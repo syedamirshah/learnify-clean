@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance'; // adjust path if needed
 import { Link } from 'react-router-dom';
 import logo from "@/assets/logo.png";
 
@@ -9,13 +9,12 @@ const HonorBoard = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchWithFallback = async (url1, url2) => {
-    const token = localStorage.getItem('access');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    
     try {
-      const res = await axios.get(url1, { headers });
+      const res = await axiosInstance.get(url1);
       return res.data;
     } catch {
-      const fallbackRes = await axios.get(url2, { headers });
+      const fallbackRes = await axiosInstance.get(url2);
       return fallbackRes.data;
     }
   };
