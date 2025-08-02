@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import logo from '../../assets/logo.png';
 
 const StudentQuizHistory = () => {
@@ -14,7 +14,7 @@ const StudentQuizHistory = () => {
       try {
         const token = localStorage.getItem('access_token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await axios.get(`/api/teacher/student/${username}/quiz-history/`, { headers });
+        const res = await axiosInstance.get(`teacher/student/${username}/quiz-history/`, { headers });
 
         setQuizResults(res.data.results || []);
         setStudentName(res.data.full_name || username); // fallback if full name not available
