@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
@@ -33,7 +33,7 @@ const LandingPage = () => {
 
   // Fetch quiz data from backend and log it
     useEffect(() => {
-        axios.get('http://127.0.0.1:8000/api/landing/quizzes/')
+        axiosInstance.get('landing/quizzes/')
         .then(res => {
             console.log("Ô£ø√º√¨¬∂ Quiz API Response:", res.data);  // ‚Äö√∫√ñ Right place to log
             setQuizData(res.data);
@@ -43,7 +43,7 @@ const LandingPage = () => {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/token/', {
+      const res = await axiosInstance.post('token/', {
         username,
         password,
       });
@@ -53,11 +53,7 @@ const LandingPage = () => {
       localStorage.setItem('account_status', res.data.account_status);
       localStorage.setItem('role', res.data.role);
 
-      const me = await axios.get('http://127.0.0.1:8000/api/user/me/', {
-        headers: {
-          Authorization: `Bearer ${res.data.access}`,
-        },
-      });
+      const me = await axiosInstance.get('user/me/');
 
       const role = me.data.role;
       const fullName = me.data.full_name || me.data.username;
