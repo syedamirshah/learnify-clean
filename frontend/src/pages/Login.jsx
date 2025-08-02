@@ -33,9 +33,9 @@ const Login = () => {
         return;
       }
 
-      const userRes = await axiosInstance.get('user/me/');
-      headers: { Authorization: `Bearer ${access}` },
-      });
+      const userRes = await axiosInstance.get('user/me/', {
+  headers: { Authorization: `Bearer ${access}` },
+});
 
       const userData = userRes.data;
       const status = userData.account_status;
