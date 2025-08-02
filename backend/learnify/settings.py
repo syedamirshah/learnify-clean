@@ -53,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+     'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Add this line
+
 ]
 
 ROOT_URLCONF = 'learnify.urls'
@@ -188,6 +190,7 @@ CORS_ALLOWED_ORIGINS = [
 
 MIDDLEWARE += [
     'core.middleware.AutoExpireUserMiddleware',
+    
 ]
 
 # ‚úÖ Gmail SMTP Email Settings
@@ -203,3 +206,5 @@ DEFAULT_FROM_EMAIL = 'Learnify Pakistan <polscience.uob@gmail.com>'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/admin/'  # This will land you on your backend main dashboard
 LOGOUT_REDIRECT_URL = '/login/'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
