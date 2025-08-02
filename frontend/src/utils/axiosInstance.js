@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
   },
 });
 
-// ‚úÖ Attach access token from localStorage (already present in your code)
+// Attach access token from localStorage (already present in your code)
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -19,7 +19,7 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// ‚úÖ Optionally handle 401 responses (for future enhancements like token refresh)
+// Optionally handle 401 responses (for future enhancements like token refresh)
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
