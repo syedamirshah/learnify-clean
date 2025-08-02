@@ -210,6 +210,7 @@ const SignupPage = () => {
               <option value="Brahui">Brahui</option>
               <option value="Chitrali">Chitrali</option>
               <option value="Hindko">Hindko</option>
+              <option value="Dari/Farsi">Dari/Farsi</option>
               <option value="Other">Other</option>
               <option value="Pashto">Pashto</option>
               <option value="Punjabi">Punjabi</option>
