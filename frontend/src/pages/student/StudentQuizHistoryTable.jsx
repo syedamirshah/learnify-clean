@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 
@@ -11,10 +11,8 @@ const StudentQuizHistoryTable = () => {
   useEffect(() => {
     const fetchQuizHistory = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await axios.get('/api/student/quiz-history/', { headers });
-
+        const res = await axiosInstance.get('student/quiz-history/');
+        
         setQuizResults(res.data.results || []);
         setStudentName(res.data.full_name || '');
       } catch (err) {
