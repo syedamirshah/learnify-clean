@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 
@@ -16,7 +16,7 @@ const TeacherAssessment = () => {
       try {
         const token = localStorage.getItem('access_token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await axios.get('/api/teacher/students/', { headers });
+        const res = await axiosInstance.get('teacher/students/', { headers });
         setStudents(res.data);
         setFilteredStudents(res.data);
 
