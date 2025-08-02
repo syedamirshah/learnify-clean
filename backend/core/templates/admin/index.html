@@ -1,0 +1,70 @@
+
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard | Learnify Pakistan{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <h1 style="font-size: 2rem; margin-bottom: 30px;">📊 Admin Dashboard</h1>
+
+  <ul class="dashboard-menu">
+    <li><a href="/admin/" class="button-link">🏠 Home</a></li>
+    <li><a href="/admin/dashboard/users/" class="button-link">🧑‍💼 User Management</a></li>
+    <li><a href="/admin/dashboard/question-bank/" class="button-link">📦 Question Bank</a></li>
+    <li><a href="/admin/dashboard/quizzes/" class="button-link">📝 Quizzes</a></li>
+    <li><a href="/honor-roll" class="button-link text-green-700">🌐 Public Honor Roll</a></li>
+    <li><a href="/admin/backups/" class="button-link">🗂 Backup & Restore</a></li>
+    <li><a href="/admin/stats-dashboard/" class="button-link">📈 Platform Stats</a></li>
+  </ul>
+</div>
+
+<style>
+  .dashboard-container {
+    max-width: 700px;
+    margin: auto;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .dashboard-menu {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .dashboard-menu li {
+    margin-bottom: 14px;
+  }
+
+  .dashboard-menu li::marker {
+    content: none !important;
+  }
+
+  .button-link {
+    display: inline-block;
+    background-color: #e8ebf5;
+    color: #1e3a8a;
+    padding: 14px 22px;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    max-width: 400px;
+    transition: background-color 0.3s ease;
+  }
+
+  .button-link:hover {
+    background-color: #cad2f3;
+  }
+
+  #nav-sidebar {
+    display: none !important;
+  }
+
+  #content {
+    margin-left: 0 !important;
+  }
+</style>
+{% endblock %}

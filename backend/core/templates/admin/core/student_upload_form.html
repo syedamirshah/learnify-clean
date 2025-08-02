@@ -1,0 +1,80 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="dashboard-container" style="padding: 30px;">
+    <h1 style="margin-bottom: 30px;">📥 Bulk Upload Students</h1>
+
+    <form method="post" enctype="multipart/form-data" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 6px rgba(0,0,0,0.1); max-width: 600px;">
+      {% csrf_token %}
+
+      <label for="file" style="display: block; font-weight: 500; margin-bottom: 10px;">📄 Select Excel File (.xlsx):</label>
+      <input type="file" name="excel_file" id="file" accept=".xlsx" required style="margin-bottom: 20px; padding: 6px; width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+
+      <p style="margin-top: -10px; font-size: 13px; color: #444;">
+        ⚠️ Ensure your Excel includes a <code>language_used_at_home</code> column with one of the following values:<br>
+        <strong>Balochi, Brahui, Chitrali, Dari/Farsi, Hindko, Kohistani, Other, Pashto, Punjabi, Saraiki, Sindhi, Urdu</strong>
+      </p>
+
+      <button type="submit" class="button">Upload</button>
+    </form>
+
+    {% if students %}
+      <h2 style="margin-top: 40px;">👥 Uploaded Student Preview</h2>
+      <table style="margin-top: 20px; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #f8f8f8;">
+            <th style="border: 1px solid #ccc; padding: 8px;">Username</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Full Name</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Role</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Gender</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">School</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">City</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Province</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Language Used at Home</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+            <tr>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.username }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.full_name }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.role }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.gender }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.school_name }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.city }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.province }}</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">{{ student.language_used_at_home }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+
+    input[type="file"] {
+      font-size: 14px;
+    }
+
+    table th, table td {
+      font-size: 14px;
+      text-align: left;
+    }
+  </style>
+{% endblock %}

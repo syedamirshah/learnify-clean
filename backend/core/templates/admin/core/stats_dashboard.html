@@ -1,0 +1,126 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Stats Dashboard | Learnify Pakistan{% endblock %}
+
+{% block content %}
+<div class="content-wrapper mx-auto" style="padding: 30px; max-width: 1000px;">
+  <h1 style="font-size: 30px; font-weight: bold; margin-bottom: 40px;">
+    📊 Learnify Pakistan — Stats Dashboard
+  </h1>
+
+  <!-- Descriptive Stats -->
+  <section class="mb-5">
+    <h2 class="mb-3">1️⃣ Descriptive Statistics</h2>
+    <table style="width: 100%; border-collapse: collapse;" class="mb-3">
+      <thead style="background-color: #f8f9fa;">
+        <tr>
+          {% for key in descriptive_stats.keys %}
+            <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">{{ key|capfirst|replace:"_ , " }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for value in descriptive_stats.values %}
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ value }}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- National Overview -->
+  <section class="mb-5">
+    <h2 class="mb-3">2️⃣ National Overview by Province</h2>
+    <table style="width: 100%; border-collapse: collapse;" class="mb-3">
+      <thead style="background-color: #f8f9fa;">
+        <tr>
+          <th style="border: 1px solid #ccc; padding: 8px;">Province</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Male</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Female</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Total</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Population %</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Avg Score</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Ranking</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in national_overview %}
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.province|default:"—" }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.male }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.female }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.total }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.percent }}%</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.avg_score }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.ranking }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Provincial Overview -->
+  <section class="mb-5">
+    <h2 class="mb-3">3️⃣ Provincial Overview (City Level)</h2>
+    {% for province, cities in provincial_overview.items %}
+      <h4 class="text-primary mt-4 mb-2">{{ province }}</h4>
+      <table style="width: 100%; border-collapse: collapse;" class="mb-4">
+        <thead style="background-color: #f8f9fa;">
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 8px;">City</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Male</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Female</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Total</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Avg Score</th>
+            <th style="border: 1px solid #ccc; padding: 8px;">Ranking</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for city in cities %}
+          <tr>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ city.city|default:"—" }}</td>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ city.male }}</td>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ city.female }}</td>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ city.total }}</td>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ city.avg_score }}</td>
+            <td style="border: 1px solid #ccc; padding: 8px;">{{ forloop.counter }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </section>
+
+  <!-- Gender × Language Cross-tab -->
+  <section class="mb-5">
+    <h2 class="mb-3">4️⃣ Gender × Language Cross-Tab</h2>
+    <table style="width: 100%; border-collapse: collapse;" class="mb-3">
+      <thead style="background-color: #f8f9fa;">
+        <tr>
+          <th style="border: 1px solid #ccc; padding: 8px;">Language</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Male Students</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Avg Score (M)</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Female Students</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Avg Score (F)</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Gender Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in gender_language_crosstab %}
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.language }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.male_count }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.male_avg_score }}%</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.female_count }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.female_avg_score }}%</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ row.gender_gap }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

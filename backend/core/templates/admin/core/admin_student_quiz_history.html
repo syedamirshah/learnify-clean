@@ -1,0 +1,53 @@
+{% extends "admin/core/base.html" %}
+
+{% block content %}
+<div class="dashboard-container" style="padding: 30px;">
+  <h1 style="margin-bottom: 20px;">📘 Quiz History for {{ student.full_name }}</h1>
+
+  <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.1);">
+    <thead>
+      <tr style="background-color: #f0f0f0;">
+        <th style="padding: 12px; border: 1px solid #ccc;">Quiz Title</th>
+        <th style="padding: 12px; border: 1px solid #ccc;">Subject</th>
+        <th style="padding: 12px; border: 1px solid #ccc;">Marks Obtained</th>
+        <th style="padding: 12px; border: 1px solid #ccc;">Percentage</th>
+        <th style="padding: 12px; border: 1px solid #ccc;">Grade</th>
+        <th style="padding: 12px; border: 1px solid #ccc;">Time of Attempt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in quiz_history %}
+        <tr>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.quiz_title }}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.subject }}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.marks }}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.percentage }}%</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.grade }}</td>
+          <td style="padding: 10px; border: 1px solid #ccc;">{{ item.attempt_time|date:"Y-m-d H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="6" style="padding: 20px; text-align: center;">No quiz attempts found for this student.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+<style>
+  .button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+  }
+
+  .button:hover {
+    background-color: #0056b3;
+  }
+</style>
+{% endblock %}

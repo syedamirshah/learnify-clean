@@ -1,0 +1,106 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+{% block title %}Question Bank Management | Learnify{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
+
+<!-- ✅ Add New Bank Button -->
+{% if request.user.role != 'manager' %}
+<div style="margin-bottom: 20px;">
+  <a href="/admin/core/questionbank/add/" class="btn-main">➕ Create New Question Bank</a>
+</div>
+{% endif %}
+
+<!-- 📋 Question Bank Table -->
+<table style="width: 100%; border-collapse: collapse; background-color: white; table-layout: fixed;">
+  <thead>
+    <tr style="background-color: #dfe1e7; text-align: left;">
+      <th style="padding: 8px; width: 40px;">#</th>
+      <th style="padding: 8px; width: 36%;">Title</th>
+      <th style="padding: 8px; width: 18%;">Type</th>
+      <th style="padding: 8px; width: 80px;">Questions</th>
+      <th style="padding: 8px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for bank in question_banks %}
+    <tr style="border-bottom: 1px solid #ccc;">
+      <td style="padding: 8px;">{{ forloop.counter }}</td>
+      <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
+      <td style="padding: 8px;">{{ bank.get_type_display }}</td>
+      <td style="padding: 8px;">{{ bank.question_count }}</td>
+      <td style="padding: 8px;">
+        {% if request.user.role != 'manager' %}
+          <div class="action-wrap">
+            <a href="{% url 'edit-question-bank' bank.id %}" class="btn-action">✏️ Edit</a>
+            <a href="{% url 'delete-question-bank' bank.id %}" class="btn-action">🗑️ Delete</a>
+            <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
+            <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
+            <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
+          </div>
+        {% else %}
+          <span style="color: gray;">🔒 No actions available</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- 🖌️ Styles -->
+<style>
+  .btn-main {
+    padding: 8px 16px;
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+  .btn-main:hover {
+    background-color: #3c7cc4;
+  }
+
+  .action-wrap {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    flex-direction: row;
+    flex-shrink: 1;
+    flex-wrap: wrap;
+  }
+
+  .btn-action {
+    background-color: #e2e6f0;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+  }
+  .btn-action:hover {
+    background-color: #c5cbe2;
+  }
+
+  td {
+    vertical-align: top;
+    font-size: 14px; /* ✅ Smaller text for content cells */
+  }
+
+  th {
+    font-size: 14px; /* ✅ Smaller text for headers */
+  }
+
+  #content-main + div, #nav-sidebar {
+    display: none !important;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "admin/core/base.html" %}
+{% block content %}
+
+<div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md font-[calibri]">
+
+  <!-- Heading -->
+  <h2 class="text-2xl font-semibold text-gray-800 mb-6">📦 Available Backups</h2>
+
+  <!-- Create Backup Form -->
+  <div class="mb-8">
+    <form method="post" class="inline-block">
+      {% csrf_token %}
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+        📦 Create New Backup
+      </button>
+    </form>
+  </div>
+
+  <!-- Backup File List -->
+  <div>
+    {% if backup_files %}
+      <ul class="space-y-4">
+        {% for file in backup_files %}
+          <li class="border border-gray-200 p-4 rounded-md flex justify-between items-center">
+            <span class="text-sm font-mono text-gray-700">{{ file }}</span>
+            <div class="space-x-2">
+              <a href="{% url 'download_backup' file %}" class="text-blue-600 hover:underline text-sm">⬇ Download</a>
+
+              <form action="{% url 'restore_backup' file %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        onclick="return confirm('Are you sure you want to restore this backup?')"
+                        class="text-green-600 hover:underline text-sm">
+                  ♻ Restore
+                </button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-500 text-sm italic">No backup files found.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

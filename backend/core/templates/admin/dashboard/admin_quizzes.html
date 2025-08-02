@@ -1,0 +1,79 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block title %}Quizzes Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="padding: 30px;">
+    <h1 style="margin-bottom: 30px;">📋 Quiz Dashboard</h1>
+
+    <div class="section" style="margin-bottom: 40px;">
+        <h2 style="margin-bottom: 10px;">1️⃣ Create Metadata</h2>
+        <p>Create and manage Grade, Subject, and Chapter metadata before assigning them to quizzes.</p>
+        <a href="/admin/core/grade/" class="button small" style="margin-right: 10px;">🎓 Manage Grades</a>
+        <a href="/admin/core/subject/" class="button small" style="margin-right: 10px;">📘 Manage Subjects</a>
+        <a href="/admin/core/chapter/" class="button small">📚 Manage Chapters</a>
+    </div>
+
+    <div class="section" style="margin-bottom: 40px;">
+        <h2 style="margin-bottom: 10px;">2️⃣ Create Quiz</h2>
+        <p>Create a new quiz and specify title, metadata, and marks per question.</p>
+        <a href="/admin/core/quiz/add/" class="button small">➕ Create New Quiz</a>
+    </div>
+
+    <div class="section" style="margin-bottom: 40px;">
+        <h2 style="margin-bottom: 10px;">3️⃣ Assign Questions to Quiz</h2>
+        <p>Select question banks and number of questions to add to a quiz.</p>
+        <a href="/admin/core/quiz-question-assignments/" class="button small">➕ Assign Questions to Quiz</a>
+    </div>
+
+    <div class="section">
+        <h2 style="margin-bottom: 10px;">4️⃣ List View of Quizzes</h2>
+        <p>View all quizzes with metadata, linked banks, and total questions. Edit/delete as needed.</p>
+        <a href="/admin/core/list-quizzes/" class="button small">📋 View Quizzes</a>
+    </div>
+</div>
+
+<style>
+    .button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .button.small {
+        padding: 6px 14px;
+        font-size: 14px;
+    }
+
+    .button:hover {
+        background-color: #0056b3;
+    }
+
+    .dashboard-container h1,
+    .dashboard-container h2 {
+        color: #2c3e50;
+    }
+
+    .section {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 0px 6px rgba(0,0,0,0.1);
+        margin-bottom: 40px;
+    }
+
+    table th, table td {
+        text-align: left;
+    }
+
+    input[type="number"] {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}

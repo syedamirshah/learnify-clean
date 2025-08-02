@@ -1,0 +1,109 @@
+{% extends "admin/core/base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom: 20px;">📝 List of All Quizzes</h1>
+
+<!-- 🔍 Filter Section -->
+<form method="get" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <div>
+            <label for="grade"><strong>Filter by Grade:</strong></label><br>
+            <select name="grade" id="grade">
+                <option value="">All Grades</option>
+                {% for grade in grades %}
+                    <option value="{{ grade.name }}" {% if request.GET.grade == grade.name %}selected{% endif %}>{{ grade.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="subject"><strong>Filter by Subject:</strong></label><br>
+            <select name="subject" id="subject">
+                <option value="">All Subjects</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.name }}" {% if request.GET.subject == subject.name %}selected{% endif %}>{{ subject.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" style="margin-top: 20px;">Apply Filters</button>
+        </div>
+    </div>
+</form>
+
+<!-- 📋 Quiz Table -->
+<table style="width: 100%; border-collapse: collapse; background-color: white; text-align: left; font-size: 12px;">
+    <thead style="background-color: #f0f0f0;">
+        <tr>
+            {% for col, label in headers %}
+                <th style="border: 1px solid #ccc; padding: 8px;">
+                    <a href="?sort={{ col }}&dir={% if current_sort == col and current_dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.grade %}&grade={{ request.GET.grade }}{% endif %}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}">
+                        {{ label }}
+                        {% if current_sort == col %}
+                            {% if current_dir == 'desc' %} 🔽 {% else %} 🔼 {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
+            {% endfor %}
+            <th style="border: 1px solid #ccc; padding: 7px;">Marks</th>
+            <th style="border: 1px solid #ccc; padding: 7px;">Question Banks</th>
+            <th style="border: 1px solid #ccc; padding: 7px;">Questions</th>
+            <th style="border: 1px solid #ccc; padding: 7px; text-align: center;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quiz in quiz_data %}
+        <tr>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.title }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.grade }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.subject }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.chapter }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.marks_per_question }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px;">
+                {% for bank in quiz.question_banks %}
+                    {{ bank }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td style="border: 1px solid #ccc; padding: 7px;">{{ quiz.total_questions }}</td>
+            <td style="border: 1px solid #ccc; padding: 7px; text-align: center;">
+                <a class="button btn-edit" href="{% url 'admin:core_quiz_change' quiz.id %}?next={% url 'quiz-question-assignments' %}?quiz_id={{ quiz.id }}">Edit</a>
+                <a class="button btn-delete" href="{% url 'admin:core_quiz_delete' quiz.id %}?next={% url 'quiz-question-assignments' %}?quiz_id={{ quiz.id }}">Delete</a>
+                <a class="button btn-format" href="{% url 'quiz-format' quiz.id %}" class="btn btn-secondary">Format</a>
+                <a class="button btn-attempt" href="http://localhost:5173/student/attempt-quiz/{{ quiz.id }}">Attempt</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center; padding: 12px;">No quizzes found for selected filters.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 🎨 Styling -->
+<style>
+    .button {
+        display: inline-block;
+        padding: 6px 10px;
+        font-size: 13px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+        margin: 2px;
+        color: white;
+    }
+    .btn-edit    { background-color: #007bff; }
+    .btn-delete  { background-color: #dc3545; }
+    .btn-format  { background-color: #6c757d; }
+    .btn-attempt { background-color: #28a745; }
+    .button:hover { opacity: 0.9; }
+
+    th a {
+        text-decoration: none;
+        color: #333;
+        font-weight: 600;
+    }
+
+    th a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+{% endblock %}

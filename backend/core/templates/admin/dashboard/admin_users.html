@@ -1,0 +1,43 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+{% block title %}Learnify Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 20px;">📊 <b>Learnify Admin Dashboard</b></h1>
+
+<!-- 🧑‍💼 User Management Section -->
+<div style="padding: 20px; border: 1px solid #ccc; border-radius: 10px; margin-bottom: 30px;">
+  <h2>🧑‍💼 User Management</h2>
+  <ul style="list-style: none; padding-left: 0;">
+    <li><a href="/admin/core/user/add/" class="button-link">➕ Create New User</a></li>
+    <li><a href="{% url 'bulk_upload_students' %}" class="button-link">📥 Bulk Upload Users (Excel)</a></li>
+    <li><a href="/admin/core/user/complete_user_data/" class="button-link">📋 View All Users</a></li>
+    <li><a href="{% url 'manage_subscriptions' %}" class="button-link">🔄 Manage User Subscriptions</a></li>
+  </ul>
+</div>
+
+<!-- 🚧 Future sections will go below -->
+
+<style>
+  .button-link {
+    display: inline-block;
+    margin: 6px 0;
+    padding: 10px 16px;
+    background-color: #e2e6ec; /* darker gray */
+    color: rgb(41, 31, 31);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .button-link:hover {
+    background-color: #afc5ea;
+  }
+
+  /* Hide Django sidebar */
+  #content-main + div, #nav-sidebar {
+    display: none !important;
+  }
+</style>
+{% endblock %}
