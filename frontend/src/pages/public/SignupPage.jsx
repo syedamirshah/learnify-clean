@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../../assets/logo.png'; // ‚úÖ adjust path if needed
 
@@ -10,7 +10,7 @@ const SignupPage = () => {
   const [grades, setGrades] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/grades/')
+    axiosInstance.get('grades/')
       .then((response) => {
         setGrades(response.data);
       })
@@ -59,7 +59,7 @@ const SignupPage = () => {
     }
 
     try {
-      await axios.post('/api/register/', form);
+      await axiosInstance.post('register/', form);
       alert(
         '‚úÖ Your account has been created successfully!\n\n' +
         'Please wait 10‚Äì15 minutes while our team verifies your information and activates your account.\n' +
