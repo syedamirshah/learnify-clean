@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance'; // ✅ adjust path if needed
 import logo from "../../../assets/logo.png";
 
 const IndividualQuizResult = () => {
@@ -11,18 +11,8 @@ const IndividualQuizResult = () => {
   useEffect(() => {
     const fetchResult = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        console.log("üîê JWT token used:", token);
   
-        if (!token) {
-          console.warn("‚ö†Ô∏è No token found in localStorage.");
-        }
-  
-        const response = await axios.get(`/api/student/quiz-result/${attemptId}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axiosInstance.get(`/student/quiz-result/${attemptId}/`);
   
         console.log('‚úÖ Fetched Result:', response.data);
   
