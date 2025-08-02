@@ -3,7 +3,8 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: 'https://learnify-backend-zlf7.onrender.com/api/', // ✅ LIVE backend URL  timeout: 5000,
+    baseURL: 'https://learnify-backend-zlf7.onrender.com/api/', // ✅ LIVE backend URL
+    timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
   },
