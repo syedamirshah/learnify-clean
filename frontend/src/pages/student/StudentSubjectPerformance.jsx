@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import logo from '../../assets/logo.png';
 import { Link } from 'react-router-dom';
 
@@ -11,7 +11,7 @@ const StudentSubjectPerformance = () => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
 
-    axios.get('/api/student/subject-performance/', {
+    axiosInstance.get('student/subject-performance/', {
       headers: {
         Authorization: `Bearer ${token}`
       }
