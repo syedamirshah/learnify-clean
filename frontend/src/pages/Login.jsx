@@ -8,7 +8,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const res = await axiosInstance.post('token/', {
+      const res = await axiosInstance.post('/token/', {
       username,
       password,
     });
