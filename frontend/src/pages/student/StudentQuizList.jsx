@@ -1,6 +1,7 @@
 // src/pages/student/StudentQuizList.jsx
+
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance'; // ✅ Use configured axios instance
 
 const StudentQuizList = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -9,10 +10,7 @@ const StudentQuizList = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const token = localStorage.getItem("access_token");
-        const res = await axios.get("http://127.0.0.1:8000/api/student/quiz-list/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axiosInstance.get("student/quiz-list/");
         setQuizzes(res.data);
       } catch (error) {
         console.error("Error fetching quizzes:", error);
@@ -27,10 +25,7 @@ const StudentQuizList = () => {
 
   const handleStartQuiz = async (quizId) => {
     try {
-      const token = localStorage.getItem("access_token");
-      const res = await axios.get(`http://127.0.0.1:8000/api/student/quiz/${quizId}/start/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axiosInstance.get(`student/quiz/${quizId}/start/`);
       // Store attempt data locally
       localStorage.setItem("current_attempt", JSON.stringify(res.data));
       window.location.href = `/student/quiz-attempt`;
