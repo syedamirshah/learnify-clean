@@ -194,7 +194,7 @@ const QuizAttempt = () => {
   const fibWidth = quizMeta.input_box_width || 8;
 
   const fixImageUrls = (html) => {
-    const backendBase = 'http://localhost:8000';
+    const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
     if (!html) return '';
     return html.replace(/src="\/media\//g, `src="${backendBase}/media/`);
   };
