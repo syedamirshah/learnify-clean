@@ -34,7 +34,7 @@ const LandingPage = () => {
   // Fetch quiz data from backend and log it
     useEffect(() => {
       import('axios').then(({ default: axios }) => {
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/landing/quizzes/`)
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}landing/quizzes/`)
           .then(res => {
             console.log("✅ Public Quiz API Response:", res.data);
             setQuizData(res.data);
@@ -220,11 +220,11 @@ const LandingPage = () => {
         </p>
       </section>
 
-      {/* Ô£ø√º√Æ√ë Dynamic Quiz View */}
+      {/* Dynamic Quiz View */}
       <div className="mt-14 px-6">
         {quizData.map((gradeItem, gradeIndex) => (
             <div key={`grade-${gradeIndex}`} className="mb-12">
-            {/* ‚Äö√∫√ñ Grade Heading (Only Once) */}
+            {/* Grade Heading (Only Once) */}
             <h2 className="text-2xl font-bold text-green-800 text-center mb-4">
                 {gradeItem.grade}
             </h2>
@@ -236,7 +236,7 @@ const LandingPage = () => {
                     {subjectItem.subject}
                 </h3>
 
-                {/* ‚Äö√∫√ñ Chapters and Quizzes */}
+                {/* Chapters and Quizzes */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {subjectItem.chapters.map((chapterItem, chapterIndex) => (
                     <div key={`chapter-${chapterIndex}`} className="bg-white px-2">
