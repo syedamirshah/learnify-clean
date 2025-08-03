@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '@/utils/axiosInstance';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '@/assets/logo.png'; // ✅ adjust path if needed
 
@@ -11,11 +11,7 @@ const RenewSubscription = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('/api/account/subscription-info/', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`
-      }
-    })
+    axiosInstance.get('account/subscription-info/')
     .then(response => setInfo(response.data))
     .catch(() => setError('Failed to fetch subscription info.'));
   }, []);
@@ -27,9 +23,8 @@ const RenewSubscription = () => {
     if (receipt) form.append('fee_receipt', receipt);
 
     try {
-      await axios.post('/api/account/renew-subscription/', form, {
+      await axiosInstance.post('account/renew-subscription/', form, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'multipart/form-data'
         }
       });
