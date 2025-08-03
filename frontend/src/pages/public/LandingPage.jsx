@@ -33,7 +33,7 @@ const LandingPage = () => {
 
   // Fetch quiz data from backend and log it
     useEffect(() => {
-        axiosInstance.get('landing/quizzes/')
+        axios.get(`${baseURL}/landing/quizzes/`)
         .then(res => {
             console.log("Ô£ø√º√¨¬∂ Quiz API Response:", res.data);  // ‚Äö√∫√ñ Right place to log
             setQuizData(res.data);
