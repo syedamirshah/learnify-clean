@@ -21,6 +21,8 @@ import HelpCenter from '@/pages/public/HelpCenter';
 
 
 function App() {
+    console.log("✅ App loaded: this build includes _redirects and updated routes.");
+
   return (
     <Router>
       <div className="min-h-screen bg-white">
