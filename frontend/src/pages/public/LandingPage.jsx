@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
-import axiosInstance from '../../utils/axiosInstance';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
