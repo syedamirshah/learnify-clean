@@ -33,12 +33,14 @@ const LandingPage = () => {
 
   // Fetch quiz data from backend and log it
     useEffect(() => {
-        axiosInstance.get('landing/quizzes/')
-        .then(res => {
-            console.log("Quiz API Response:", res.data);  // Right place to log
+      import('axios').then(({ default: axios }) => {
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/landing/quizzes/`)
+          .then(res => {
+            console.log("✅ Public Quiz API Response:", res.data);
             setQuizData(res.data);
-        })
-        .catch(err => console.error("‚Äö√π√• Error fetching quizzes:", err));
+          })
+          .catch(err => console.error("❌ Error fetching quizzes:", err));
+      });
     }, []);
 
   const handleLogin = async () => {
