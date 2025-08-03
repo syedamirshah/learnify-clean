@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '@/utils/axiosInstance';
 import logo from '@/assets/logo.png';
 import { Link } from 'react-router-dom';
 
@@ -28,9 +28,7 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('access_token');
-      const res = await axios.get('http://127.0.0.1:8000/api/user/me/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axiosInstance.get('user/me/')
       setFormData({
         ...formData,
         ...res.data,
@@ -41,7 +39,7 @@ const EditProfile = () => {
   }, []);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/grades/')
+    axiosInstance.get('grades/')
       .then((response) => {
         setGrades(response.data);
       })
@@ -75,12 +73,9 @@ const EditProfile = () => {
     });
 
     try {
-      await axios.put('http://127.0.0.1:8000/api/user/edit-profile/', payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await axiosInstance.put('user/edit-profile/', payload, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
       alert('Profile updated successfully.');
     } catch (err) {
       console.error(err);
@@ -97,13 +92,10 @@ const EditProfile = () => {
     }
     const token = localStorage.getItem('access_token');
     try {
-      await axios.post(
-        'http://127.0.0.1:8000/api/user/change-password/',
-        { old_password, new_password },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axiosInstance.post('user/change-password/', {
+        old_password,
+        new_password,
+      });
       alert('Password changed successfully.');
       setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
     } catch (err) {
