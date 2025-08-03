@@ -59,19 +59,23 @@ const SignupPage = () => {
     }
 
     try {
-      await axiosInstance.post('register/', form);
+      await axiosInstance.post('register/', form, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       alert(
-        '‚úÖ Your account has been created successfully!\n\n' +
-        'Please wait 10‚Äì15 minutes while our team verifies your information and activates your account.\n' +
+        'Your account has been created successfully!\n\n' +
+        'Please wait 10 to 15 minutes while our team verifies your information and activates your account.\n' +
         'You will receive an email once your account is approved.'
       );
       navigate('/');
     } catch (error) {
       console.error(error);
       if (error.response && error.response.status === 403) {
-        alert('‚è≥ Your account is not active yet. Please wait for activation.');
+        alert('Your account is not active yet. Please wait for activation.');
       } else {
-        alert('‚ùå Registration failed. Please check your details and try again.');
+        alert('Registration failed. Please check your details and try again.');
       }
     }
   };
