@@ -21,5 +21,13 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // ✅ This ensures _redirects is copied from public/
+    assetsDir: '',
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
   },
+  publicDir: 'public', // ✅ Makes sure _redirects is included
 });
