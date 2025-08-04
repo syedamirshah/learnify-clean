@@ -204,7 +204,7 @@ const LandingPage = () => {
 
         {!role && (
           <div>
-            <a href="/signup" className="text-white hover:underline">Sign up</a>
+            <Link to="/signup" className="text-white hover:underline">Sign up</Link>
           </div>
         )}
       </nav>
