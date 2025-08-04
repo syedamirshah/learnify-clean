@@ -7,7 +7,7 @@ import QuizAttempt from "./pages/student/QuizAttempt.jsx";
 import HonorBoard from './pages/public/HonorBoard';
 import LandingPage from './pages/public/LandingPage';
 import WhyJoin from './pages/public/WhyJoin';
-import SignupPage from './pages/public/SignupPage';
+import SignupPage from '@/pages/public/SignupPage';
 import RenewSubscription from './pages/account/RenewSubscription';
 import EditProfile from './pages/account/EditProfile';
 import TeacherAssessment from './pages/teacher/TeacherAssessment';
