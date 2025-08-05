@@ -54,7 +54,11 @@ const SignupPage = () => {
 
     for (const key in formData) {
       if (formData[key] !== null && formData[key] !== undefined) {
-        form.append(key, formData[key]);
+        if (key === 'grade') {
+          form.append('grade', formData.grade.id);  // ✅ submit ID only
+        } else {
+          form.append(key, formData[key]);
+        }
       }
     }
 
