@@ -71,9 +71,13 @@ const SignupPage = () => {
       );
       navigate('/');
     } catch (error) {
-      console.error(error);
+      console.error("❌ Registration failed:", error);
+
       if (error.response && error.response.status === 403) {
         alert('Your account is not active yet. Please wait for activation.');
+      } else if (error.response && error.response.data) {
+        console.log("💡 Backend error details:", error.response.data);
+        alert("Registration failed:\n" + JSON.stringify(error.response.data, null, 2));
       } else {
         alert('Registration failed. Please check your details and try again.');
       }
