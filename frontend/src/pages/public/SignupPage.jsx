@@ -55,7 +55,7 @@ const SignupPage = () => {
     for (const key in formData) {
       if (formData[key] !== null && formData[key] !== undefined) {
         if (key === 'grade') {
-          form.append('grade', formData.grade?.id);  // ✅ grade.id is guaranteed
+          form.append('grade', typeof formData.grade === 'object' ? formData.grade.id : formData.grade);
         } else {
           form.append(key, formData[key]);
         }
