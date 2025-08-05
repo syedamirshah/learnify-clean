@@ -187,7 +187,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://learnify-frontend-7y4n.onrender.com",  # ✅ deployed frontend
-
+    "https://www.learnifypakistan.com",            # ✅ NEW: production frontend
 ]
 
 MIDDLEWARE += [
@@ -210,3 +210,8 @@ LOGIN_REDIRECT_URL = '/admin/'  # This will land you on your backend main dashbo
 LOGOUT_REDIRECT_URL = '/login/'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ✅ CSRF setting for production frontend
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.learnifypakistan.com",
+]
