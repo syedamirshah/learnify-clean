@@ -162,13 +162,19 @@ const SignupPage = () => {
             <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Grade</label>
             <select
               name="grade"
-              value={formData.grade}
-              onChange={handleChange}
+              value={formData.grade?.id || ''}
+              onChange={(e) => {
+                const selectedGrade = grades.find(g => g.id === parseInt(e.target.value));
+                setFormData((prev) => ({
+                  ...prev,
+                  grade: selectedGrade || '',
+                }));
+              }}
               className="w-full max-w-sm border px-3 py-2 rounded text-sm"
             >
               <option value="">Select Grade</option>
-              {grades.map((grade, idx) => (
-                <option key={idx} value={grade.value}>{grade.label}</option>
+              {grades.map((grade) => (
+                <option key={grade.id} value={grade.id}>{grade.name}</option>
               ))}
             </select>
 
