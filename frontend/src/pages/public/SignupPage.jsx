@@ -55,7 +55,7 @@ const SignupPage = () => {
     for (const key in formData) {
       if (formData[key] !== null && formData[key] !== undefined) {
         if (key === 'grade') {
-          form.append('grade', formData.grade.id);  // ✅ submit ID only
+          form.append('grade', formData.grade?.id);  // ✅ grade.id is guaranteed
         } else {
           form.append(key, formData[key]);
         }
@@ -166,9 +166,10 @@ const SignupPage = () => {
             <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Grade</label>
             <select
               name="grade"
-              value={formData.grade?.id || ''}
+              value={formData.grade && typeof formData.grade === 'object' ? formData.grade.id : ''}
               onChange={(e) => {
-                const selectedGrade = grades.find(g => g.id === parseInt(e.target.value));
+                const selectedId = parseInt(e.target.value);
+                const selectedGrade = grades.find((g) => g.id === selectedId);
                 setFormData((prev) => ({
                   ...prev,
                   grade: selectedGrade || '',
@@ -178,7 +179,9 @@ const SignupPage = () => {
             >
               <option value="">Select Grade</option>
               {grades.map((grade) => (
-                <option key={grade.id} value={grade.id}>{grade.name}</option>
+                <option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </option>
               ))}
             </select>
 
