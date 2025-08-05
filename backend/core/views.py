@@ -1551,5 +1551,4 @@ def list_public_quizzes(request):
 @permission_classes([AllowAny])
 def get_all_grades(request):
     grades = Grade.objects.all().order_by('name')
-    grade_list = [{'label': grade.name, 'value': grade.name} for grade in grades]
-    return Response(grade_list)
+    return Response([{'id': grade.id, 'name': grade.name} for grade in grades])  # ✅ Clean format
