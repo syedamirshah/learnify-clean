@@ -22,6 +22,7 @@ ALLOWED_HOSTS = [
     "learnifypakistan.com",
     "www.learnifypakistan.com",
     "learnify-backend-zlf7.onrender.com",  # ✅ Add this
+    'api.learnifypakistan.com',
 
 ]
 
