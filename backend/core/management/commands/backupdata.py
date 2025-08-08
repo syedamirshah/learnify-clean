@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Creates a JSON backup of the entire database and stores only the latest 3 backups.'
 
     def handle(self, *args, **options):
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+        backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
 
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
