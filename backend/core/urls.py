@@ -17,6 +17,9 @@ from core.views import (
     get_shining_stars, get_national_heroes, list_all_quizzes, list_public_quizzes,
     # teacher lists
     teacher_student_list,
+
+    admin_student_quiz_history,  # you referenced this in your urls
+
 )
 
 from core import admin_views  # for admin/api/subjects & admin/api/chapters helpers
@@ -30,7 +33,6 @@ from core.admin_views import (
     create_metadata_view, quiz_question_assignment_view, quiz_formatting_view,
     edit_question_bank, delete_question_bank, delete_question,
     bulk_delete_users,
-    admin_student_quiz_history,  # you referenced this in your urls
 )
 
 # --- Stats dashboard ---
