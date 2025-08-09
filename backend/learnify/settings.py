@@ -140,7 +140,8 @@ USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
 if USE_CLOUDINARY:
     # Store all uploaded media on Cloudinary
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-
+    CKEDITOR_STORAGE_BACKEND = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    
     # Reads CLOUDINARY_URL from env; optional folder prefix for organization
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
