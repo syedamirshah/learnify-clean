@@ -36,7 +36,7 @@ from datetime import date  # ‚úÖ add this import at the top
 import io
 from django.http import HttpResponse
 import json
-
+from django.core.files.storage import default_storage
 
 
 
@@ -829,3 +829,45 @@ def get_chapters_by_subject(request):
         chapters = Chapter.objects.filter(subject_id=subject_id).values('id', 'name')
         return JsonResponse(list(chapters), safe=False)
     return JsonResponse([], safe=False)
+
+@staff_member_required
+@require_POST
+def upload_restore_backup(request):
+    """
+    Accept a .json backup file from the admin, temporarily store it,
+    run loaddata to restore, then delete the temp file.
+    """
+    file_obj = request.FILES.get('backup_file')
+    if not file_obj:
+        messages.error(request, "No file selected.")
+        return redirect('list_backups')
+
+    if not file_obj.name.lower().endswith('.json'):
+        messages.error(request, "Please upload a .json backup file.")
+        return redirect('list_backups')
+
+    # Save to MEDIA_ROOT/backups/tmp_<filename>
+    backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
+    os.makedirs(backup_dir, exist_ok=True)
+    temp_name = f"upload_tmp_{timezone.now().strftime('%Y%m%d_%H%M%S')}_{file_obj.name}"
+    temp_path = os.path.join(backup_dir, temp_name)
+
+    # Write file to disk
+    with open(temp_path, 'wb+') as destination:
+        for chunk in file_obj.chunks():
+            destination.write(chunk)
+
+    # Try restore
+    try:
+        call_command('loaddata', temp_path)
+        messages.success(request, f"Backup '{file_obj.name}' restored successfully.")
+    except Exception as e:
+        messages.error(request, f"Restore failed: {str(e)}")
+    finally:
+        # Clean up temp
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass
+
+    return redirect('list_backups')
