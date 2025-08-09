@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!2nszdij8sl0oljn=f)wd2uowab_ae@mm))r0=6#si8ozke&sy'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -129,8 +129,13 @@ STATIC_URL = 'static/'
 
 # CKEditor settings
 CKEDITOR_UPLOAD_PATH = "uploads/"
-MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Use absolute media URL on Render so CKEditor inserts full URLs
+if os.environ.get("RENDER", "").lower() == "true":
+    MEDIA_URL = "https://api.learnifypakistan.com/media/"
+else:
+    MEDIA_URL = "/media/"
 
 
 # Default primary key field type
@@ -215,4 +220,5 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ✅ CSRF setting for production frontend
 CSRF_TRUSTED_ORIGINS = [
     "https://www.learnifypakistan.com",
+    "https://api.learnifypakistan.com",
 ]
