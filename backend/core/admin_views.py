@@ -34,7 +34,8 @@ from django.http import FileResponse, HttpResponseRedirect
 from django.core.management import call_command
 from datetime import date  # ‚úÖ add this import at the top
 import io
-
+from django.http import HttpResponse
+import json
 
 
 
