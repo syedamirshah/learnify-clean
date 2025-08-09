@@ -67,7 +67,8 @@ urlpatterns = [
     path('student/submit-answer/', submit_answer, name='submit-answer'),
     path('student/quiz/finalize/', finalize_quiz, name='finalize-quiz'),
     path('student/results/', list_student_quiz_results, name='student-quiz-results'),
-    path('student/subject-performance/', student_subject_performance, name='student_subject_performance'),
+    path('student/subject-performance/', student_subject_performance_view, name='student_subject_performance'),
+
     path('student/quiz-result/<int:attempt_id>/', get_quiz_result),
     # API aliases
     path('api/quiz/start/<int:quiz_id>/', start_quiz, name='start_quiz_api'),
