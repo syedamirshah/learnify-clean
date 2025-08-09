@@ -219,6 +219,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ✅ CSRF setting for production frontend
 CSRF_TRUSTED_ORIGINS = [
-    "https://www.learnifypakistan.com",
-    "https://api.learnifypakistan.com",
+    "https://api.learnifypakistan.com",      # backend/admin host
+    "https://www.learnifypakistan.com",      # frontend host
+    "https://learnify-backend-zlf7.onrender.com",  # Render preview host (optional)
 ]
