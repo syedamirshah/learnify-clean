@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -128,15 +130,31 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-# CKEditor settings
+# CKEditor uploads will use Django's default storage (which we switch to Cloudinary in prod)
 CKEDITOR_UPLOAD_PATH = "uploads/"
-MEDIA_ROOT = BASE_DIR / "media"
 
-# Use absolute media URL on Render so CKEditor inserts full URLs
-if os.environ.get("RENDER", "").lower() == "true":
-    MEDIA_URL = "https://api.learnifypakistan.com/media/"
+# Use Cloudinary for media in production (when CLOUDINARY_URL is present),
+# and local filesystem during local/dev.
+USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
+
+if USE_CLOUDINARY:
+    # Store all uploaded media on Cloudinary
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+    # Optional (keeps credentials out of code; reads CLOUDINARY_URL from env)
+    CLOUDINARY_STORAGE = {
+        "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
+        # Optional: group uploads under a folder prefix
+        "MEDIA_PREFIX": "learnify",
+    }
+
+    # MEDIA_URL/ROOT aren’t needed for Cloudinary; Cloudinary builds absolute URLs.
+    MEDIA_URL = ""
+    MEDIA_ROOT = None
 else:
+    # Local/dev behavior: store files on disk
     MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Default primary key field type
