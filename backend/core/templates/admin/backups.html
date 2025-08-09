@@ -4,19 +4,23 @@
 <div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md font-[calibri]">
 
   <!-- Heading -->
-  <h2 class="text-2xl font-semibold text-gray-800 mb-6">📦 Available Backups</h2>
+  <h2 class="text-2xl font-semibold text-gray-800 mb-2">📦 Available Backups</h2>
+  <p class="text-sm text-gray-600 mb-6">
+    Clicking “Create & Download Backup” will generate a fresh JSON dump and download it directly to your computer.
+    Existing files listed below are older server-side backups (from before this change).
+  </p>
 
-  <!-- Create Backup Form -->
+  <!-- Create Backup Form (POST => immediate download via FileResponse) -->
   <div class="mb-8">
     <form method="post" class="inline-block">
       {% csrf_token %}
       <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
-        📦 Create New Backup
+        📦 Create & Download Backup
       </button>
     </form>
   </div>
 
-  <!-- Backup File List -->
+  <!-- Backup File List (legacy files that still live on the server) -->
   <div>
     {% if backup_files %}
       <ul class="space-y-4">
@@ -29,7 +33,7 @@
               <form action="{% url 'restore_backup' file %}" method="post" class="inline">
                 {% csrf_token %}
                 <button type="submit"
-                        onclick="return confirm('Are you sure you want to restore this backup?')"
+                        onclick="return confirm('Are you sure you want to restore this backup? This will overwrite current data.')"
                         class="text-green-600 hover:underline text-sm">
                   ♻ Restore
                 </button>
@@ -39,7 +43,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="text-gray-500 text-sm italic">No backup files found.</p>
+      <p class="text-gray-500 text-sm italic">No backup files found on server.</p>
     {% endif %}
   </div>
 

@@ -555,32 +555,36 @@ def admin_list_quizzes_view(request):
 
 @staff_member_required
 def list_backups(request):
+    """
+    GET  -> Show any backups already on disk (if any).
+    POST -> Create a fresh JSON backup and download it directly (no file saved on server).
+    """
     backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     os.makedirs(backup_dir, exist_ok=True)
 
-    # ‚úÖ If user clicked "Create Backup" button
     if request.method == "POST":
+        # Create a filename for the download
         timestamp = timezone.localtime(timezone.now()).strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"backup_{timestamp}.json"
-        filepath = os.path.join(backup_dir, filename)
 
-        with open(filepath, 'w') as f:
-            call_command('dumpdata', '--natural-primary', '--natural-foreign', '--indent=2', stdout=f)
-
-        # Keep only latest 3 backups
-        files = sorted(
-            [f for f in os.listdir(backup_dir) if f.endswith('.json')],
-            reverse=True
+        # Dump database to an in-memory buffer (no server file)
+        buf = io.StringIO()
+        call_command(
+            'dumpdata',
+            '--natural-primary', '--natural-foreign',
+            '--indent=2',
+            stdout=buf
         )
-        for old_file in files[3:]:
-            os.remove(os.path.join(backup_dir, old_file))
+        data = buf.getvalue()
+        buf.close()
 
-        return HttpResponseRedirect(request.path)  # Refresh page after backup
+        # Send it to the browser as a download
+        resp = HttpResponse(data, content_type='application/json')
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
 
-    # ‚úÖ Show existing backups
-    backup_files = [
-        f for f in os.listdir(backup_dir) if f.endswith('.json')
-    ]
+    # Show backups that might already exist on disk (from older behavior)
+    backup_files = [f for f in os.listdir(backup_dir) if f.endswith('.json')]
     backup_files.sort(reverse=True)
 
     return render(request, 'admin/backups.html', {
@@ -590,14 +594,21 @@ def list_backups(request):
 
 @staff_member_required
 def download_backup(request, filename):
+    """
+    Download a backup that exists on the server (if any).
+    """
     backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     filepath = os.path.join(backup_dir, filename)
     return FileResponse(open(filepath, 'rb'), as_attachment=True)
 
+
 @user_passes_test(lambda u: u.is_superuser)
 @require_POST
 def restore_backup(request, filename):
-    backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')  # ‚úÖ FIXED
+    """
+    Restore from a backup file that exists on the server.
+    """
+    backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     filepath = os.path.join(backup_dir, filename)
 
     if not os.path.exists(filepath):
