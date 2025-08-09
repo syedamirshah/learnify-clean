@@ -23,8 +23,7 @@ ALLOWED_HOSTS = [
     "learnifypakistan.com",
     "www.learnifypakistan.com",
     "learnify-backend-zlf7.onrender.com",  # ✅ Add this
-    'api.learnifypakistan.com',
-
+    "api.learnifypakistan.com",
 ]
 
 
@@ -50,15 +49,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',     # ✅ directly after SecurityMiddleware
+    'corsheaders.middleware.CorsMiddleware',          # ✅ as high as possible, before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-     'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Add this line
-
 ]
 
 ROOT_URLCONF = 'learnify.urls'
@@ -127,7 +125,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'                                  # ✅ leading slash
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # CKEditor uploads will use Django's default storage (which we switch to Cloudinary in prod)
@@ -141,14 +141,13 @@ if USE_CLOUDINARY:
     # Store all uploaded media on Cloudinary
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
-    # Optional (keeps credentials out of code; reads CLOUDINARY_URL from env)
+    # Reads CLOUDINARY_URL from env; optional folder prefix for organization
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
-        # Optional: group uploads under a folder prefix
         "MEDIA_PREFIX": "learnify",
     }
 
-    # MEDIA_URL/ROOT aren’t needed for Cloudinary; Cloudinary builds absolute URLs.
+    # Cloudinary builds absolute URLs; filesystem MEDIA_* not needed
     MEDIA_URL = ""
     MEDIA_ROOT = None
 else:
@@ -178,8 +177,8 @@ CKEDITOR_CONFIGS = {
             ['Source', 'Maximize'],
         ],
         'extraPlugins': ','.join([
-            'image2',           # ‚Äö√∫√ñ Enables drag-to-resize for images
-            'embed',            # ‚Äö√∫√ñ YouTube embedding
+            'image2',
+            'embed',
             'embedsemantic',
             'autoembed',
             'clipboard',
@@ -188,15 +187,11 @@ CKEDITOR_CONFIGS = {
             'lineutils',
             'widget',
         ]),
-        'removePlugins': 'image',  # ‚Äö√∫√ñ Removes default plugin to avoid conflict with image2
-
-        # ‚Äö√∫√ñ Enables file uploads and browser dialogs
+        'removePlugins': 'image',
         'filebrowserUploadUrl': "/ckeditor/upload/",
         'filebrowserBrowseUrl': "/ckeditor/browse/",
     }
 }
-
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -211,34 +206,32 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://learnify-frontend-7y4n.onrender.com",  # ✅ deployed frontend
-    "https://www.learnifypakistan.com",            # ✅ NEW: production frontend
+    "https://learnify-frontend-7y4n.onrender.com",
+    "https://www.learnifypakistan.com",
 ]
 
+# Extra middleware
 MIDDLEWARE += [
     'core.middleware.AutoExpireUserMiddleware',
-    
 ]
 
-# ‚úÖ Gmail SMTP Email Settings
+# Gmail SMTP Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = 'polscience.uob@gmail.com'  # ‚úÖ Your Gmail address
-EMAIL_HOST_PASSWORD = 'fykonmbfkkuhcccn'  # ‚úÖ Paste app password (no spaces)
+EMAIL_HOST_USER = 'polscience.uob@gmail.com'
+EMAIL_HOST_PASSWORD = 'fykonmbfkkuhcccn'
 DEFAULT_FROM_EMAIL = 'Learnify Pakistan <polscience.uob@gmail.com>'
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/admin/'  # This will land you on your backend main dashboard
+LOGIN_REDIRECT_URL = '/admin/'
 LOGOUT_REDIRECT_URL = '/login/'
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ✅ CSRF setting for production frontend
 CSRF_TRUSTED_ORIGINS = [
-    "https://api.learnifypakistan.com",      # backend/admin host
-    "https://www.learnifypakistan.com",      # frontend host
-    "https://learnify-backend-zlf7.onrender.com",  # Render preview host (optional)
+    "https://api.learnifypakistan.com",
+    "https://www.learnifypakistan.com",
+    "https://learnify-backend-zlf7.onrender.com",
 ]
