@@ -51,3 +51,4 @@ urllib3==2.5.0
 whitenoise==6.6.0
 cloudinary==1.44.1
 django-cloudinary-storage==0.3.0
+Brotli>=1.0,<2

@@ -88,6 +88,8 @@ DATABASES = {
         env="DATABASE_URL",
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        ssl_require=True,          # ← add this
+
     )
 }
 
@@ -131,7 +133,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # CKEditor uploads will use Django's default storage (which we switch to Cloudinary in prod)
-CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_UPLOAD_PATH = "uploads/%Y/%m/%d/"
 
 # Use Cloudinary for media in production (when CLOUDINARY_URL is present),
 # and local filesystem during local/dev.
@@ -141,7 +143,7 @@ if USE_CLOUDINARY:
     # Store all uploaded media on Cloudinary
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CKEDITOR_STORAGE_BACKEND = "cloudinary_storage.storage.MediaCloudinaryStorage"
-    
+
     # Reads CLOUDINARY_URL from env; optional folder prefix for organization
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
