@@ -3,12 +3,10 @@ from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect
 
-# --- Public/API views ---
+# --- Public/API views (core.views) ---
 from core.views import (
     # uploads
     bulk_upload_scq, bulk_upload_mcq, bulk_upload_fib,
-    # student results & performance
-    list_student_quiz_results, student_subject_performance,
     # users
     user_list_api, user_list,
     # quiz flow
@@ -17,14 +15,15 @@ from core.views import (
     get_shining_stars, get_national_heroes, list_all_quizzes, list_public_quizzes,
     # teacher lists
     teacher_student_list,
-
-    admin_student_quiz_history,  # you referenced this in your urls
-
+    # admin history view actually lives here
+    admin_student_quiz_history,
+    # student results
+    list_student_quiz_results,
 )
 
 from core import admin_views  # for admin/api/subjects & admin/api/chapters helpers
 
-# --- Admin views / dashboards ---
+# --- Admin views / dashboards (core.admin_views) ---
 from core.admin_views import (
     preview_questions, assign_questions_view,
     admin_list_quizzes_view, duplicate_question,
@@ -38,7 +37,7 @@ from core.admin_views import (
 # --- Stats dashboard ---
 from core.admin_stats_views import stats_dashboard_view
 
-# --- Auth / profile / subscription endpoints in this app ---
+# --- Auth / profile / subscription endpoints (this app’s views) ---
 from .views import (
     get_current_user,
     public_register_user,
@@ -47,7 +46,7 @@ from .views import (
     CustomTokenObtainPairView,
     edit_profile_view, change_password_view,
     teacher_student_quiz_history_view,
-    student_subject_performance as student_subject_performance_view,  # alias to avoid name shadowing
+    student_subject_performance as student_subject_performance_view,  # keep the alias only
     student_quiz_history_view,
     get_all_grades,
 )
