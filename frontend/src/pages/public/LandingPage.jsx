@@ -247,19 +247,19 @@ const LandingPage = () => {
                         </span>
                         </div>
 
-                        {/* ‚Äö√∫√ñ Numbered Quiz List with normal weight */}
+                        {/* Numbered Quiz List with oldest first */}
                         <div className="space-y-1">
-                        {chapterItem.quizzes.map((quiz, quizIndex) => (
+                          {[...chapterItem.quizzes].reverse().map((quiz, quizIndex) => (
                             <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                            <span className="text-gray-700">{quizIndex + 1}.</span>
-                            <Link
-                            to={`/student/attempt-quiz/${quiz.id}`}
-                            className="text-green-800 hover:text-green-600 hover:underline"
-                            >
-                            {quiz.title}
-                            </Link>
+                              <span className="text-gray-700">{quizIndex + 1}.</span>
+                              <Link
+                                to={`/student/attempt-quiz/${quiz.id}`}
+                                className="text-green-800 hover:text-green-600 hover:underline"
+                              >
+                                {quiz.title}
+                              </Link>
                             </div>
-                        ))}
+                          ))}
                         </div>
                     </div>
                     ))}
