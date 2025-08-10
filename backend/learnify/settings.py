@@ -261,6 +261,12 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_NAME = "csrftoken"                 # explicit, matches frontend lookup
 CSRF_COOKIE_DOMAIN = ".learnifypakistan.com"   # parent domain
 CSRF_COOKIE_SECURE = True                      # send only over HTTPS
+CSRF_COOKIE_SAMESITE = "None"     # ← add this
+
 
 SESSION_COOKIE_DOMAIN = ".learnifypakistan.com"
 SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "None"  # ← add this
+
+# Behind Render's proxy: tell Django requests are HTTPS so 'Secure' cookies are sent
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

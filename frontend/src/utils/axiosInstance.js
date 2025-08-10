@@ -13,6 +13,11 @@ const axiosInstance = axios.create({
   xsrfHeaderName: 'X-CSRFToken', // ✅ Django's CSRF header
 });
 
+// 🔹 CSRF warm-up: fetch cookie before any POST/PUT/DELETE requests
+axiosInstance.get('/csrf/', { withCredentials: true }).catch(err => {
+  console.warn("CSRF warm-up failed", err);
+});
+
 // Attach access token from localStorage (JWT auth)
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');

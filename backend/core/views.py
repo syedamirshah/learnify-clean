@@ -49,6 +49,9 @@ from .models import Grade
 from django.utils.timezone import localtime
 import pytz
 from core.utils import normalize_text
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
+
 
 # Define the Pakistan time zone once
 pk_timezone = pytz.timezone('Asia/Karachi')
@@ -1552,3 +1555,9 @@ def list_public_quizzes(request):
 def get_all_grades(request):
     grades = Grade.objects.all().order_by('name')
     return Response([{'id': grade.id, 'name': grade.name} for grade in grades])  # ✅ Clean format
+
+
+@require_GET
+@ensure_csrf_cookie
+def csrf_view(request):
+    return JsonResponse({"detail": "CSRF cookie set"})

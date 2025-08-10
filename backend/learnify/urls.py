@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from core.views import csrf_view  # import at the top
 
 # From admin_views only the admin-only views:
 from core.admin_views import (
@@ -52,6 +53,9 @@ urlpatterns = [
 
     # (Optional) If you really want every route also under /api/, uncomment:
     # path('api/', include('core.urls')),
+
+    path('api/', include('core.urls')),          # expose your app also under /api/
+    path('api/csrf/', csrf_view, name='csrf'),   # GET once to set csrftoken cookie
 ]
 
 # Always serve MEDIA on this service so CKEditor images work (even with DEBUG=False)
