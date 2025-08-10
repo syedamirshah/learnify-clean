@@ -193,6 +193,9 @@ CKEDITOR_CONFIGS = {
         'removePlugins': 'image',
         'filebrowserUploadUrl': "/ckeditor/upload/",
         'filebrowserBrowseUrl': "/ckeditor/browse/",
+        # 🔽 Added for reliable YouTube embedding
+        'allowedContent': True,
+        'embed_provider': 'https://noembed.com/embed?url={url}&callback={callback}',
     }
 }
 
