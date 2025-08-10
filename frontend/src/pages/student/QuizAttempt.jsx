@@ -343,7 +343,7 @@ const QuizAttempt = () => {
                             />
                           );
                         }
-                        return <span key={index}>{part}</span>;
+                        return <span key={index} dangerouslySetInnerHTML={{ __html: fixImageUrls(part) }} />;
                       })}
                     </div>
                   )}
