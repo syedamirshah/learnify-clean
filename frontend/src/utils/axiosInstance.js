@@ -3,14 +3,17 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: 'https://api.learnifypakistan.com/api/', // ✅ LIVE backend URL
-    timeout: 5000,
+  baseURL: 'https://api.learnifypakistan.com/api/', // ✅ LIVE backend URL
+  timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // ✅ Send cookies (needed for CSRF/session auth)
+  xsrfCookieName: 'csrftoken', // ✅ Django's CSRF cookie
+  xsrfHeaderName: 'X-CSRFToken', // ✅ Django's CSRF header
 });
 
-// Attach access token from localStorage (already present in your code)
+// Attach access token from localStorage (JWT auth)
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -19,7 +22,7 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// Optionally handle 401 responses (for future enhancements like token refresh)
+// Handle 401 responses globally
 axiosInstance.interceptors.response.use(
   response => response,
   error => {

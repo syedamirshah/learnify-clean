@@ -256,3 +256,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://learnifypakistan.com",   # ← added non‑www
     "https://learnify-backend-zlf7.onrender.com",
 ]
+
+# Make cookies usable across api.learnifypakistan.com and learnifypakistan.com
+CSRF_COOKIE_NAME = "csrftoken"                 # explicit, matches frontend lookup
+CSRF_COOKIE_DOMAIN = ".learnifypakistan.com"   # parent domain
+CSRF_COOKIE_SECURE = True                      # send only over HTTPS
+
+SESSION_COOKIE_DOMAIN = ".learnifypakistan.com"
+SESSION_COOKIE_SECURE = True
