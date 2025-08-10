@@ -214,7 +214,21 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://learnify-frontend-7y4n.onrender.com",
     "https://www.learnifypakistan.com",
+    "https://learnifypakistan.com",   # ← added non‑www
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
 # Extra middleware
 MIDDLEWARE += [
@@ -239,5 +253,6 @@ LOGOUT_REDIRECT_URL = '/login/'
 CSRF_TRUSTED_ORIGINS = [
     "https://api.learnifypakistan.com",
     "https://www.learnifypakistan.com",
+    "https://learnifypakistan.com",   # ← added non‑www
     "https://learnify-backend-zlf7.onrender.com",
 ]
