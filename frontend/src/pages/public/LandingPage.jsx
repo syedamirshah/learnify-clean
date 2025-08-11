@@ -247,19 +247,32 @@ const LandingPage = () => {
                         </span>
                         </div>
 
-                        {/* Numbered Quiz List with oldest first */}
+                        {/* Numbered Quiz List — sorted by the leading number in the title (ascending) */}
                         <div className="space-y-1">
-                          {[...chapterItem.quizzes].reverse().map((quiz, quizIndex) => (
-                            <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                              <span className="text-gray-700">{quizIndex + 1}.</span>
-                              <Link
-                                to={`/student/attempt-quiz/${quiz.id}`}
-                                className="text-green-800 hover:text-green-600 hover:underline"
-                              >
-                                {quiz.title}
-                              </Link>
-                            </div>
-                          ))}
+                          {[...chapterItem.quizzes]
+                            .sort((a, b) => {
+                              // Pull the first number at the start of each title (e.g., "1 Counting upto 10")
+                              const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                              const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+
+                              // If both have numbers, sort numerically; otherwise fall back to alpha
+                              if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
+                                return numA - numB;
+                              }
+                              return (a.title || '').localeCompare(b.title || '');
+                            })
+                            .map((quiz, idx) => (
+                              <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
+                                {/* If you do NOT want list numbers on the page, delete the next line */}
+                                <span className="text-gray-700">{idx + 1}.</span>
+                                <Link
+                                  to={`/student/attempt-quiz/${quiz.id}`}
+                                  className="text-green-800 hover:text-green-600 hover:underline"
+                                >
+                                  {quiz.title}
+                                </Link>
+                              </div>
+                            ))}
                         </div>
                     </div>
                     ))}
