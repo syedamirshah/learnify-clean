@@ -263,8 +263,6 @@ const LandingPage = () => {
                             })
                             .map((quiz, idx) => (
                               <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                                {/* If you do NOT want list numbers on the page, delete the next line */}
-                                <span className="text-gray-700">{idx + 1}.</span>
                                 <Link
                                   to={`/student/attempt-quiz/${quiz.id}`}
                                   className="text-green-800 hover:text-green-600 hover:underline"
