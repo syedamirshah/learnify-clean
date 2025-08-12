@@ -332,7 +332,7 @@ const QuizAttempt = () => {
                                 }))
                               }
                               onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
-                              className="border p-1 m-1 rounded"
+                              className="border px-1 py-0.5 rounded align-middle ml-1 mr-0"
                               style={{
                                 width: `${fibWidth * 10}px`,
                                 height: `${fontSize * 1.35}px`,
