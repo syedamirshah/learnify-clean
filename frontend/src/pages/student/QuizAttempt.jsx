@@ -311,42 +311,70 @@ const QuizAttempt = () => {
                     </div>
                   )}
     
-                  {currentQuestion.type === 'fib' && (
-                    <div className="mt-2">
-                      {currentQuestion.question_text.split(/\[(.*?)\]/g).map((part, index) => {
-                        const isInput = index % 2 === 1;
-                        if (isInput) {
-                          const key = part.trim();
-                          const compoundId = `${currentQuestion.question_id}_${key}`;
-                          const value = answers[compoundId] || '';
-                          return (
-                            <input
-                              key={index}
-                              placeholder=""
-                              data-blank={key}
-                              value={value}
-                              onChange={(e) =>
-                                setAnswers((prev) => ({
-                                  ...prev,
-                                  [compoundId]: e.target.value
-                                }))
-                              }
-                              onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
-                              className="border px-1 py-0.5 rounded align-middle ml-1 mr-0"
-                              style={{
-                                width: `${fibWidth * 10}px`,
-                                height: `${fontSize * 1.35}px`,
-                                fontSize: `${fontSize}px`,
-                                verticalAlign: 'middle',
-                                padding: '1px 4px'
-                              }}
-                            />
-                          );
-                        }
-                        return <span key={index} dangerouslySetInnerHTML={{ __html: fixImageUrls(part) }} />;
-                      })}
-                    </div>
-                  )}
+                  {currentQuestion.type === 'fib' && (() => {
+                    // Use backend HTML, split first <p> as instruction and keep series inline
+                    const raw = fixImageUrls(currentQuestion.question_text) || '';
+
+                    const splitOnPara = raw.split(/<\/p>\s*<p>/i);
+                    let instruction = '';
+                    let seriesHtml = raw;
+
+                    if (splitOnPara.length >= 2) {
+                      instruction = splitOnPara[0].replace(/<\/?p>/gi, '').trim();
+                      seriesHtml = splitOnPara.slice(1).join(' ')
+                        .replace(/<\/?p>/gi, '')
+                        .trim();
+                    } else {
+                      seriesHtml = raw.replace(/<\/?p>/gi, '').trim();
+                    }
+
+                    // Normalize comma spacing so inputs sit correctly
+                    seriesHtml = seriesHtml.replace(/\s*,\s*/g, ', ');
+
+                    const chunks = seriesHtml.split(/\[(.*?)\]/g);
+
+                    return (
+                      <div className="mt-2">
+                        {/* instruction on its own line */}
+                        {instruction && (
+                          <div className="mb-2">
+                            <span dangerouslySetInnerHTML={{ __html: instruction }} />
+                          </div>
+                        )}
+
+                        {/* series kept inline */}
+                        <div style={{ display: 'inline', whiteSpace: 'normal' }}>
+                          {chunks.map((part, index) => {
+                            const isInput = index % 2 === 1;
+                            if (isInput) {
+                              const key = part.trim();
+                              const compoundId = `${currentQuestion.question_id}_${key}`;
+                              const value = answers[compoundId] || '';
+                              return (
+                                <input
+                                  key={index}
+                                  data-blank={key}
+                                  value={value}
+                                  onChange={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
+                                  }
+                                  onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
+                                  className="border rounded inline-block align-baseline mx-1 px-1 py-0.5"
+                                  style={{
+                                    width: `${fibWidth * 10}px`,
+                                    height: `${fontSize * 1.35}px`,
+                                    fontSize: `${fontSize}px`,
+                                    verticalAlign: 'baseline',
+                                  }}
+                                />
+                              );
+                            }
+                            return <span key={index} dangerouslySetInnerHTML={{ __html: fixImageUrls(part) }} />;
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
     
