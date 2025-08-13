@@ -135,29 +135,26 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # CKEditor uploads will use Django's default storage (which we switch to Cloudinary in prod)
 CKEDITOR_UPLOAD_PATH = "uploads"
 
-# Use Cloudinary for media in production (when CLOUDINARY_URL is present),
-# and local filesystem during local/dev.
+# Always keep a real local MEDIA_ROOT so admin utilities (backups/exports) have a filesystem path.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Optional: dedicated local folder for backups/exports
+BACKUP_DIR = BASE_DIR / "backups"
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+# Use Cloudinary for media in production (when CLOUDINARY_URL is present)
 USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
 
 if USE_CLOUDINARY:
-    # Store all uploaded media on Cloudinary
+    # Store user-uploaded media via Cloudinary
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CKEDITOR_STORAGE_BACKEND = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
-    # Reads CLOUDINARY_URL from env; optional folder prefix for organization
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
         "MEDIA_PREFIX": "learnify/uploads",  # keep assets grouped
     }
-
-    # Cloudinary builds absolute URLs; filesystem MEDIA_* not needed
-    MEDIA_URL = ""
-    MEDIA_ROOT = None
-else:
-    # Local/dev behavior: store files on disk
-    MEDIA_URL = "/media/"
-    MEDIA_ROOT = BASE_DIR / "media"
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
