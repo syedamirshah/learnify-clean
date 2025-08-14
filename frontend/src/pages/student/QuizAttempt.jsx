@@ -311,27 +311,38 @@ const QuizAttempt = () => {
                     </div>
                   )}
     
-                  {currentQuestion.type === 'fib' && (() => {
-                    // Use backend HTML, split first <p> as instruction and keep series inline
+                      {currentQuestion.type === 'fib' && (() => {
+                    // Keep image URLs absolute
                     const raw = fixImageUrls(currentQuestion.question_text) || '';
 
+                    // Split first paragraph as instruction; keep INNER paragraph breaks for the series
                     const splitOnPara = raw.split(/<\/p>\s*<p>/i);
                     let instruction = '';
-                    let seriesHtml = raw;
+                    let seriesHtmlWithPs = raw;
 
                     if (splitOnPara.length >= 2) {
                       instruction = splitOnPara[0].replace(/<\/?p>/gi, '').trim();
-                      seriesHtml = splitOnPara.slice(1).join(' ')
-                        .replace(/<\/?p>/gi, '')
+
+                      // join the rest back WITH paragraph markers preserved
+                      seriesHtmlWithPs = splitOnPara.slice(1).join('</p><p>');
+                      // remove a single leading/trailing <p> wrapper if present
+                      seriesHtmlWithPs = seriesHtmlWithPs
+                        .replace(/^<p>/i, '')
+                        .replace(/<\/p>$/i, '')
                         .trim();
                     } else {
-                      seriesHtml = raw.replace(/<\/?p>/gi, '').trim();
+                      // no explicit first paragraph; keep inner breaks if any
+                      seriesHtmlWithPs = raw
+                        .replace(/^<p>/i, '')
+                        .replace(/<\/p>$/i, '')
+                        .trim();
                     }
 
-                    // Normalize comma spacing so inputs sit correctly
-                    seriesHtml = seriesHtml.replace(/\s*,\s*/g, ', ');
+                    // Normalize comma spacing (doesn't remove paragraph breaks)
+                    seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
 
-                    const chunks = seriesHtml.split(/\[(.*?)\]/g);
+                    // Split by [a], [b], ... while retaining HTML around them
+                    const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
 
                     return (
                       <div className="mt-2">
@@ -342,34 +353,56 @@ const QuizAttempt = () => {
                           </div>
                         )}
 
-                        {/* series kept inline */}
-                        <div style={{ display: 'inline', whiteSpace: 'normal' }}>
-                          {chunks.map((part, index) => {
+                        {/* series rendered, respecting inner </p> or <br> before blanks */}
+                        <div style={{ whiteSpace: 'normal' }}>
+                          {parts.map((part, index) => {
                             const isInput = index % 2 === 1;
+
                             if (isInput) {
                               const key = part.trim();
                               const compoundId = `${currentQuestion.question_id}_${key}`;
                               const value = answers[compoundId] || '';
-                              return (
+
+                              // Look at previous chunk: if it ends with </p> or <br>, drop input to a new line
+                              const prev = parts[index - 1] || '';
+                              const needsNewLine =
+                                /<\/p>\s*$/i.test(prev) || /<br\s*\/?>\s*$/i.test(prev);
+
+                              const inputEl = (
                                 <input
-                                  key={index}
+                                  key={`in-${index}`}
                                   data-blank={key}
                                   value={value}
                                   onChange={(e) =>
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
                                   onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
-                                  className="border rounded inline-block align-baseline mx-1 px-1 py-0.5"
+                                  className="border rounded px-1 py-0.5 mx-1"
                                   style={{
                                     width: `${fibWidth * 10}px`,
                                     height: `${fontSize * 1.35}px`,
                                     fontSize: `${fontSize}px`,
-                                    verticalAlign: 'baseline',
+                                    verticalAlign: needsNewLine ? 'baseline' : 'middle',
                                   }}
                                 />
                               );
+
+                              return needsNewLine ? (
+                                <div key={`wrap-${index}`} className="mt-2">
+                                  {inputEl}
+                                </div>
+                              ) : (
+                                inputEl
+                              );
                             }
-                            return <span key={index} dangerouslySetInnerHTML={{ __html: fixImageUrls(part) }} />;
+
+                            // Normal HTML chunk (still contains any internal <p> / <br>)
+                            return (
+                              <span
+                                key={`txt-${index}`}
+                                dangerouslySetInnerHTML={{ __html: part }}
+                              />
+                            );
                           })}
                         </div>
                       </div>
