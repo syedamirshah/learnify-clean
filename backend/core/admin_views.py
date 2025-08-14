@@ -37,8 +37,6 @@ import io
 from django.http import HttpResponse
 import json
 from django.core.files.storage import default_storage
-import zipfile
-from django.views.decorators.http import require_http_methods
 
 
 
@@ -874,33 +872,3 @@ def upload_restore_backup(request):
             pass
 
     return redirect('list_backups')
-
-@staff_member_required
-@require_http_methods(["GET", "POST"])
-def create_media_backup(request):
-    """
-    Stream a ZIP of MEDIA_ROOT (excluding MEDIA_ROOT/backups) to the browser.
-    Accepts GET and POST. For POST, CSRF is required by the template form.
-    """
-    media_root = settings.MEDIA_ROOT
-    if not media_root or not os.path.exists(media_root):
-        messages.error(request, "MEDIA_ROOT is not configured or does not exist on this server.")
-        return redirect('list_backups')
-
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for root, dirs, files in os.walk(media_root):
-            # Skip the backups directory early so we don't include JSON backups inside the ZIP
-            rel_dir = os.path.relpath(root, media_root)
-            if rel_dir == 'backups' or rel_dir.startswith('backups' + os.sep):
-                continue
-
-            for fname in files:
-                abs_path = os.path.join(root, fname)
-                rel_path = os.path.relpath(abs_path, media_root)
-                zf.write(abs_path, arcname=rel_path)
-
-    buf.seek(0)
-    timestamp = timezone.localtime(timezone.now()).strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"media_backup_{timestamp}.zip"
-    return FileResponse(buf, as_attachment=True, filename=filename, content_type='application/zip')
