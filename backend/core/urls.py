@@ -106,6 +106,8 @@ urlpatterns = [
     path('admin/backups/<str:filename>/restore/', restore_backup, name='restore_backup'),
     path('admin/backups/upload/', upload_restore_backup, name='upload_restore_backup'),
 
+    path('admin/backups/media/', admin_views.create_media_backup, name='create_media_backup'),
+
     # ---------- Final Stats Dashboard ----------
     path('admin/stats-dashboard/', stats_dashboard_view, name='admin-stats-dashboard'),
 

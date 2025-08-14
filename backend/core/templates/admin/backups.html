@@ -4,39 +4,63 @@
 <div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md font-[calibri]">
 
   <!-- Heading -->
-  <h2 class="text-2xl font-semibold text-gray-800 mb-2">📦 Available Backups</h2>
-  <p class="text-sm text-gray-600 mb-6">
-    Clicking “Create &amp; Download Backup” will generate a fresh JSON dump and download it directly to your computer.
-    Existing files listed below are older server-side backups (from before this change). You can also upload a local
-    <code>.json</code> backup from your computer to restore immediately.
+  <h2 class="text-2xl font-semibold text-gray-800 mb-2">📦 Backups</h2>
+  <p class="text-sm text-gray-600 mb-4">
+    Use these tools to back up your data and media separately.
   </p>
 
-  <!-- Create Backup + Upload & Restore -->
-  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+  <ul class="list-disc ml-6 text-sm text-gray-700 mb-6">
+    <li><strong>Data backup (JSON)</strong>: exports all database records (quizzes, questions, users, etc.).</li>
+    <li><strong>Media backup (ZIP)</strong>: zips everything under <code>MEDIA_ROOT</code> (e.g., CKEditor images).</li>
+  </ul>
 
-    <!-- Create Backup Form (POST => immediate download via FileResponse) -->
+  <!-- Create Backups + Upload & Restore -->
+  <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+
+    <!-- Create Data Backup (POST => immediate download) -->
     <form method="post" class="inline-block">
       {% csrf_token %}
       <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
-        📦 Create &amp; Download Backup
+        📄 Create &amp; Download Data (JSON)
       </button>
     </form>
 
-    <!-- Upload & Restore (NEW) -->
-    <form action="{% url 'upload_restore_backup' %}" method="post" enctype="multipart/form-data" class="inline-flex items-center gap-2">
+    <!-- Create Media Backup (GET link => immediate download) -->
+    <a href="{% url 'create_media_backup' %}"
+       class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition">
+      🖼 Download Media (ZIP)
+    </a>
+
+    <!-- Upload & Restore DATA (JSON) -->
+    <form action="{% url 'upload_restore_backup' %}" method="post" enctype="multipart/form-data"
+          class="inline-flex items-center gap-2">
       {% csrf_token %}
-      <label class="text-sm text-gray-700">Upload .json backup:</label>
+      <label class="text-sm text-gray-700">Restore data (.json):</label>
       <input type="file" name="backup_file" accept=".json" class="border px-2 py-1 rounded text-sm">
       <button type="submit"
               class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm">
-        ⤴ Restore from File
+        ⤴ Restore Data
       </button>
     </form>
-
   </div>
 
-  <!-- Backup File List (legacy files that still live on the server) -->
+  <!-- Restore notes -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm text-yellow-800 mb-8">
+    <p class="font-semibold">Restore notes:</p>
+    <ul class="list-disc ml-5 mt-2 space-y-1">
+      <li><strong>Data (JSON)</strong>: Use the “Restore Data” form above to load a JSON backup.</li>
+      <li><strong>Media (ZIP)</strong>:
+        <ul class="list-disc ml-5 mt-1">
+          <li>If you store files locally: unzip into your server’s <code>MEDIA_ROOT</code> path (usually <code>media/</code>).</li>
+          <li>If you use Cloudinary: unzip locally and re-upload via Cloudinary’s dashboard or a small import script.</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Legacy server-side backups list (JSON files saved previously on server) -->
   <div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-3">Old server-side data backups</h3>
     {% if backup_files %}
       <ul class="space-y-4">
         {% for file in backup_files %}
@@ -58,7 +82,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="text-gray-500 text-sm italic">No backup files found on server.</p>
+      <p class="text-gray-500 text-sm italic">No server-side JSON backups found.</p>
     {% endif %}
   </div>
 

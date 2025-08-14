@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.conf import settings
 
 class Command(BaseCommand):
-    help = 'Creates a JSON backup of the entire database and stores only the latest 3 backups.'
+    help = 'Creates a JSON backup of the entire database (no auto-deletion).'
 
     def handle(self, *args, **options):
         backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
@@ -22,11 +22,3 @@ class Command(BaseCommand):
             call_command('dumpdata', '--natural-primary', '--natural-foreign', '--indent', '2', stdout=f)
 
         self.stdout.write(self.style.SUCCESS(f"Backup created at {backup_path}"))
-
-        # Keep only 3 most recent backups
-        backups = sorted([f for f in os.listdir(backup_dir) if f.endswith('.json')])
-        if len(backups) > 3:
-            for old_file in backups[:-3]:
-                old_path = os.path.join(backup_dir, old_file)
-                os.remove(old_path)
-                self.stdout.write(self.style.WARNING(f"Deleted old backup: {old_file}"))
