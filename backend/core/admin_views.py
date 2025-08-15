@@ -633,7 +633,7 @@ def user_dashboard(request):
 @staff_member_required
 def admin_question_bank_view(request):
     # Fetch all question banks
-    question_banks = QuestionBank.objects.all().order_by('-id')
+    question_banks = QuestionBank.objects.all().order_by('title')
 
     # Create a dictionary to hold question counts by bank_id
     question_counts = {}
