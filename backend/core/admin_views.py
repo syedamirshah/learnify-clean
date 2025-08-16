@@ -710,7 +710,7 @@ def create_metadata_view(request):
         'chapters': chapters
     })
 
-see the code first and tell me exact changes:
+
 @staff_member_required
 def quiz_question_assignment_view(request):
     quizzes = Quiz.objects.all()
