@@ -338,8 +338,12 @@ const QuizAttempt = () => {
                         .trim();
                     }
 
-                    // Normalize comma spacing (doesn't remove paragraph breaks)
+                    // Normalize comma spacing
                     seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
+                    // ⬇️ Make paragraph boundaries inline so inputs don't drop to a new line
+                    seriesHtmlWithPs = seriesHtmlWithPs
+                       .replace(/<\/p>\s*<p>/gi, ' ')   // turn paragraph joins into a single space
+                       .replace(/<\/?p>/gi, '');        // remove any remaining <p> or </p>
 
                     // Split by [a], [b], ... while retaining HTML around them
                     const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
@@ -365,8 +369,9 @@ const QuizAttempt = () => {
 
                               // Look at previous chunk: if it ends with </p> or <br>, drop input to a new line
                               const prev = parts[index - 1] || '';
-                              const needsNewLine =
-                                /<\/p>\s*$/i.test(prev) || /<br\s*\/?>\s*$/i.test(prev);
+                              // after flattening <p>, only respect real <br> for line breaks
+                              const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
+
 
                               const inputEl = (
                                 <input
@@ -379,6 +384,7 @@ const QuizAttempt = () => {
                                   onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
                                   className="border rounded px-1 py-0.5 mx-1"
                                   style={{
+                                    display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
                                     height: `${fontSize * 1.35}px`,
                                     fontSize: `${fontSize}px`,
@@ -387,12 +393,13 @@ const QuizAttempt = () => {
                                 />
                               );
 
-                              return needsNewLine ? (
-                                <div key={`wrap-${index}`} className="mt-2">
-                                  {inputEl}
-                                </div>
-                              ) : (
-                                inputEl
+                              return (
+                                <>
+                                 {needsNewLine && <br />}
+                                 <span key={`wrap-${index}`} className="inline-block align-middle mx-1">
+                                   {inputEl}
+                                 </span>
+                                </>
                               );
                             }
 
