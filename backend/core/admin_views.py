@@ -37,6 +37,8 @@ import io
 from django.http import HttpResponse
 import json
 from django.core.files.storage import default_storage
+import re
+
 
 
 
@@ -473,6 +475,7 @@ def assign_questions_view(request, quiz_id):
         "question_banks": question_banks
     })
 
+
 @login_required
 def admin_list_quizzes_view(request):
     if request.user.role != 'admin':
@@ -492,11 +495,11 @@ def admin_list_quizzes_view(request):
         'chapter': 'chapter__name'
     }
     sort_expression = valid_sort_fields.get(sort_field, 'title')
-    if sort_dir == 'desc':
-        sort_expression = f'-{sort_expression}'
 
     # Base queryset
-    quizzes = Quiz.objects.all().prefetch_related('assignments__question_bank', 'chapter', 'subject', 'grade')
+    quizzes = Quiz.objects.all().prefetch_related(
+        'assignments__question_bank', 'chapter', 'subject', 'grade'
+    )
 
     # Filtering
     if selected_grade:
@@ -505,7 +508,20 @@ def admin_list_quizzes_view(request):
         quizzes = quizzes.filter(subject__name=selected_subject)
 
     # Sorting
-    quizzes = quizzes.order_by(sort_expression)
+    if sort_field == 'title':
+        def _leading_num(title: str):
+            m = re.match(r"\s*(\d+)", title or "")
+            return int(m.group(1)) if m else float('inf')
+
+        quizzes = list(quizzes)
+        quizzes.sort(
+            key=lambda q: (_leading_num(q.title), (q.title or "").lower()),
+            reverse=(sort_dir == 'desc')
+        )
+    else:
+        quizzes = quizzes.order_by(
+            f"-{sort_expression}" if sort_dir == 'desc' else sort_expression
+        )
 
     # Build data for display
     quiz_data = []
@@ -554,7 +570,7 @@ def admin_list_quizzes_view(request):
         'request': request,
         'current_sort': sort_field,
         'current_dir': sort_dir,
-        'headers': headers,  # ‚úÖ passed to template
+        'headers': headers,
     })
 
 @staff_member_required
@@ -713,16 +729,28 @@ def create_metadata_view(request):
 
 @staff_member_required
 def quiz_question_assignment_view(request):
-    quizzes = Quiz.objects.all()
+    # Base data
+    quizzes_qs = Quiz.objects.all()
     grades = Grade.objects.all()
-    
-    # √î¬£√∏‚àö¬∫‚àö¬®‚àö‚Ä¢ Apply grade filter if selected
+
+    # ✅ Apply grade filter if selected
     selected_grade_id = request.GET.get('grade_filter')
     if selected_grade_id:
-        quizzes = quizzes.filter(grade_id=selected_grade_id)
+        quizzes_qs = quizzes_qs.filter(grade_id=selected_grade_id)
 
-    question_banks = QuestionBank.objects.all().order_by(Lower('title'))  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Alphabetical sorting
+    # ✅ Natural/numeric sort for titles like "12 - ..." (so 2 < 10 < 12)
+    def _leading_num(title: str):
+        m = re.match(r"\s*(\d+)", title or "")
+        return int(m.group(1)) if m else float('inf')
 
+    # Evaluate the queryset and sort in Python (no DB/schema changes)
+    quizzes = list(quizzes_qs)
+    quizzes.sort(key=lambda q: (_leading_num(q.title), (q.title or "").lower()))
+
+    # ✅ Question banks stay alphabetically sorted (case-insensitive)
+    question_banks = QuestionBank.objects.all().order_by(Lower('title'))
+
+    # ✅ Handle assignments (unchanged)
     if request.method == 'POST':
         quiz_id = request.POST.get("quiz_id")
         bank_id = request.POST.get("assign_bank_id")
@@ -740,30 +768,20 @@ def quiz_question_assignment_view(request):
                     question_bank=bank,
                     num_questions=num_questions
                 )
-                messages.success(request, f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'.")
-                return redirect('quiz-question-assignments')  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± works now
+                messages.success(
+                    request,
+                    f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'."
+                )
+                return redirect('quiz-question-assignments')
             except Exception as e:
-                messages.error(request, f"‚Äö√Ñ√∂‚àöœÄ‚àö‚Ä¢ Error: {e}")
+                messages.error(request, f" Error: {e}")
 
     return render(request, 'admin/core/quiz_question_assignments.html', {
-        'quizzes': quizzes,
+        'quizzes': quizzes,                      # ← now a numerically sorted list
         'grades': grades,
         'selected_grade_id': selected_grade_id,
         'question_banks': question_banks
     })
-
-
-# KEEP this in admin_views.py and update it to include line_spacing
-class QuizFormattingForm(forms.ModelForm):
-    class Meta:
-        model = Quiz
-        fields = ['input_box_width', 'text_alignment', 'font_size', 'line_spacing']
-        widgets = {
-            'input_box_width': forms.NumberInput(attrs={'min': 1}),
-            'text_alignment': forms.Select(choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')]),
-            'font_size': forms.NumberInput(attrs={'min': 10, 'max': 40}),
-            'line_spacing': forms.NumberInput(attrs={'step': 0.1, 'min': 1, 'max': 3}),
-        }
 
 @staff_member_required
 def quiz_formatting_view(request, quiz_id):
