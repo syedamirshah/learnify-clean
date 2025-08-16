@@ -37,9 +37,6 @@ import io
 from django.http import HttpResponse
 import json
 from django.core.files.storage import default_storage
-import re
-
-
 
 
 
@@ -475,19 +472,6 @@ def assign_questions_view(request, quiz_id):
         "question_banks": question_banks
     })
 
-def natural_key(s: str):
-    """
-    Split a string into digit / non-digit chunks for natural sorting.
-    Titles that contain a number sort before non-numbered titles.
-    """
-    s = s or ''
-    parts = re.split(r'(\d+)', s)
-    has_num = any(p.isdigit() for p in parts)
-    return (
-        0 if has_num else 1,
-        [int(p) if p.isdigit() else p.lower() for p in parts]
-    )
-
 @login_required
 def admin_list_quizzes_view(request):
     if request.user.role != 'admin':
@@ -507,11 +491,11 @@ def admin_list_quizzes_view(request):
         'chapter': 'chapter__name'
     }
     sort_expression = valid_sort_fields.get(sort_field, 'title')
+    if sort_dir == 'desc':
+        sort_expression = f'-{sort_expression}'
 
     # Base queryset
-    quizzes = Quiz.objects.all().prefetch_related(
-        'assignments__question_bank', 'chapter', 'subject', 'grade'
-    )
+    quizzes = Quiz.objects.all().prefetch_related('assignments__question_bank', 'chapter', 'subject', 'grade')
 
     # Filtering
     if selected_grade:
@@ -520,24 +504,7 @@ def admin_list_quizzes_view(request):
         quizzes = quizzes.filter(subject__name=selected_subject)
 
     # Sorting
-    if sort_field == 'title':
-        # safety toggle: only use natural sort if nat=1 is present
-        use_natural = request.GET.get('nat') == '1'
-        if use_natural:
-            quizzes = list(quizzes)  # evaluate queryset for Python sort
-            quizzes.sort(
-                key=lambda q: natural_key(q.title),
-                reverse=(sort_dir == 'desc')
-            )
-        else:
-            # default DB ordering (unchanged)
-            quizzes = quizzes.order_by(
-                f"-title" if sort_dir == 'desc' else "title"
-            )
-    else:
-        quizzes = quizzes.order_by(
-            f"-{sort_expression}" if sort_dir == 'desc' else sort_expression
-        )
+    quizzes = quizzes.order_by(sort_expression)
 
     # Build data for display
     quiz_data = []
@@ -586,7 +553,7 @@ def admin_list_quizzes_view(request):
         'request': request,
         'current_sort': sort_field,
         'current_dir': sort_dir,
-        'headers': headers,
+        'headers': headers,  # ‚úÖ passed to template
     })
 
 @staff_member_required
@@ -743,31 +710,19 @@ def create_metadata_view(request):
         'chapters': chapters
     })
 
+see the code first and tell me exact changes:
 @staff_member_required
 def quiz_question_assignment_view(request):
-    # Base data
-    quizzes_qs = Quiz.objects.all()
-    grades = Grade.objects.all().order_by('name')  # ← sort grade dropdown
-
-    # ✅ Apply grade filter if selected
+    quizzes = Quiz.objects.all()
+    grades = Grade.objects.all()
+    
+    # √î¬£√∏‚àö¬∫‚àö¬®‚àö‚Ä¢ Apply grade filter if selected
     selected_grade_id = request.GET.get('grade_filter')
     if selected_grade_id:
-        quizzes_qs = quizzes_qs.filter(grade_id=selected_grade_id)
+        quizzes = quizzes.filter(grade_id=selected_grade_id)
 
-    # ✅ Natural/numeric sort for titles like "12 - ..." (so 2 < 10 < 12)
-    def _leading_num(title: str):
-        title = title or ""
-        m = re.match(r"\s*(\d+)", title)
-        return int(m.group(1)) if m else float('inf')
+    question_banks = QuestionBank.objects.all().order_by(Lower('title'))  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Alphabetical sorting
 
-    # Evaluate the queryset and sort in Python (no DB/schema changes)
-    quizzes = list(quizzes_qs)
-    quizzes.sort(key=lambda q: (_leading_num(q.title), (q.title or "").lower()))
-
-    # ✅ Question banks stay alphabetically sorted (case-insensitive)
-    question_banks = QuestionBank.objects.all().order_by(Lower('title'))
-
-    # ✅ Handle assignments (unchanged)
     if request.method == 'POST':
         quiz_id = request.POST.get("quiz_id")
         bank_id = request.POST.get("assign_bank_id")
@@ -785,20 +740,31 @@ def quiz_question_assignment_view(request):
                     question_bank=bank,
                     num_questions=num_questions
                 )
-                messages.success(
-                    request,
-                    f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'."
-                )
-                return redirect('quiz-question-assignments')
+                messages.success(request, f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'.")
+                return redirect('quiz-question-assignments')  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± works now
             except Exception as e:
-                messages.error(request, f" Error: {e}")
+                messages.error(request, f"‚Äö√Ñ√∂‚àöœÄ‚àö‚Ä¢ Error: {e}")
 
     return render(request, 'admin/core/quiz_question_assignments.html', {
-        'quizzes': quizzes,                      # ← numerically sorted list
-        'grades': grades,                        # ← alphabetically sorted
+        'quizzes': quizzes,
+        'grades': grades,
         'selected_grade_id': selected_grade_id,
-        'question_banks': question_banks         # ← alphabetically sorted (case-insensitive)
+        'question_banks': question_banks
     })
+
+
+# KEEP this in admin_views.py and update it to include line_spacing
+class QuizFormattingForm(forms.ModelForm):
+    class Meta:
+        model = Quiz
+        fields = ['input_box_width', 'text_alignment', 'font_size', 'line_spacing']
+        widgets = {
+            'input_box_width': forms.NumberInput(attrs={'min': 1}),
+            'text_alignment': forms.Select(choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')]),
+            'font_size': forms.NumberInput(attrs={'min': 10, 'max': 40}),
+            'line_spacing': forms.NumberInput(attrs={'step': 0.1, 'min': 1, 'max': 3}),
+        }
+        
 
 @staff_member_required
 def quiz_formatting_view(request, quiz_id):
