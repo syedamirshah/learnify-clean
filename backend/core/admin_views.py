@@ -475,6 +475,18 @@ def assign_questions_view(request, quiz_id):
         "question_banks": question_banks
     })
 
+def natural_key(s: str):
+    """
+    Split a string into digit / non-digit chunks for natural sorting.
+    Titles that contain a number sort before non-numbered titles.
+    """
+    s = s or ''
+    parts = re.split(r'(\d+)', s)
+    has_num = any(p.isdigit() for p in parts)
+    return (
+        0 if has_num else 1,
+        [int(p) if p.isdigit() else p.lower() for p in parts]
+    )
 
 @login_required
 def admin_list_quizzes_view(request):
@@ -509,15 +521,19 @@ def admin_list_quizzes_view(request):
 
     # Sorting
     if sort_field == 'title':
-        def _leading_num(title: str):
-            m = re.match(r"\s*(\d+)", title or "")
-            return int(m.group(1)) if m else float('inf')
-
-        quizzes = list(quizzes)
-        quizzes.sort(
-            key=lambda q: (_leading_num(q.title), (q.title or "").lower()),
-            reverse=(sort_dir == 'desc')
-        )
+        # safety toggle: only use natural sort if nat=1 is present
+        use_natural = request.GET.get('nat') == '1'
+        if use_natural:
+            quizzes = list(quizzes)  # evaluate queryset for Python sort
+            quizzes.sort(
+                key=lambda q: natural_key(q.title),
+                reverse=(sort_dir == 'desc')
+            )
+        else:
+            # default DB ordering (unchanged)
+            quizzes = quizzes.order_by(
+                f"-title" if sort_dir == 'desc' else "title"
+            )
     else:
         quizzes = quizzes.order_by(
             f"-{sort_expression}" if sort_dir == 'desc' else sort_expression
@@ -731,7 +747,7 @@ def create_metadata_view(request):
 def quiz_question_assignment_view(request):
     # Base data
     quizzes_qs = Quiz.objects.all()
-    grades = Grade.objects.all()
+    grades = Grade.objects.all().order_by('name')  # ← sort grade dropdown
 
     # ✅ Apply grade filter if selected
     selected_grade_id = request.GET.get('grade_filter')
@@ -740,7 +756,8 @@ def quiz_question_assignment_view(request):
 
     # ✅ Natural/numeric sort for titles like "12 - ..." (so 2 < 10 < 12)
     def _leading_num(title: str):
-        m = re.match(r"\s*(\d+)", title or "")
+        title = title or ""
+        m = re.match(r"\s*(\d+)", title)
         return int(m.group(1)) if m else float('inf')
 
     # Evaluate the queryset and sort in Python (no DB/schema changes)
@@ -777,10 +794,10 @@ def quiz_question_assignment_view(request):
                 messages.error(request, f" Error: {e}")
 
     return render(request, 'admin/core/quiz_question_assignments.html', {
-        'quizzes': quizzes,                      # ← now a numerically sorted list
-        'grades': grades,
+        'quizzes': quizzes,                      # ← numerically sorted list
+        'grades': grades,                        # ← alphabetically sorted
         'selected_grade_id': selected_grade_id,
-        'question_banks': question_banks
+        'question_banks': question_banks         # ← alphabetically sorted (case-insensitive)
     })
 
 @staff_member_required
