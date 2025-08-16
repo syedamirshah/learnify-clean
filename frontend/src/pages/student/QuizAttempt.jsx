@@ -338,12 +338,15 @@ const QuizAttempt = () => {
                         .trim();
                     }
 
-                    // Normalize comma spacing
+                    // Normalize comma spacing (keep tidy)
                     seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
-                    // ⬇️ Make paragraph boundaries inline so inputs don't drop to a new line
+
+                    // Preserve author line breaks:
+                    // turn paragraph boundaries into an explicit <br/> so the blank after it drops to next line,
+                    // then remove the remaining <p> wrappers (we don't want nested block elements here)
                     seriesHtmlWithPs = seriesHtmlWithPs
-                       .replace(/<\/p>\s*<p>/gi, ' ')   // turn paragraph joins into a single space
-                       .replace(/<\/?p>/gi, '');        // remove any remaining <p> or </p>
+                      .replace(/<\/p>\s*<p>/gi, '<br/>')  // paragraph join -> line break
+                      .replace(/<\/?p>/gi, '');           // strip <p> and </p>
 
                     // Split by [a], [b], ... while retaining HTML around them
                     const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
@@ -357,7 +360,7 @@ const QuizAttempt = () => {
                           </div>
                         )}
 
-                        {/* series rendered, respecting inner </p> or <br> before blanks */}
+                        {/* series rendered, respecting <br> before blanks */}
                         <div style={{ whiteSpace: 'normal' }}>
                           {parts.map((part, index) => {
                             const isInput = index % 2 === 1;
@@ -367,11 +370,9 @@ const QuizAttempt = () => {
                               const compoundId = `${currentQuestion.question_id}_${key}`;
                               const value = answers[compoundId] || '';
 
-                              // Look at previous chunk: if it ends with </p> or <br>, drop input to a new line
+                              // Look at previous chunk: if it ends with <br>, drop input to a new line
                               const prev = parts[index - 1] || '';
-                              // after flattening <p>, only respect real <br> for line breaks
                               const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
-
 
                               const inputEl = (
                                 <input
@@ -388,22 +389,22 @@ const QuizAttempt = () => {
                                     width: `${fibWidth * 10}px`,
                                     height: `${fontSize * 1.35}px`,
                                     fontSize: `${fontSize}px`,
-                                    verticalAlign: needsNewLine ? 'baseline' : 'middle',
+                                    verticalAlign: 'middle',
                                   }}
                                 />
                               );
 
                               return (
                                 <>
-                                 {needsNewLine && <br />}
-                                 <span key={`wrap-${index}`} className="inline-block align-middle mx-1">
-                                   {inputEl}
-                                 </span>
+                                  {needsNewLine && <br />}
+                                  <span key={`wrap-${index}`} className="inline-block align-middle mx-1">
+                                    {inputEl}
+                                  </span>
                                 </>
                               );
                             }
 
-                            // Normal HTML chunk (still contains any internal <p> / <br>)
+                            // Normal HTML chunk (still contains any internal <br>)
                             return (
                               <span
                                 key={`txt-${index}`}
