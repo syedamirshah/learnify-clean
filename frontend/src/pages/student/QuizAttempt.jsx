@@ -387,9 +387,11 @@ const QuizAttempt = () => {
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.35}px`,
+                                    height: `${fontSize * 1.2}px`,     // tighter box
+                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
                                     fontSize: `${fontSize}px`,
-                                    verticalAlign: 'middle',
+                                    padding: '0 6px',
+                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
                                   }}
                                 />
                               );
@@ -397,7 +399,11 @@ const QuizAttempt = () => {
                               return (
                                 <>
                                   {needsNewLine && <br />}
-                                  <span key={`wrap-${index}`} className="inline-block align-middle mx-1">
+                                  <span
+                                    key={`wrap-${index}`}
+                                    className="inline-block mx-1"
+                                    style={{ verticalAlign: 'baseline' }}
+                                  >
                                     {inputEl}
                                   </span>
                                 </>
