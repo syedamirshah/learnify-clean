@@ -9,34 +9,55 @@ html, body, #root {
   padding: 0;
 }
 
-/* --- FRACTION (no .bar element required) --- */
+/* =====================  STACKED FRACTION  ===================== */
+/* Works even if CKEditor strips empty nodes or injects spaces     */
+
 .fib-frac{
-  display: inline-flex;
-  flex-direction: column;     /* stack top/bottom */
-  align-items: center;        /* center numerator/denominator */
+  /* create a 2-row stack */
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-items: center;
+
+  position: relative;
   line-height: 1;
+  white-space: nowrap;          /* keep numerator/denominator together */
+  padding: 0 .35em;             /* small left/right breathing room */
 }
 
+/* Draw the fraction bar between the 2 rows */
+.fib-frac::after{
+  content: "";
+  position: absolute;
+  left: .25em;
+  right: .25em;
+
+  /* place between row 1 and 2 */
+  top: 50%;
+  transform: translateY(-50%);
+
+  height: 2px;                  /* thickness of the bar */
+  background: currentColor;     /* matches surrounding text color */
+}
+
+/* Numerator & denominator blocks */
 .fib-frac .num,
 .fib-frac .den{
   display: block;
-  padding: 0 6px;             /* some horizontal breathing room */
+  padding: 0 .15em;             /* minor padding so the bar extends slightly past text */
 }
 
-/* draw the fraction bar on the denominator */
-.fib-frac .den{
-  border-top: 2px solid currentColor;
-  margin-top: 2px;
-  padding-top: 2px;
-}
-
-/* make FIB inputs look good inside the fraction */
+/* Inputs inside the fraction */
 .fib-frac input{
   display: inline-block;
-  height: 1.2em;              /* aligns nicely with surrounding text */
+  height: 1.2em;                /* compact box that aligns well with text */
   line-height: 1.2em;
   font: inherit;
-  padding: 0 6px;
-  vertical-align: text-bottom; /* baseline alignment */
-  /* width is still controlled by your quizMeta.input_box_width (JS inline style) */
+  padding: 0 .35em;
+  vertical-align: text-bottom;
+  /* width still respects your React inline style from quizMeta.input_box_width */
 }
+
+/* Optional size helpers if you ever want quick scaling from CKEditor */
+.fib-frac.fib-sm { font-size: 0.9em; }
+.fib-frac.fib-lg { font-size: 1.25em; }
