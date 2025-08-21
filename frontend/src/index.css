@@ -9,18 +9,34 @@ html, body, #root {
   padding: 0;
 }
 
-/* Stacked fraction for FIB */
-.fib-fraction {
-  display: inline-grid;
-  grid-template-rows: auto 2px auto; /* numerator, bar, denominator */
-  align-items: center;
-  justify-items: center;
-  vertical-align: middle;
-  margin: 0 4px;
+/* --- FRACTION (no .bar element required) --- */
+.fib-frac{
+  display: inline-flex;
+  flex-direction: column;     /* stack top/bottom */
+  align-items: center;        /* center numerator/denominator */
+  line-height: 1;
 }
-.fib-fraction .bar {
-  width: calc(var(--fib-width, 80px) + 6px); /* match input width */
-  height: 2px;
-  background: #222;
+
+.fib-frac .num,
+.fib-frac .den{
+  display: block;
+  padding: 0 6px;             /* some horizontal breathing room */
 }
-.fib-fraction input { text-align: center; }
+
+/* draw the fraction bar on the denominator */
+.fib-frac .den{
+  border-top: 2px solid currentColor;
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+/* make FIB inputs look good inside the fraction */
+.fib-frac input{
+  display: inline-block;
+  height: 1.2em;              /* aligns nicely with surrounding text */
+  line-height: 1.2em;
+  font: inherit;
+  padding: 0 6px;
+  vertical-align: text-bottom; /* baseline alignment */
+  /* width is still controlled by your quizMeta.input_box_width (JS inline style) */
+}
