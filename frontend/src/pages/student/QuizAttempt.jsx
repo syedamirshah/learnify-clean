@@ -349,169 +349,76 @@ const QuizAttempt = () => {
                       .replace(/<\/?p>/gi, '');           // strip <p> and </p>
 
                     // Split by [a], [b], ... while retaining HTML around them
-                    // --- tokenise content so we can detect [a]/[b] fractions or single [a] blanks
-                    // We keep HTML outside tokens intact, including <br>
-                    const TOKEN_RE = /(\[[^\]]+\]\s*\/\s*\[[^\]]+\]|\[[^\]]+\])/g;
-
-                    /** render a single inline FIB input */
-                    const renderBlank = (key, prevHtmlChunk = '') => {
-                      const compoundId = `${currentQuestion.question_id}_${key}`;
-                      const value = answers[compoundId] || '';
-                      const needsNewLine = /<br\s*\/?>\s*$/i.test(prevHtmlChunk);
-
-                      const inputEl = (
-                        <input
-                          key={`in-${compoundId}`}
-                          data-blank={key}
-                          value={value}
-                          onChange={(e) =>
-                            setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
-                          }
-                          onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
-                          className="border rounded px-1 py-0.5 mx-1"
-                          style={{
-                            display: 'inline-block',
-                            width: `${fibWidth * 10}px`,
-                            height: `${fontSize * 1.2}px`,
-                            lineHeight: `${fontSize * 1.2}px`,
-                            fontSize: `${fontSize}px`,
-                            padding: '0 6px',
-                            verticalAlign: 'text-bottom',
-                          }}
-                        />
-                      );
-
-                      return needsNewLine ? (
-                        <React.Fragment key={`wrap-${compoundId}`}>
-                          <br />
-                          <span className="inline-block mx-1" style={{ verticalAlign: 'baseline' }}>
-                            {inputEl}
-                          </span>
-                        </React.Fragment>
-                      ) : (
-                        <span
-                          key={`wrap-${compoundId}`}
-                          className="inline-block mx-1"
-                          style={{ verticalAlign: 'baseline' }}
-                        >
-                          {inputEl}
-                        </span>
-                      );
-                    };
-
-                    /** render a stacked fraction [num]/[den] */
-                    const renderFraction = (numKey, denKey, prevHtmlChunk = '') => {
-                      const numId = `${currentQuestion.question_id}_${numKey}`;
-                      const denId = `${currentQuestion.question_id}_${denKey}`;
-                      const numVal = answers[numId] || '';
-                      const denVal = answers[denId] || '';
-                      const needsNewLine = /<br\s*\/?>\s*$/i.test(prevHtmlChunk);
-
-                      const boxStyle = {
-                        width: `${fibWidth * 10}px`,
-                        height: `${fontSize * 1.2}px`,
-                        lineHeight: `${fontSize * 1.2}px`,
-                        fontSize: `${fontSize}px`,
-                        padding: '0 6px',
-                      };
-
-                      const frac = (
-                        <span
-                          className="inline-flex flex-col items-stretch mx-1"
-                          style={{ verticalAlign: 'baseline' }}
-                          key={`frac-${numId}-${denId}`}
-                        >
-                          <input
-                            className="border rounded px-1 py-0.5"
-                            style={{ ...boxStyle, display: 'block', textAlign: 'center' }}
-                            data-blank={numKey}
-                            value={numVal}
-                            onChange={(e) =>
-                              setAnswers((prev) => ({ ...prev, [numId]: e.target.value }))
-                            }
-                            onBlur={(e) => handleOptionChange(numId, e.target.value)}
-                          />
-                          <span
-                            style={{
-                              display: 'block',
-                              height: '2px',
-                              background: '#000',
-                              margin: '3px 4px',
-                            }}
-                          />
-                          <input
-                            className="border rounded px-1 py-0.5"
-                            style={{ ...boxStyle, display: 'block', textAlign: 'center' }}
-                            data-blank={denKey}
-                            value={denVal}
-                            onChange={(e) =>
-                              setAnswers((prev) => ({ ...prev, [denId]: e.target.value }))
-                            }
-                            onBlur={(e) => handleOptionChange(denId, e.target.value)}
-                          />
-                        </span>
-                      );
-
-                      return needsNewLine ? (
-                        <React.Fragment key={`wrap-frac-${numId}-${denId}`}>
-                          <br />
-                          {frac}
-                        </React.Fragment>
-                      ) : (
-                        frac
-                      );
-                    };
-
-                    // walk through the HTML, splitting by tokens but preserving the HTML chunks
-                    const pieces = [];
-                    let lastIndex = 0;
-                    seriesHtmlWithPs.replace(TOKEN_RE, (match, _m, offset) => {
-                      const prevHtml = seriesHtmlWithPs.slice(lastIndex, offset);
-                      if (prevHtml) {
-                        pieces.push(
-                          <span
-                            key={`txt-${lastIndex}`}
-                            dangerouslySetInnerHTML={{ __html: prevHtml }}
-                          />
-                        );
-                      }
-
-                      // fraction token?
-                      if (/\]\s*\/\s*\[/.test(match)) {
-                        const m = match.match(/\[([^\]]+)\]\s*\/\s*\[([^\]]+)\]/);
-                        const numKey = (m?.[1] || '').trim();
-                        const denKey = (m?.[2] || '').trim();
-                        pieces.push(renderFraction(numKey, denKey, prevHtml));
-                      } else {
-                        // single blank like [a]
-                        const key = match.replace(/[\[\]]/g, '').trim();
-                        pieces.push(renderBlank(key, prevHtml));
-                      }
-
-                      lastIndex = offset + match.length;
-                      return match;
-                    });
-
-                    // tail HTML after last token
-                    if (lastIndex < seriesHtmlWithPs.length) {
-                      pieces.push(
-                        <span
-                          key={`txt-${lastIndex}`}
-                          dangerouslySetInnerHTML={{
-                            __html: seriesHtmlWithPs.slice(lastIndex),
-                          }}
-                        />
-                      );
-                    }
+                    const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
 
                     return (
                       <div className="mt-2">
+                        {/* instruction on its own line */}
                         {instruction && (
                           <div className="mb-2">
                             <span dangerouslySetInnerHTML={{ __html: instruction }} />
                           </div>
                         )}
-                        <div style={{ whiteSpace: 'normal' }}>{pieces}</div>
+
+                        {/* series rendered, respecting <br> before blanks */}
+                        <div style={{ whiteSpace: 'normal' }}>
+                          {parts.map((part, index) => {
+                            const isInput = index % 2 === 1;
+
+                            if (isInput) {
+                              const key = part.trim();
+                              const compoundId = `${currentQuestion.question_id}_${key}`;
+                              const value = answers[compoundId] || '';
+
+                              // Look at previous chunk: if it ends with <br>, drop input to a new line
+                              const prev = parts[index - 1] || '';
+                              const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
+
+                              const inputEl = (
+                                <input
+                                  key={`in-${index}`}
+                                  data-blank={key}
+                                  value={value}
+                                  onChange={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
+                                  }
+                                  onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
+                                  className="border rounded px-1 py-0.5 mx-1"
+                                  style={{
+                                    display: 'inline-block',
+                                    width: `${fibWidth * 10}px`,
+                                    height: `${fontSize * 1.2}px`,     // tighter box
+                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
+                                    fontSize: `${fontSize}px`,
+                                    padding: '0 6px',
+                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
+                                  }}
+                                />
+                              );
+
+                              return (
+                                <>
+                                  {needsNewLine && <br />}
+                                  <span
+                                    key={`wrap-${index}`}
+                                    className="inline-block mx-1"
+                                    style={{ verticalAlign: 'baseline' }}
+                                  >
+                                    {inputEl}
+                                  </span>
+                                </>
+                              );
+                            }
+
+                            // Normal HTML chunk (still contains any internal <br>)
+                            return (
+                              <span
+                                key={`txt-${index}`}
+                                dangerouslySetInnerHTML={{ __html: part }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })()}
