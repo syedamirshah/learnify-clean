@@ -9,55 +9,42 @@ html, body, #root {
   padding: 0;
 }
 
-/* =====================  STACKED FRACTION  ===================== */
-/* Works even if CKEditor strips empty nodes or injects spaces     */
+/* =====================  STACKED FRACTION (robust)  ===================== */
+/* Uses flex column + border-bottom on numerator. Survives CKEditor spaces  */
 
 .fib-frac{
-  /* create a 2-row stack */
-  display: inline-grid;
-  grid-template-rows: auto auto;
-  justify-items: center;
-  align-items: center;
-
-  position: relative;
+  display: inline-flex;
+  flex-direction: column;      /* force true vertical stack */
+  align-items: center;          /* center numerator/denominator */
+  justify-content: center;
   line-height: 1;
-  white-space: nowrap;          /* keep numerator/denominator together */
-  padding: 0 .35em;             /* small left/right breathing room */
+  white-space: nowrap;          /* keep as one unit */
+  padding: 0 .3em;              /* a little side breathing room */
 }
 
-/* Draw the fraction bar between the 2 rows */
-.fib-frac::after{
-  content: "";
-  position: absolute;
-  left: .25em;
-  right: .25em;
-
-  /* place between row 1 and 2 */
-  top: 50%;
-  transform: translateY(-50%);
-
-  height: 2px;                  /* thickness of the bar */
-  background: currentColor;     /* matches surrounding text color */
+/* Numerator draws the fraction bar */
+.fib-frac .num{
+  display: block;
+  padding: 0 .2em .18em;        /* bottom pad so bar doesn’t touch text */
+  border-bottom: 2px solid currentColor; /* ← the fraction bar */
 }
 
-/* Numerator & denominator blocks */
-.fib-frac .num,
+/* Denominator */
 .fib-frac .den{
   display: block;
-  padding: 0 .15em;             /* minor padding so the bar extends slightly past text */
+  padding: .18em .2em 0;
 }
 
-/* Inputs inside the fraction */
+/* Input inside the fraction (works with your dynamic width) */
 .fib-frac input{
   display: inline-block;
-  height: 1.2em;                /* compact box that aligns well with text */
+  height: 1.2em;
   line-height: 1.2em;
   font: inherit;
   padding: 0 .35em;
-  vertical-align: text-bottom;
-  /* width still respects your React inline style from quizMeta.input_box_width */
+  vertical-align: baseline;     /* aligns nicely with the bar */
 }
 
-/* Optional size helpers if you ever want quick scaling from CKEditor */
+/* Optional size helpers */
 .fib-frac.fib-sm { font-size: 0.9em; }
 .fib-frac.fib-lg { font-size: 1.25em; }
