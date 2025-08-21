@@ -8,3 +8,19 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
+
+/* Stacked fraction for FIB */
+.fib-fraction {
+  display: inline-grid;
+  grid-template-rows: auto 2px auto; /* numerator, bar, denominator */
+  align-items: center;
+  justify-items: center;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.fib-fraction .bar {
+  width: calc(var(--fib-width, 80px) + 6px); /* match input width */
+  height: 2px;
+  background: #222;
+}
+.fib-fraction input { text-align: center; }
