@@ -241,30 +241,34 @@ const LandingPage = () => {
                     {subjectItem.chapters.map((chapterItem, chapterIndex) => (
                       <div key={`chapter-${chapterIndex}`} className="break-inside-avoid mb-6 px-2">
                         {/* Chapter Title */}
-                        <h4 className="text-green-700 font-bold text-base mb-1">
-                          {chapterItem.chapter}.
-                        </h4>
+                        <div className="mb-2">
+                          <span className="text-green-700 font-bold text-base">
+                            {chapterItem.chapter}.
+                          </span>
+                        </div>
 
                         {/* Numbered Quiz List — sorted by number */}
-                        <ul className="space-y-1">
+                        <div className="space-y-1">
                           {[...chapterItem.quizzes]
                             .sort((a, b) => {
                               const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
                               const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                              if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+                              if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
+                                return numA - numB;
+                              }
                               return (a.title || '').localeCompare(b.title || '');
                             })
-                            .map((quiz) => (
-                              <li key={`quiz-${quiz.id}`}>
+                            .map((quiz, idx) => (
+                              <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
                                 <Link
                                   to={`/student/attempt-quiz/${quiz.id}`}
                                   className="text-green-800 hover:text-green-600 hover:underline"
                                 >
                                   {quiz.title}
                                 </Link>
-                              </li>
+                              </div>
                             ))}
-                        </ul>
+                        </div>
                       </div>
                     ))}
                   </div>
