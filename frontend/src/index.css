@@ -9,16 +9,33 @@ html, body, #root {
   padding: 0;
 }
 
-/* Multi-column layout for chapters */
+/* ===================== MULTI-COLUMN LAYOUT ===================== */
 .catalog {
   column-count: 3;          /* 3 flowing columns */
   column-gap: 2rem;         /* space between columns */
+  column-fill: balance;     /* try to balance column heights */
 }
 
 .catalog h3 {
-  column-span: all;         /* if you ever want headings spanning full width */
+  column-span: all;         /* headings can span across all columns if needed */
 }
 
 .break-inside-avoid {
-  break-inside: avoid;      /* keep each chapter box together */
+  break-inside: avoid;               /* keep chapter boxes together */
+  -webkit-column-break-inside: avoid; /* Safari/Chrome */
+  -moz-column-break-inside: avoid;    /* Firefox */
+}
+
+/* ===================== RESPONSIVE BEHAVIOR ===================== */
+@media (max-width: 1024px) {
+  .catalog { column-count: 2; }
+}
+
+@media (max-width: 640px) {
+  .catalog { column-count: 1; }
+}
+
+/* ===================== QUIZ LIST SPACING ===================== */
+.catalog .space-y-1 > * + * {
+  margin-top: 0.25rem; /* tighter spacing inside quiz lists */
 }
