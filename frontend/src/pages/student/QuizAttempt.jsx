@@ -4,6 +4,17 @@ import axios from '../../utils/axiosInstance';
 import logo from '../../assets/logo.png'; 
 import ElapsedTimer from "../../components/ElapsedTimer.jsx";
 
+// Options with these values will be hidden in UI
+const HIDE_OPTION_MARKERS = new Set([
+  '[hide]', '[HIDE]', 'n/a'
+]);
+
+const shouldHideOption = (opt) => {
+  if (opt == null) return true;                // hides null/undefined
+  const s = String(opt).trim();
+  if (!s) return true;                         // hides empty strings
+  return HIDE_OPTION_MARKERS.has(s) || HIDE_OPTION_MARKERS.has(s.toLowerCase());
+};
 
 const QuizAttempt = () => {
   const { quizId } = useParams();
@@ -277,37 +288,39 @@ const QuizAttempt = () => {
                         }}
                         dangerouslySetInnerHTML={{ __html: fixImageUrls(currentQuestion.question_text) }}
                       />
-                      {currentQuestion.options.map((opt, index) => {
-                        const qid = currentQuestion.question_id;
-                        const isMCQ = currentQuestion.type === 'mcq';
-                        const isSelected = isMCQ
-                          ? (answers[qid] || []).includes(opt)
-                          : answers[qid] === opt;
-    
-                        return (
-                          <label key={index} className="block">
-                            <input
-                              type={isMCQ ? 'checkbox' : 'radio'}
-                              name={`question_${qid}${isMCQ ? `_${index}` : ''}`}
-                              value={opt}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (isMCQ) {
-                                  const prev = answers[qid] || [];
-                                  const updated = e.target.checked
-                                    ? [...prev, opt]
-                                    : prev.filter((o) => o !== opt);
-                                  handleOptionChange(qid, updated);
-                                } else {
-                                  handleOptionChange(qid, opt);
-                                }
-                              }}
-                              className="mr-2"
-                            />
-                            {opt}
-                          </label>
-                        );
-                      })}
+                      {(currentQuestion.options || [])
+                        .filter(opt => !shouldHideOption(opt))                 // ✅ hide placeholder options
+                        .map((opt, index) => {
+                          const qid = currentQuestion.question_id;
+                          const isMCQ = currentQuestion.type === 'mcq';
+                          const isSelected = isMCQ
+                            ? (answers[qid] || []).includes(opt)
+                            : answers[qid] === opt;
+
+                          return (
+                            <label key={`${qid}-${index}`} className="block">
+                              <input
+                                type={isMCQ ? 'checkbox' : 'radio'}
+                                name={`question_${qid}${isMCQ ? `_${index}` : ''}`}
+                                value={opt}
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (isMCQ) {
+                                    const prev = answers[qid] || [];
+                                    const updated = e.target.checked
+                                      ? [...prev, opt]
+                                      : prev.filter((o) => o !== opt);
+                                    handleOptionChange(qid, updated);
+                                  } else {
+                                    handleOptionChange(qid, opt);
+                                  }
+                                }}
+                                className="mr-2"
+                              />
+                              {opt}
+                            </label>
+                          );
+                        })}
                     </div>
                   )}
     
