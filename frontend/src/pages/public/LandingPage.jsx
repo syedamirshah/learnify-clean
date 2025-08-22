@@ -237,25 +237,22 @@ const LandingPage = () => {
                 </h3>
 
                 {/* Chapters and Quizzes */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="catalog">
                     {subjectItem.chapters.map((chapterItem, chapterIndex) => (
-                    <div key={`chapter-${chapterIndex}`} className="bg-white px-2">
-                        {/* ‚Äö√∫√ñ Chapter Title (left-aligned like quizzes) */}
+                      <div key={`chapter-${chapterIndex}`} className="break-inside-avoid mb-6 px-2">
+                        {/* Chapter Title */}
                         <div className="mb-2">
-                        <span className="text-green-700 font-bold text-base">
+                          <span className="text-green-700 font-bold text-base">
                             {chapterItem.chapter}.
-                        </span>
+                          </span>
                         </div>
 
-                        {/* Numbered Quiz List — sorted by the leading number in the title (ascending) */}
+                        {/* Numbered Quiz List — sorted by number */}
                         <div className="space-y-1">
                           {[...chapterItem.quizzes]
                             .sort((a, b) => {
-                              // Pull the first number at the start of each title (e.g., "1 Counting upto 10")
                               const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
                               const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-
-                              // If both have numbers, sort numerically; otherwise fall back to alpha
                               if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
                                 return numA - numB;
                               }
@@ -272,9 +269,9 @@ const LandingPage = () => {
                               </div>
                             ))}
                         </div>
-                    </div>
+                      </div>
                     ))}
-                </div>
+                  </div>
                 </div>
             ))}
             </div>

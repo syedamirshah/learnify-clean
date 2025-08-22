@@ -8,3 +8,17 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
+
+/* Multi-column layout for chapters */
+.catalog {
+  column-count: 3;          /* 3 flowing columns */
+  column-gap: 2rem;         /* space between columns */
+}
+
+.catalog h3 {
+  column-span: all;         /* if you ever want headings spanning full width */
+}
+
+.break-inside-avoid {
+  break-inside: avoid;      /* keep each chapter box together */
+}
