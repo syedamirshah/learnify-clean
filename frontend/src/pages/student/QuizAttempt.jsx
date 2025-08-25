@@ -176,6 +176,27 @@ const QuizAttempt = () => {
     }
   };
 
+    // ---- FIB helpers: detect keys [a], [b], ... and save all current blanks ----
+    const getFibKeys = (q) => {
+      if (!q || q.type !== 'fib' || !q.question_text) return [];
+      const text = q.question_text.replace(/&nbsp;/g, ' ');   // <-- added line
+      const matches = text.match(/\[(.*?)\]/g) || [];
+      return matches
+        .map(m => m.replace(/\[|\]/g, '').trim())
+        .filter(Boolean);
+    };
+  
+    const saveAllFibForQuestion = async (q) => {
+      if (!q || q.type !== 'fib') return;
+      const qid = q.question_id;
+      const keys = getFibKeys(q);
+      for (const key of keys) {
+        const compoundId = `${qid}_${key}`;
+        const val = answers[compoundId] ?? '';
+        await saveAnswer(compoundId, val);
+      }
+    };
+
   const handleOptionChange = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
     saveAnswer(questionId, value);
@@ -461,7 +482,13 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={() => canProceed && setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))}
+                  onClick={async () => {
+                    if (!canProceed) return;
+                    if (currentQuestion?.type === 'fib') {
+                      await saveAllFibForQuestion(currentQuestion);
+                    }
+                    setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1));
+                  }}
                   disabled={!canProceed}
                 >
                   Next
@@ -471,7 +498,13 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={() => canProceed && handleSubmit()}
+                  onClick={async () => {
+                    if (!canProceed) return;
+                    if (currentQuestion?.type === 'fib') {
+                      await saveAllFibForQuestion(currentQuestion);
+                    }
+                    await handleSubmit();
+                  }}
                   disabled={!canProceed}
                 >
                   {previewMode ? 'Exit Preview' : 'Submit Quiz'}
