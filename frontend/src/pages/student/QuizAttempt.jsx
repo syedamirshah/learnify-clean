@@ -34,11 +34,10 @@ const QuizAttempt = () => {
   let canProceed = false;
   if (currentQuestion) {
     if (currentQuestion.type === 'fib') {
-      const blanks = currentQuestion.question_text.match(/\[(.*?)\]/g) || [];
-      canProceed = blanks.every((b) => {
-        const key = b.replace(/\[|\]/g, '').trim();
+      const keys = getFibKeys(currentQuestion);
+      canProceed = keys.length > 0 && keys.every((key) => {
         const compoundId = `${currentQuestion.question_id}_${key}`;
-        return answers[compoundId] && answers[compoundId].trim() !== '';
+        return (answers[compoundId] ?? '').toString().trim() !== '';
       });
     } else if (currentQuestion.type === 'mcq') {
       const selected = answers[currentQuestion.question_id];
@@ -86,11 +85,10 @@ const QuizAttempt = () => {
   
         let valid = false;
         if (type === 'fib') {
-          const blanks = q.question_text.match(/\[(.*?)\]/g) || [];
-          valid = blanks.every((b) => {
-            const key = b.replace(/\[|\]/g, '').trim();
+          const keys = getFibKeys(q);
+          valid = keys.length > 0 && keys.every((key) => {
             const compoundId = `${qid}_${key}`;
-            return answers[compoundId] && answers[compoundId].trim() !== '';
+            return (answers[compoundId] ?? '').toString().trim() !== '';
           });
         } else if (type === 'mcq') {
           valid = Array.isArray(answers[qid]) && answers[qid].length > 0;
@@ -345,56 +343,55 @@ const QuizAttempt = () => {
                     </div>
                   )}
     
-                      {currentQuestion.type === 'fib' && (() => {
-                    // Keep image URLs absolute
+                    {currentQuestion.type === 'fib' && (() => {
+                    // Normalize & keep image URLs absolute
                     const raw = fixImageUrls(currentQuestion.question_text) || '';
+                    const cleaned = raw.replace(/&nbsp;/g, ' ');
 
-                    // Split first paragraph as instruction; keep INNER paragraph breaks for the series
-                    const splitOnPara = raw.split(/<\/p>\s*<p>/i);
-                    let instruction = '';
-                    let seriesHtmlWithPs = raw;
+                    // Split into paragraphs (strip single outer <p> wrapper if present)
+                    let paras = cleaned
+                      .replace(/^<p[^>]*>/i, '')
+                      .replace(/<\/p>$/i, '')
+                      .split(/<\/p>\s*<p[^>]*>/i);
 
-                    if (splitOnPara.length >= 2) {
-                      instruction = splitOnPara[0].replace(/<\/?p>/gi, '').trim();
-
-                      // join the rest back WITH paragraph markers preserved
-                      seriesHtmlWithPs = splitOnPara.slice(1).join('</p><p>');
-                      // remove a single leading/trailing <p> wrapper if present
-                      seriesHtmlWithPs = seriesHtmlWithPs
-                        .replace(/^<p>/i, '')
-                        .replace(/<\/p>$/i, '')
-                        .trim();
-                    } else {
-                      // no explicit first paragraph; keep inner breaks if any
-                      seriesHtmlWithPs = raw
-                        .replace(/^<p>/i, '')
-                        .replace(/<\/p>$/i, '')
-                        .trim();
+                    // Collect leading image-only paragraphs so images stay visible
+                    const leadingImages = [];
+                    while (paras.length && /^\s*(?:<img\b[^>]*>\s*)+$/i.test(paras[0])) {
+                      leadingImages.push(paras.shift());
                     }
 
-                    // Normalize comma spacing (keep tidy)
-                    seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
+                    // Use first remaining paragraph as instruction ONLY if it contains no [blank]
+                    let instruction = '';
+                    if (paras.length && !/\[[^\]]+\]/.test(paras[0])) {
+                      instruction = paras.shift().trim();
+                    }
 
-                    // Preserve author line breaks:
-                    // turn paragraph boundaries into an explicit <br/> so the blank after it drops to next line,
-                    // then remove the remaining <p> wrappers (we don't want nested block elements here)
-                    seriesHtmlWithPs = seriesHtmlWithPs
-                      .replace(/<\/p>\s*<p>/gi, '<br/>')  // paragraph join -> line break
-                      .replace(/<\/?p>/gi, '');           // strip <p> and </p>
+                    // Remainder contains the blanks
+                    let seriesHtml = paras.join('<br/>').trim();
 
-                    // Split by [a], [b], ... while retaining HTML around them
-                    const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
+                    // Tidy commas, preserve line breaks, remove stray <p> tags
+                    seriesHtml = seriesHtml
+                      .replace(/\s*,\s*/g, ', ')
+                      .replace(/<\/p>\s*<p>/gi, '<br/>')
+                      .replace(/<\/?p>/gi, '');
+
+                    // Split around [a], [b], ... while retaining surrounding HTML
+                    const parts = seriesHtml.split(/\[(.*?)\]/g);
 
                     return (
                       <div className="mt-2">
-                        {/* instruction on its own line */}
+                        {leadingImages.length > 0 && (
+                          <div className="mb-2">
+                            <span dangerouslySetInnerHTML={{ __html: leadingImages.join('<br/>') }} />
+                          </div>
+                        )}
+
                         {instruction && (
                           <div className="mb-2">
                             <span dangerouslySetInnerHTML={{ __html: instruction }} />
                           </div>
                         )}
 
-                        {/* series rendered, respecting <br> before blanks */}
                         <div style={{ whiteSpace: 'normal' }}>
                           {parts.map((part, index) => {
                             const isInput = index % 2 === 1;
@@ -404,7 +401,7 @@ const QuizAttempt = () => {
                               const compoundId = `${currentQuestion.question_id}_${key}`;
                               const value = answers[compoundId] || '';
 
-                              // Look at previous chunk: if it ends with <br>, drop input to a new line
+                              // New line if previous chunk ends with <br>
                               const prev = parts[index - 1] || '';
                               const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
 
@@ -421,11 +418,11 @@ const QuizAttempt = () => {
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,     // tighter box
-                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
+                                    height: `${fontSize * 1.2}px`,
+                                    lineHeight: `${fontSize * 1.2}px`,
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
-                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
+                                    verticalAlign: 'text-bottom',
                                   }}
                                 />
                               );
@@ -444,7 +441,6 @@ const QuizAttempt = () => {
                               );
                             }
 
-                            // Normal HTML chunk (still contains any internal <br>)
                             return (
                               <span
                                 key={`txt-${index}`}
