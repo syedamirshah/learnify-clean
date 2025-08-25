@@ -102,13 +102,7 @@ const QuizAttempt = () => {
   
         // ✅ Save answer before proceeding
         if (type === 'fib') {
-          const blanks = q.question_text.match(/\[(.*?)\]/g) || [];
-          for (const b of blanks) {
-            const key = b.replace(/\[|\]/g, '').trim();
-            const compoundId = `${qid}_${key}`;
-            const val = answers[compoundId];
-            await saveAnswer(compoundId, val);
-          }
+          await saveFibCombined(q);        // <- one request, merged keys
         } else {
           await saveAnswer(qid, answers[qid]);
         }
@@ -175,6 +169,37 @@ const QuizAttempt = () => {
       console.error('💥 Failed to save answer:', err);
     }
   };
+
+    // ---- FIB helpers: collect keys and save them in ONE request ----
+    const getFibKeys = (q) => {
+      if (!q || q.type !== 'fib' || !q.question_text) return [];
+      const matches = q.question_text.match(/\[(.*?)\]/g) || [];
+      return matches.map(m => m.replace(/\[|\]/g, '').trim()).filter(Boolean);
+    };
+  
+    const saveFibCombined = async (q) => {
+      if (!q || q.type !== 'fib' || previewMode) return;
+  
+      const qid = q.question_id;
+      const keys = getFibKeys(q);
+      const payload = {};
+  
+      for (const key of keys) {
+        const compoundId = `${qid}_${key}`;
+        payload[key] = (answers[compoundId] ?? '').toString();
+      }
+  
+      try {
+        await axios.post(`/student/submit-answer/`, {
+          attempt_id: attemptId,
+          question_id: qid,
+          question_type: 'fib',
+          answer_data: payload,             // <- send ALL blanks at once
+        });
+      } catch (err) {
+        console.error('💥 Failed to save FIB (combined):', err);
+      }
+    };
 
   const handleOptionChange = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -395,7 +420,9 @@ const QuizAttempt = () => {
                                   onChange={(e) =>
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
-                                  onBlur={(e) => handleOptionChange(compoundId, e.target.value)}
+                                  onBlur={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
+                                  }
                                   className="border rounded px-1 py-0.5 mx-1"
                                   style={{
                                     display: 'inline-block',
@@ -461,7 +488,15 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={() => canProceed && setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))}
+                  onClick={async () => {
+                    if (!canProceed) return;
+                    if (currentQuestion?.type === 'fib') {
+                      await saveFibCombined(currentQuestion);
+                    } else {
+                      await saveAnswer(currentQuestion.question_id, answers[currentQuestion.question_id]);
+                    }
+                    setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1));
+                  }}
                   disabled={!canProceed}
                 >
                   Next
@@ -471,7 +506,15 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={() => canProceed && handleSubmit()}
+                  onClick={async () => {
+                    if (!canProceed) return;
+                    if (currentQuestion?.type === 'fib') {
+                      await saveFibCombined(currentQuestion);
+                    } else {
+                      await saveAnswer(currentQuestion.question_id, answers[currentQuestion.question_id]);
+                    }
+                    await handleSubmit();
+                  }}
                   disabled={!canProceed}
                 >
                   {previewMode ? 'Exit Preview' : 'Submit Quiz'}
