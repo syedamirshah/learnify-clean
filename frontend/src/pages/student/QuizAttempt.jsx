@@ -325,31 +325,37 @@ const QuizAttempt = () => {
                   )}
     
                       {currentQuestion.type === 'fib' && (() => {
-                    // Keep image URLs absolute
-                    const raw = fixImageUrls(currentQuestion.question_text) || '';
-
-                    // Split first paragraph as instruction; keep INNER paragraph breaks for the series
-                    const splitOnPara = raw.split(/<\/p>\s*<p>/i);
+                    // Robust paragraph handling:
+                    // 1) drop leading image-only/whitespace paragraphs
+                    // 2) the first remaining paragraph is "instruction" ONLY if it has no [blank]
+                    // 3) parse blanks across the rest
                     let instruction = '';
-                    let seriesHtmlWithPs = raw;
+                    let seriesHtmlWithPs = '';
 
-                    if (splitOnPara.length >= 2) {
-                      instruction = splitOnPara[0].replace(/<\/?p>/gi, '').trim();
+                    const cleaned = (fixImageUrls(currentQuestion.question_text) || '')
+                      .replace(/&nbsp;/g, ' '); // normalize NBSPs so [a] is detectable
 
-                      // join the rest back WITH paragraph markers preserved
-                      seriesHtmlWithPs = splitOnPara.slice(1).join('</p><p>');
-                      // remove a single leading/trailing <p> wrapper if present
-                      seriesHtmlWithPs = seriesHtmlWithPs
-                        .replace(/^<p>/i, '')
-                        .replace(/<\/p>$/i, '')
-                        .trim();
-                    } else {
-                      // no explicit first paragraph; keep inner breaks if any
-                      seriesHtmlWithPs = raw
-                        .replace(/^<p>/i, '')
-                        .replace(/<\/p>$/i, '')
-                        .trim();
+                    let paras = cleaned
+                      .replace(/^<p[^>]*>/i, '')
+                      .replace(/<\/p>$/i, '')
+                      .split(/<\/p>\s*<p[^>]*>/i);
+
+                    // Remove any leading paragraphs that contain only images/whitespace
+                    while (
+                      paras.length &&
+                      /^\s*(?:<img\b[^>]*>\s*)+$/i.test(paras[0])
+                    ) {
+                      paras.shift();
                     }
+
+                    // Use first paragraph as instruction only if it has no [blank]
+                    if (paras.length && !/\[[^\]]+\]/.test(paras[0])) {
+                      instruction = paras[0].trim();
+                      paras = paras.slice(1);
+                    }
+
+                    // Whatever remains becomes the content we parse for inputs
+                    seriesHtmlWithPs = paras.join('<br/>').trim();
 
                     // Normalize comma spacing (keep tidy)
                     seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
