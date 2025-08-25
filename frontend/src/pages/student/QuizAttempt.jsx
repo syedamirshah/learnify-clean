@@ -34,10 +34,11 @@ const QuizAttempt = () => {
   let canProceed = false;
   if (currentQuestion) {
     if (currentQuestion.type === 'fib') {
-      const keys = getFibKeys(currentQuestion);
-      canProceed = keys.length > 0 && keys.every((key) => {
+      const blanks = currentQuestion.question_text.match(/\[(.*?)\]/g) || [];
+      canProceed = blanks.every((b) => {
+        const key = b.replace(/\[|\]/g, '').trim();
         const compoundId = `${currentQuestion.question_id}_${key}`;
-        return (answers[compoundId] ?? '').toString().trim() !== '';
+        return answers[compoundId] && answers[compoundId].trim() !== '';
       });
     } else if (currentQuestion.type === 'mcq') {
       const selected = answers[currentQuestion.question_id];
@@ -85,10 +86,11 @@ const QuizAttempt = () => {
   
         let valid = false;
         if (type === 'fib') {
-          const keys = getFibKeys(q);
-          valid = keys.length > 0 && keys.every((key) => {
+          const blanks = q.question_text.match(/\[(.*?)\]/g) || [];
+          valid = blanks.every((b) => {
+            const key = b.replace(/\[|\]/g, '').trim();
             const compoundId = `${qid}_${key}`;
-            return (answers[compoundId] ?? '').toString().trim() !== '';
+            return answers[compoundId] && answers[compoundId].trim() !== '';
           });
         } else if (type === 'mcq') {
           valid = Array.isArray(answers[qid]) && answers[qid].length > 0;
@@ -173,27 +175,6 @@ const QuizAttempt = () => {
       console.error('💥 Failed to save answer:', err);
     }
   };
-
-    // ---- FIB helpers: detect keys [a], [b], ... and save all current blanks ----
-    const getFibKeys = (q) => {
-      if (!q || q.type !== 'fib' || !q.question_text) return [];
-      const text = q.question_text.replace(/&nbsp;/g, ' ');   // <-- added line
-      const matches = text.match(/\[(.*?)\]/g) || [];
-      return matches
-        .map(m => m.replace(/\[|\]/g, '').trim())
-        .filter(Boolean);
-    };
-  
-    const saveAllFibForQuestion = async (q) => {
-      if (!q || q.type !== 'fib') return;
-      const qid = q.question_id;
-      const keys = getFibKeys(q);
-      for (const key of keys) {
-        const compoundId = `${qid}_${key}`;
-        const val = answers[compoundId] ?? '';
-        await saveAnswer(compoundId, val);
-      }
-    };
 
   const handleOptionChange = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -343,55 +324,56 @@ const QuizAttempt = () => {
                     </div>
                   )}
     
-                    {currentQuestion.type === 'fib' && (() => {
-                    // Normalize & keep image URLs absolute
+                      {currentQuestion.type === 'fib' && (() => {
+                    // Keep image URLs absolute
                     const raw = fixImageUrls(currentQuestion.question_text) || '';
-                    const cleaned = raw.replace(/&nbsp;/g, ' ');
 
-                    // Split into paragraphs (strip single outer <p> wrapper if present)
-                    let paras = cleaned
-                      .replace(/^<p[^>]*>/i, '')
-                      .replace(/<\/p>$/i, '')
-                      .split(/<\/p>\s*<p[^>]*>/i);
-
-                    // Collect leading image-only paragraphs so images stay visible
-                    const leadingImages = [];
-                    while (paras.length && /^\s*(?:<img\b[^>]*>\s*)+$/i.test(paras[0])) {
-                      leadingImages.push(paras.shift());
-                    }
-
-                    // Use first remaining paragraph as instruction ONLY if it contains no [blank]
+                    // Split first paragraph as instruction; keep INNER paragraph breaks for the series
+                    const splitOnPara = raw.split(/<\/p>\s*<p>/i);
                     let instruction = '';
-                    if (paras.length && !/\[[^\]]+\]/.test(paras[0])) {
-                      instruction = paras.shift().trim();
+                    let seriesHtmlWithPs = raw;
+
+                    if (splitOnPara.length >= 2) {
+                      instruction = splitOnPara[0].replace(/<\/?p>/gi, '').trim();
+
+                      // join the rest back WITH paragraph markers preserved
+                      seriesHtmlWithPs = splitOnPara.slice(1).join('</p><p>');
+                      // remove a single leading/trailing <p> wrapper if present
+                      seriesHtmlWithPs = seriesHtmlWithPs
+                        .replace(/^<p>/i, '')
+                        .replace(/<\/p>$/i, '')
+                        .trim();
+                    } else {
+                      // no explicit first paragraph; keep inner breaks if any
+                      seriesHtmlWithPs = raw
+                        .replace(/^<p>/i, '')
+                        .replace(/<\/p>$/i, '')
+                        .trim();
                     }
 
-                    // Remainder contains the blanks
-                    let seriesHtml = paras.join('<br/>').trim();
+                    // Normalize comma spacing (keep tidy)
+                    seriesHtmlWithPs = seriesHtmlWithPs.replace(/\s*,\s*/g, ', ');
 
-                    // Tidy commas, preserve line breaks, remove stray <p> tags
-                    seriesHtml = seriesHtml
-                      .replace(/\s*,\s*/g, ', ')
-                      .replace(/<\/p>\s*<p>/gi, '<br/>')
-                      .replace(/<\/?p>/gi, '');
+                    // Preserve author line breaks:
+                    // turn paragraph boundaries into an explicit <br/> so the blank after it drops to next line,
+                    // then remove the remaining <p> wrappers (we don't want nested block elements here)
+                    seriesHtmlWithPs = seriesHtmlWithPs
+                      .replace(/<\/p>\s*<p>/gi, '<br/>')  // paragraph join -> line break
+                      .replace(/<\/?p>/gi, '');           // strip <p> and </p>
 
-                    // Split around [a], [b], ... while retaining surrounding HTML
-                    const parts = seriesHtml.split(/\[(.*?)\]/g);
+                    // Split by [a], [b], ... while retaining HTML around them
+                    const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
 
                     return (
                       <div className="mt-2">
-                        {leadingImages.length > 0 && (
-                          <div className="mb-2">
-                            <span dangerouslySetInnerHTML={{ __html: leadingImages.join('<br/>') }} />
-                          </div>
-                        )}
-
+                        {/* instruction on its own line */}
                         {instruction && (
                           <div className="mb-2">
                             <span dangerouslySetInnerHTML={{ __html: instruction }} />
                           </div>
                         )}
 
+                        {/* series rendered, respecting <br> before blanks */}
                         <div style={{ whiteSpace: 'normal' }}>
                           {parts.map((part, index) => {
                             const isInput = index % 2 === 1;
@@ -401,7 +383,7 @@ const QuizAttempt = () => {
                               const compoundId = `${currentQuestion.question_id}_${key}`;
                               const value = answers[compoundId] || '';
 
-                              // New line if previous chunk ends with <br>
+                              // Look at previous chunk: if it ends with <br>, drop input to a new line
                               const prev = parts[index - 1] || '';
                               const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
 
@@ -418,11 +400,11 @@ const QuizAttempt = () => {
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,
-                                    lineHeight: `${fontSize * 1.2}px`,
+                                    height: `${fontSize * 1.2}px`,     // tighter box
+                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
-                                    verticalAlign: 'text-bottom',
+                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
                                   }}
                                 />
                               );
@@ -441,6 +423,7 @@ const QuizAttempt = () => {
                               );
                             }
 
+                            // Normal HTML chunk (still contains any internal <br>)
                             return (
                               <span
                                 key={`txt-${index}`}
@@ -478,13 +461,7 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={async () => {
-                    if (!canProceed) return;
-                    if (currentQuestion?.type === 'fib') {
-                      await saveAllFibForQuestion(currentQuestion);
-                    }
-                    setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1));
-                  }}
+                  onClick={() => canProceed && setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))}
                   disabled={!canProceed}
                 >
                   Next
@@ -494,13 +471,7 @@ const QuizAttempt = () => {
                   className={`px-6 py-2 rounded font-medium ${
                     canProceed ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
-                  onClick={async () => {
-                    if (!canProceed) return;
-                    if (currentQuestion?.type === 'fib') {
-                      await saveAllFibForQuestion(currentQuestion);
-                    }
-                    await handleSubmit();
-                  }}
+                  onClick={() => canProceed && handleSubmit()}
                   disabled={!canProceed}
                 >
                   {previewMode ? 'Exit Preview' : 'Submit Quiz'}
