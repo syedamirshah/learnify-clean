@@ -99,13 +99,38 @@ const LandingPage = () => {
     window.location.href = '/';
   };
 
-  // Put chapters into 3 simple buckets (round-robin). We only need 3 wrappers;
-  // the grid will make each wrapper the same height.
-  const toThreeColumns = (items) => {
-    const cols = [[], [], []];
-    items.forEach((item, i) => cols[i % 3].push(item));
-    return cols;
-  };
+  // Estimate a chapter "height": 1 for the title + one per quiz.
+const chapterWeight = (ch) =>
+  1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
+
+/**
+ * Split an ordered chapter list into `cols` sequential columns,
+ * trying to balance total height per column. Order is preserved;
+ * chapters are never split.
+ */
+const splitChaptersBalanced = (chapters, cols = 3) => {
+  const total = chapters.reduce((s, ch) => s + chapterWeight(ch), 0);
+  const target = Math.ceil(total / cols);
+
+  const out = Array.from({ length: cols }, () => []);
+  let col = 0;
+  let used = 0;
+
+  chapters.forEach((ch, i) => {
+    const w = chapterWeight(ch);
+    const remainingChapters = chapters.length - i - 1;
+    const remainingCols = cols - col - 1;
+
+    if (used > 0 && used + w > target && remainingCols >= 1) {
+      col += 1;
+      used = 0;
+    }
+    out[col].push(ch);
+    used += w;
+  });
+
+  return out;
+};
 
   return (
     <div className="bg-white min-h-screen font-[Calibri] text-gray-800">
@@ -242,7 +267,7 @@ const LandingPage = () => {
 
                 {/* Chapters and Quizzes — 3 equal-height columns */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-                  {toThreeColumns(subjectItem.chapters).map((column, colIdx) => (
+                {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
                     <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
                       {column.map((chapterItem, chapterIndex) => (
                         <div key={`chapter-${colIdx}-${chapterIndex}`} className="px-2">
