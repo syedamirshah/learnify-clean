@@ -99,6 +99,14 @@ const LandingPage = () => {
     window.location.href = '/';
   };
 
+  // Put chapters into 3 simple buckets (round-robin). We only need 3 wrappers;
+  // the grid will make each wrapper the same height.
+  const toThreeColumns = (items) => {
+    const cols = [[], [], []];
+    items.forEach((item, i) => cols[i % 3].push(item));
+    return cols;
+  };
+
   return (
     <div className="bg-white min-h-screen font-[Calibri] text-gray-800">
       <header className="flex justify-between items-center px-4 pt-4 pb-2">
@@ -232,36 +240,41 @@ const LandingPage = () => {
                   {subjectItem.subject}
                 </h3>
 
-                <div className="catalog">
-                  {subjectItem.chapters.map((chapterItem, chapterIndex) => (
-                    <div key={`chapter-${chapterIndex}`} className="mb-6 px-2">
-                      <div className="mb-2">
-                        <span className="text-green-700 font-bold text-base">
-                          {chapterItem.chapter}.
-                        </span>
-                      </div>
+                {/* Chapters and Quizzes — 3 equal-height columns */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                  {toThreeColumns(subjectItem.chapters).map((column, colIdx) => (
+                    <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
+                      {column.map((chapterItem, chapterIndex) => (
+                        <div key={`chapter-${colIdx}-${chapterIndex}`} className="px-2">
+                          {/* Chapter Title */}
+                          <div className="mb-2">
+                            <span className="text-green-700 font-bold text-base">
+                              {chapterItem.chapter}.
+                            </span>
+                          </div>
 
-                      <div className="space-y-1">
-                        {[...chapterItem.quizzes]
-                          .sort((a, b) => {
-                            const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                            const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                            if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
-                              return numA - numB;
-                            }
-                            return (a.title || '').localeCompare(b.title || '');
-                          })
-                          .map((quiz) => (
-                            <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                              <Link
-                                to={`/student/attempt-quiz/${quiz.id}`}
-                                className="text-green-800 hover:text-green-600 hover:underline"
-                              >
-                                {quiz.title}
-                              </Link>
-                            </div>
-                          ))}
-                      </div>
+                          {/* Numbered Quiz List — sorted by leading number */}
+                          <div className="space-y-1">
+                            {[...chapterItem.quizzes]
+                              .sort((a, b) => {
+                                const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+                                return (a.title || '').localeCompare(b.title || '');
+                              })
+                              .map((quiz) => (
+                                <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
+                                  <Link
+                                    to={`/student/attempt-quiz/${quiz.id}`}
+                                    className="text-green-800 hover:text-green-600 hover:underline"
+                                  >
+                                    {quiz.title}
+                                  </Link>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
