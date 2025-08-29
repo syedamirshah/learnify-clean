@@ -9,7 +9,7 @@ const LandingPage = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(null);
   const [userFullName, setFullName] = useState('');
-  const [quizData, setQuizData] = useState([]);  // ‚Äö√∫√ñ NEW
+  const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
 
   // Load role and name
@@ -32,16 +32,16 @@ const LandingPage = () => {
   }, [navigate]);
 
   // Fetch quiz data from backend and log it
-    useEffect(() => {
-      import('axios').then(({ default: axios }) => {
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}landing/quizzes/`)
-          .then(res => {
-            console.log("✅ Public Quiz API Response:", res.data);
-            setQuizData(res.data);
-          })
-          .catch(err => console.error("❌ Error fetching quizzes:", err));
-      });
-    }, []);
+  useEffect(() => {
+    import('axios').then(({ default: axios }) => {
+      axios.get(`${import.meta.env.VITE_API_BASE_URL}landing/quizzes/`)
+        .then(res => {
+          console.log("✅ Public Quiz API Response:", res.data);
+          setQuizData(res.data);
+        })
+        .catch(err => console.error("❌ Error fetching quizzes:", err));
+    });
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -158,7 +158,6 @@ const LandingPage = () => {
           </Link>
         </div>
 
-        {/* Assessment Section */}
         <div className="relative group py-2">
           {role === 'student' && (
             <>
@@ -191,7 +190,6 @@ const LandingPage = () => {
           <Link to="/help-center" className="text-white hover:underline">Help Center</Link>
         </div>
 
-        {/* Account Settings */}
         {role && (
           <div className="relative group py-2">
             <button className="text-white hover:underline font-normal">Account Settings</button>
@@ -221,65 +219,59 @@ const LandingPage = () => {
       </section>
 
       {/* Dynamic Quiz View */}
-      <div className="mt-14 px-6">
+      <div className="mt-14 px-6 max-w-7xl mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
-            <div key={`grade-${gradeIndex}`} className="mb-12">
-            {/* Grade Heading (Only Once) */}
+          <div key={`grade-${gradeIndex}`} className="mb-12">
             <h2 className="text-2xl font-bold text-green-800 text-center mb-4">
-                {gradeItem.grade}
+              {gradeItem.grade}
             </h2>
 
             {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-                <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
-                {/* ‚Äö√∫√ñ Subject Name */}
+              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
                 <h3 className="text-xl text-green-700 font-semibold text-center mb-4">
-                    {subjectItem.subject}
+                  {subjectItem.subject}
                 </h3>
 
-                {/* Chapters and Quizzes */}
-                  <div className="catalog">
-                    {subjectItem.chapters.map((chapterItem, chapterIndex) => (
-                      <div key={`chapter-${chapterIndex}`} className="break-inside-avoid mb-6 px-2">
-                        {/* Chapter Title */}
-                        <div className="mb-2">
-                          <span className="text-green-700 font-bold text-base">
-                            {chapterItem.chapter}.
-                          </span>
-                        </div>
-
-                        {/* Numbered Quiz List — sorted by number */}
-                        <div className="space-y-1">
-                          {[...chapterItem.quizzes]
-                            .sort((a, b) => {
-                              const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                              const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                              if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
-                                return numA - numB;
-                              }
-                              return (a.title || '').localeCompare(b.title || '');
-                            })
-                            .map((quiz, idx) => (
-                              <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                                <Link
-                                  to={`/student/attempt-quiz/${quiz.id}`}
-                                  className="text-green-800 hover:text-green-600 hover:underline"
-                                >
-                                  {quiz.title}
-                                </Link>
-                              </div>
-                            ))}
-                        </div>
+                <div className="catalog">
+                  {subjectItem.chapters.map((chapterItem, chapterIndex) => (
+                    <div key={`chapter-${chapterIndex}`} className="mb-6 px-2">
+                      <div className="mb-2">
+                        <span className="text-green-700 font-bold text-base">
+                          {chapterItem.chapter}.
+                        </span>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="space-y-1">
+                        {[...chapterItem.quizzes]
+                          .sort((a, b) => {
+                            const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                            const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                            if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) {
+                              return numA - numB;
+                            }
+                            return (a.title || '').localeCompare(b.title || '');
+                          })
+                          .map((quiz) => (
+                            <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
+                              <Link
+                                to={`/student/attempt-quiz/${quiz.id}`}
+                                className="text-green-800 hover:text-green-600 hover:underline"
+                              >
+                                {quiz.title}
+                              </Link>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
             ))}
-            </div>
+          </div>
         ))}
-        </div>
+      </div>
     </div>
   );
 };
 
 export default LandingPage;
-
