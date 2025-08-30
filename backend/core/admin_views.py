@@ -632,27 +632,36 @@ def user_dashboard(request):
 
 @staff_member_required
 def admin_question_bank_view(request):
-    # --- read filter from query string ---
-    selected_grade = (request.GET.get('grade') or '').strip()
+    # ---------- read query params ----------
+    sort_key = (request.GET.get('sort') or 'created').strip()   # 'created' | 'title'
+    sort_dir = (request.GET.get('dir') or 'desc').strip()       # 'asc' | 'desc'
+    per_page = (request.GET.get('per_page') or '50').strip()    # '50' | '100' | 'all'
+    page_num = (request.GET.get('page') or '1').strip()
 
-    # --- base queryset (unchanged) ---
-    question_banks = QuestionBank.objects.all().order_by('title')
+    # ---------- choose a safe "created" field (fallback to id) ----------
+    qb_fields = {f.name for f in QuestionBank._meta.get_fields()}
+    created_field = next(
+        (f for f in ('created_at', 'created', 'created_on', 'date_created', 'timestamp', 'id') if f in qb_fields),
+        'id'
+    )
 
-    # --- apply Grade filter via assignments (bank -> assignment -> quiz -> grade) ---
-    if selected_grade:
-        from core.models import QuizQuestionAssignment  # keep imports local to match your style
-        bank_ids = (
-            QuizQuestionAssignment.objects
-            .filter(quiz__grade__name=selected_grade)
-            .values_list('question_bank_id', flat=True)
-            .distinct()
-        )
-        question_banks = question_banks.filter(id__in=bank_ids)
+    # map UI sort to DB field; default to created
+    sort_map = {
+        'title': 'title',
+        'created': created_field,
+    }
+    sort_expr = sort_map.get(sort_key, created_field)
+    if sort_dir == 'desc':
+        sort_expr = f'-{sort_expr}'
 
-    # --- your existing question count logic (unchanged) ---
+    # ---------- base queryset (preserves your original behavior) ----------
+    qs = QuestionBank.objects.all().order_by(sort_expr)
+
+    # ---------- your original question-count logic (unchanged) ----------
     question_counts = {}
 
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as in your original
+    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as in your code
+
     # Count SCQ questions
     for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
@@ -665,20 +674,37 @@ def admin_question_bank_view(request):
     for bank_id, count in FIBQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
-    # Attach count to each question bank object
+    # ---------- pagination ----------
+    page_obj = None
+    if per_page.lower() == 'all':
+        question_banks = list(qs)
+    else:
+        try:
+            per_page_int = int(per_page)
+        except ValueError:
+            per_page_int = 50
+        paginator = Paginator(qs, per_page_int)
+        page_obj = paginator.get_page(page_num)
+        question_banks = list(page_obj.object_list)
+
+    # Attach counts to visible items
     for bank in question_banks:
         bank.question_count = question_counts.get(bank.id, 0)
 
-    # --- dropdown data (same pattern as quizzes page) ---
-    from core.models import Grade
-    grades = Grade.objects.all().order_by('name')
-
-    return render(request, "admin/dashboard/admin_question_bank.html", {
-        "question_banks": question_banks,
-        "grades": grades,
-        "selected_grade": selected_grade,
-        "request": request,  # lets template keep the selection
-    })
+    return render(
+        request,
+        "admin/dashboard/admin_question_bank.html",
+        {
+            "question_banks": question_banks,
+            # controls for the template
+            "current_sort": sort_key,
+            "current_dir": sort_dir,
+            "per_page": per_page.lower(),
+            # paginator (None when 'all')
+            "page_obj": page_obj,
+            "has_pagination": page_obj is not None,
+        },
+    )
 
 @staff_member_required
 def delete_question(request, q_type, q_id, bank_id):
