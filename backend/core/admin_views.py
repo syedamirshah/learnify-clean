@@ -631,32 +631,53 @@ def user_dashboard(request):
 
 @staff_member_required
 def admin_question_bank_view(request):
-    # Fetch all question banks
-    question_banks = QuestionBank.objects.all().order_by('title')
+    # ---- read requested sort (only 'title' is allowed) ----
+    sort_param = (request.GET.get('sort') or '').lower()
+    dir_param  = (request.GET.get('dir')  or 'asc').lower()
 
-    # Create a dictionary to hold question counts by bank_id
+    # ---- default ordering: newest first by creation-like field ----
+    # try several common field names on QuestionBank; fallback to -id
+    qb_fields = {f.name for f in QuestionBank._meta.get_fields()}
+    for candidate in ('created_at', 'created', 'created_on', 'timestamp',
+                      'date_created', 'added_on', 'created_time', 'id'):
+        if candidate in qb_fields:
+            default_ordering = '-' + candidate  # newest first
+            break
+    else:
+        default_ordering = '-id'
+
+    # ---- compute final ordering ----
+    if sort_param == 'title':
+        ordering = 'title' if dir_param == 'asc' else '-title'
+        current_sort, current_dir = 'title', ('asc' if dir_param == 'asc' else 'desc')
+    else:
+        ordering = default_ordering
+        current_sort, current_dir = 'created', 'desc'  # for template arrow state
+
+    # ---- base queryset (with ordering) ----
+    question_banks = QuestionBank.objects.all().order_by(ordering)
+
+    # ---- your existing question count logic (unchanged) ----
     question_counts = {}
 
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # Adjust if models live elsewhere
+    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as is
 
-    # Count SCQ questions
     for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
-    # Count MCQ questions
     for bank_id, count in MCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
-    # Count FIB questions
     for bank_id, count in FIBQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
-    # Attach count to each question bank object
     for bank in question_banks:
         bank.question_count = question_counts.get(bank.id, 0)
 
     return render(request, "admin/dashboard/admin_question_bank.html", {
-        "question_banks": question_banks
+        "question_banks": question_banks,
+        "current_sort": current_sort,  # used by header to show/toggle arrow
+        "current_dir": current_dir,
     })
 
 @staff_member_required

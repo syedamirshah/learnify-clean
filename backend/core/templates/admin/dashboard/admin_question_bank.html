@@ -17,7 +17,18 @@
   <thead>
     <tr style="background-color: #dfe1e7; text-align: left;">
       <th style="padding: 8px; width: 40px;">#</th>
-      <th style="padding: 8px; width: 36%;">Title</th>
+
+      <!-- 🔼🔽 Clickable sort on Title (only sorting control) -->
+      <th style="padding: 8px; width: 36%;">
+        <a href="?sort=title&dir={% if current_sort == 'title' and current_dir != 'desc' %}desc{% else %}asc{% endif %}"
+           style="text-decoration:none; color:inherit;">
+          Title
+          {% if current_sort == 'title' %}
+            {% if current_dir == 'desc' %} 🔽{% else %} 🔼{% endif %}
+          {% endif %}
+        </a>
+      </th>
+
       <th style="padding: 8px; width: 18%;">Type</th>
       <th style="padding: 8px; width: 80px;">Questions</th>
       <th style="padding: 8px;">Actions</th>
@@ -63,9 +74,7 @@
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   }
-  .btn-main:hover {
-    background-color: #3c7cc4;
-  }
+  .btn-main:hover { background-color: #3c7cc4; }
 
   .action-wrap {
     display: flex;
@@ -86,21 +95,11 @@
     color: #333;
     white-space: nowrap;
   }
-  .btn-action:hover {
-    background-color: #c5cbe2;
-  }
+  .btn-action:hover { background-color: #c5cbe2; }
 
-  td {
-    vertical-align: top;
-    font-size: 14px; /* ✅ Smaller text for content cells */
-  }
+  td { vertical-align: top; font-size: 14px; }
+  th { font-size: 14px; }
 
-  th {
-    font-size: 14px; /* ✅ Smaller text for headers */
-  }
-
-  #content-main + div, #nav-sidebar {
-    display: none !important;
-  }
+  #content-main + div, #nav-sidebar { display: none !important; }
 </style>
 {% endblock %}
