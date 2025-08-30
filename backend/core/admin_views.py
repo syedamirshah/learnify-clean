@@ -561,52 +561,45 @@ def admin_question_bank_view(request):
     """
     Question Bank list with filters:
       - Grade (by Grade.name)
-      - Chapter (by Chapter.id) if your QuestionBank actually has a chapter FK.
-    Safe even if QuestionBank has no 'chapter' field (we auto-detect).
+      - Chapter (by Chapter.id) if QuestionBank actually has a chapter FK.
+    This version ALWAYS passes a populated `grades` list like the quiz page.
     """
 
     selected_grade = (request.GET.get('grade') or '').strip()      # e.g. "Grade 3"
-    selected_chapter = (request.GET.get('chapter') or '').strip()  # chapter id as string
+    selected_chapter = (request.GET.get('chapter') or '').strip()  # chapter id as str
 
-    # Detect whether QuestionBank has a direct 'chapter' FK
-    qb_fields = {f.name for f in QuestionBank._meta.get_fields()}
-    has_chapter_fk = 'chapter' in qb_fields
+    # Detect whether QuestionBank has a direct 'chapter' field (avoid FieldError)
+    qb_field_names = {f.name for f in QuestionBank._meta.get_fields()}
+    has_chapter_fk = 'chapter' in qb_field_names
 
-    # Base queryset: follow the path that surely exists (subject -> grade)
+    # Base queryset (follow a path we know exists: subject -> grade)
     banks = (
         QuestionBank.objects
-        .select_related('subject', 'subject__grade')  # this is safe
+        .select_related('subject', 'subject__grade')
         .all()
         .order_by('title')
     )
 
-    # Filters
+    # Apply filters
     if selected_grade:
         banks = banks.filter(subject__grade__name=selected_grade)
 
     if has_chapter_fk and selected_chapter:
         banks = banks.filter(chapter_id=selected_chapter)
 
-    # ---- Dropdown data ------------------------------------------------------
+    # -------- Dropdown data (mirror quiz page) --------
+    # ✅ Always show all grades so the dropdown is never empty
+    grades = Grade.objects.all().order_by('name')
 
-    # 1) Grades: show only grades that actually have at least one bank
-    grades = (
-        Grade.objects
-        .filter(subject__questionbank__isnull=False)
-        .distinct()
-        .order_by('name')
-    )
-
-    # 2) Chapters: if a grade is chosen, list that grade's chapters; else show all (or none)
+    # Chapters depend on the chosen grade (or show all if you prefer)
     if selected_grade:
+        grade_obj = Grade.objects.filter(name=selected_grade).first()
         chapters = (
-            Chapter.objects
-            .filter(subject__grade__name=selected_grade)
-            .order_by('number', 'name', 'title')
+            Chapter.objects.filter(subject__grade=grade_obj).order_by('number', 'name', 'title')
+            if grade_obj else Chapter.objects.none()
         )
     else:
-        # You can choose to show none or all; quizzes page shows “All Subjects”,
-        # so we mirror that UX by showing all chapters so the menu isn’t empty.
+        # You can choose Chapter.objects.none() if you want it empty until a grade is picked
         chapters = Chapter.objects.all().order_by('number', 'name', 'title')
 
     return render(
@@ -614,9 +607,9 @@ def admin_question_bank_view(request):
         'admin/dashboard/admin_question_bank.html',
         {
             'question_banks': banks,
-            'grades': grades,                 # <<— the critical bit for the dropdown
+            'grades': grades,          # <- critical for the dropdown
             'chapters': chapters,
-            'request': request,               # used by template to keep selections
+            'request': request,        # keeps selections in the template
         },
     )
 
