@@ -6,7 +6,7 @@
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
 {# ───────────────────────────────────────────────────────────────────────────── #}
-{# Filters – SAME PATTERN as quizzes page: Grade (by name) → Chapter (by id)   #}
+{# Filters – Grade (by name/title) → Chapter (by id)                            #}
 {# Context: grades, chapters, selected_grade, selected_chapter                 #}
 {# ───────────────────────────────────────────────────────────────────────────── #}
 <form method="get" style="margin-bottom: 16px;">
@@ -16,10 +16,15 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for g in grades %}
-          <option value="{{ g.name }}"
-                  {% if request.GET.grade == g.name or selected_grade == g.name %}selected{% endif %}>
-            {{ g.name }}
+          {# value & label use first existing: g.name or g.title #}
+          {% with grade_val=default %}
+          <option
+            value="{% firstof g.name g.title %}"
+            {% if request.GET.grade == g.name or request.GET.grade == g.title
+                  or selected_grade == g.name or selected_grade == g.title %}selected{% endif %}>
+            {% firstof g.name g.title %}
           </option>
+          {% endwith %}
         {% endfor %}
       </select>
     </div>
@@ -33,7 +38,7 @@
           {% for c in chapters %}
             <option value="{{ c.id }}"
                     {% if request.GET.chapter == c.id|stringformat:'s' or selected_chapter == c.id|stringformat:'s' %}selected{% endif %}>
-              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name }}
+              {% if c.number %}{{ c.number }} — {% endif %}{% firstof c.title c.name %}
             </option>
           {% endfor %}
         {% endif %}
@@ -124,11 +129,9 @@
   (function () {
     var grade = document.getElementById('grade');
     var chapter = document.getElementById('chapter');
-    function toggle() { chapter.disabled = !grade.value; }
-    if (grade && chapter) {
-      grade.addEventListener('change', toggle);
-      toggle();
-    }
+    function toggle() { if (chapter) chapter.disabled = !grade.value; }
+    if (grade) grade.addEventListener('change', toggle);
+    toggle();
   })();
 </script>
 {% endblock %}

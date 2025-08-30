@@ -560,18 +560,17 @@ def admin_list_quizzes_view(request):
 
 @login_required
 def admin_question_bank_list(request):
-    # Match quizzes page: grade by NAME, chapter by ID
+    # EXACTLY like quizzes: grade filter uses Grade.name; chapter filter uses id.
     selected_grade = (request.GET.get('grade') or '').strip()
     selected_chapter = (request.GET.get('chapter') or '').strip()
 
-    # Base queryset (keeps your relateds & order)
     banks = (
         QuestionBank.objects
         .select_related('chapter', 'chapter__subject', 'chapter__subject__grade')
         .order_by('title')
     )
 
-    # Chapters list depends on selected grade (same idea as subjects in quizzes page)
+    # Chapters are populated only when a grade is chosen
     chapters = Chapter.objects.none()
     if selected_grade:
         banks = banks.filter(chapter__subject__grade__name=selected_grade)
@@ -592,10 +591,9 @@ def admin_question_bank_list(request):
         {
             'question_banks': banks,
             'grades': grades,
-            'chapters': chapters,                 # only populated when a grade is selected
+            'chapters': chapters,
             'selected_grade': selected_grade,
             'selected_chapter': selected_chapter,
-            'request': request,                   # you already pass it elsewhere; harmless here
         },
     )
 
