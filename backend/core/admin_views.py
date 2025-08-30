@@ -559,30 +559,56 @@ def admin_list_quizzes_view(request):
     })
 
 @login_required
-def admin_question_bank_list(request):
-    # EXACTLY like quizzes: grade filter uses Grade.name; chapter filter uses id.
+def admin_question_bank_view(request):
+    """
+    Question Bank list with optional filters:
+      - grade (by Grade.name, same as quizzes page)
+      - chapter (by Chapter.id)
+    Works whether QuestionBank has a FK 'chapter' or an M2M 'chapters'.
+    """
+    # read filters
     selected_grade = (request.GET.get('grade') or '').strip()
     selected_chapter = (request.GET.get('chapter') or '').strip()
 
-    banks = (
-        QuestionBank.objects
-        .select_related('chapter', 'chapter__subject', 'chapter__subject__grade')
-        .order_by('title')
+    # base queryset
+    banks = QuestionBank.objects.all().order_by('title')
+
+    # introspect the QuestionBank relations
+    fields = {f.name: f for f in QuestionBank._meta.get_fields()}
+    has_fk_chapter = (
+        'chapter' in fields and fields['chapter'].is_relation and not fields['chapter'].many_to_many
+    )
+    has_m2m_chapters = (
+        'chapters' in fields and fields['chapters'].is_relation and fields['chapters'].many_to_many
     )
 
-    # Chapters are populated only when a grade is chosen
-    chapters = Chapter.objects.none()
+    # when a grade is selected, filter banks and build chapter dropdown
     if selected_grade:
-        banks = banks.filter(chapter__subject__grade__name=selected_grade)
-        grade_obj = Grade.objects.filter(name=selected_grade).first()
-        if grade_obj:
+        if has_fk_chapter:
+            banks = banks.filter(chapter__subject__grade__name=selected_grade)
             chapters = Chapter.objects.filter(
-                subject__grade=grade_obj
+                subject__grade__name=selected_grade
             ).order_by('number', 'name', 'title')
+        elif has_m2m_chapters:
+            banks = banks.filter(chapters__subject__grade__name=selected_grade).distinct()
+            chapters = Chapter.objects.filter(
+                subject__grade__name=selected_grade
+            ).order_by('number', 'name', 'title')
+        else:
+            # No link from QuestionBank to Chapter — keep UI alive but no chapter options
+            chapters = Chapter.objects.none()
+    else:
+        chapters = Chapter.objects.none()
 
+    # chapter filter (if provided)
     if selected_chapter:
-        banks = banks.filter(chapter_id=selected_chapter)
+        if has_fk_chapter:
+            banks = banks.filter(chapter_id=selected_chapter)
+        elif has_m2m_chapters:
+            banks = banks.filter(chapters__id=selected_chapter).distinct()
+        # else: no relation; ignore silently
 
+    # grade dropdown (same as quizzes page — uses Grade.name)
     grades = Grade.objects.all().order_by('name')
 
     return render(
