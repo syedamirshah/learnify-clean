@@ -32,6 +32,7 @@ from core.admin_views import (
     create_metadata_view, quiz_question_assignment_view, quiz_formatting_view,
     edit_question_bank, delete_question_bank, delete_question,
     bulk_delete_users,
+    admin_question_bank_list,
 )
 
 # --- Stats dashboard ---
@@ -126,7 +127,7 @@ urlpatterns = [
 
     # ---------- Admin dashboard shortcuts ----------
     path('admin/dashboard/users/', user_dashboard, name='admin-user-dashboard'),
-    path('admin/dashboard/question-bank/', admin_question_bank_view, name='admin-question-bank'),
+    path('admin/dashboard/question-bank/', admin_question_bank_list, name='admin-question-bank'),
     path('admin/dashboard/student-results/<int:student_id>/', admin_student_quiz_history, name='admin_student_quiz_history'),
 
     # ---------- Admin helpers / dropdowns ----------
