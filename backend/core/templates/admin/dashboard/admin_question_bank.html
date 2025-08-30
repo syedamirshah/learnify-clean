@@ -5,10 +5,6 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-{# ───────────────────────────────────────────────────────────────────────────── #}
-{# Filters – Grade (by name/title) → Chapter (by id)                            #}
-{# Context: grades, chapters, selected_grade, selected_chapter                 #}
-{# ───────────────────────────────────────────────────────────────────────────── #}
 <form method="get" style="margin-bottom: 16px;">
   <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
     <div>
@@ -16,15 +12,12 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for g in grades %}
-          {# value & label use first existing: g.name or g.title #}
-          {% with grade_val=default %}
           <option
             value="{% firstof g.name g.title %}"
             {% if request.GET.grade == g.name or request.GET.grade == g.title
                   or selected_grade == g.name or selected_grade == g.title %}selected{% endif %}>
             {% firstof g.name g.title %}
           </option>
-          {% endwith %}
         {% endfor %}
       </select>
     </div>
@@ -58,7 +51,6 @@
   </div>
 {% endif %}
 
-<!-- 📋 Question Bank Table -->
 <table style="width: 100%; border-collapse: collapse; background-color: white; table-layout: fixed;">
   <thead>
     <tr style="background-color: #dfe1e7; text-align: left;">
@@ -98,7 +90,6 @@
   </tbody>
 </table>
 
-<!-- 🖌️ Styles -->
 <style>
   .btn-main {
     padding: 8px 16px;
@@ -125,7 +116,6 @@
 </style>
 
 <script>
-  // Small UX touch: disable chapter select when no grade selected
   (function () {
     var grade = document.getElementById('grade');
     var chapter = document.getElementById('chapter');
