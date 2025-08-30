@@ -559,57 +559,64 @@ def admin_list_quizzes_view(request):
 @login_required
 def admin_question_bank_view(request):
     """
-    Question Bank list with filters:
-      - Grade (by Grade.name)
-      - Chapter (by Chapter.id) if QuestionBank actually has a chapter FK.
-    This version ALWAYS passes a populated `grades` list like the quiz page.
+    Question Bank list with filters + per-bank question counts.
+    - Grade filter uses Grade.name
+    - Chapter filter (only applied if QuestionBank has a chapter FK)
     """
+    selected_grade  = (request.GET.get('grade') or '').strip()      # e.g. "Grade 3"
+    selected_chapter = (request.GET.get('chapter') or '').strip()   # chapter id as str
 
-    selected_grade = (request.GET.get('grade') or '').strip()      # e.g. "Grade 3"
-    selected_chapter = (request.GET.get('chapter') or '').strip()  # chapter id as str
+    # Does QuestionBank have a direct chapter FK?
+    has_chapter_fk = 'chapter' in {f.name for f in QuestionBank._meta.get_fields()}
 
-    # Detect whether QuestionBank has a direct 'chapter' field (avoid FieldError)
-    qb_field_names = {f.name for f in QuestionBank._meta.get_fields()}
-    has_chapter_fk = 'chapter' in qb_field_names
-
-    # Base queryset (follow a path we know exists: subject -> grade)
+    # Base queryset (follow subject -> grade path which we know exists)
     banks = (
         QuestionBank.objects
-        .select_related('subject', 'subject__grade')
+        .select_related('subject', 'subject__grade')   # safe path for filtering by grade
         .all()
         .order_by('title')
     )
 
-    # Apply filters
+    # Filters
     if selected_grade:
         banks = banks.filter(subject__grade__name=selected_grade)
-
     if has_chapter_fk and selected_chapter:
         banks = banks.filter(chapter_id=selected_chapter)
 
-    # -------- Dropdown data (mirror quiz page) --------
-    # ✅ Always show all grades so the dropdown is never empty
+    # ---- Aggregate question counts (SCQ + MCQ + FIB) ----
+    counts = {}
+    for model in (SCQQuestion, MCQQuestion, FIBQuestion):
+        # values_list('question_bank') returns (bank_id,) tuples; annotate adds count
+        for bank_id, c in model.objects.values_list('question_bank').annotate(c=Count('id')):
+            counts[bank_id] = counts.get(bank_id, 0) + c
+
+    # Attach .question_count to each bank
+    for bank in banks:
+        bank.question_count = counts.get(bank.id, 0)
+
+    # ---- Dropdown data (match the working quiz page pattern) ----
     grades = Grade.objects.all().order_by('name')
 
-    # Chapters depend on the chosen grade (or show all if you prefer)
     if selected_grade:
         grade_obj = Grade.objects.filter(name=selected_grade).first()
         chapters = (
-            Chapter.objects.filter(subject__grade=grade_obj).order_by('number', 'name', 'title')
+            Chapter.objects.filter(subject__grade=grade_obj)
+            .order_by('number', 'title', 'name')
             if grade_obj else Chapter.objects.none()
         )
     else:
-        # You can choose Chapter.objects.none() if you want it empty until a grade is picked
-        chapters = Chapter.objects.all().order_by('number', 'name', 'title')
+        chapters = Chapter.objects.none()
 
     return render(
         request,
-        'admin/dashboard/admin_question_bank.html',
+        "admin/dashboard/admin_question_bank.html",
         {
-            'question_banks': banks,
-            'grades': grades,          # <- critical for the dropdown
-            'chapters': chapters,
-            'request': request,        # keeps selections in the template
+            "question_banks": banks,
+            "grades": grades,                    # critical for the dropdown
+            "chapters": chapters,
+            "selected_grade": selected_grade,    # optional, helps template default selection
+            "selected_chapter": selected_chapter,
+            "request": request,                  # your templates use this for selected options
         },
     )
 
@@ -686,35 +693,6 @@ def restore_backup(request, filename):
 def user_dashboard(request):
     return render(request, 'admin/dashboard/admin_users.html')
 
-@staff_member_required
-def admin_question_bank_view(request):
-    # Fetch all question banks
-    question_banks = QuestionBank.objects.all().order_by('title')
-
-    # Create a dictionary to hold question counts by bank_id
-    question_counts = {}
-
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # Adjust if models live elsewhere
-
-    # Count SCQ questions
-    for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
-        question_counts[bank_id] = question_counts.get(bank_id, 0) + count
-
-    # Count MCQ questions
-    for bank_id, count in MCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
-        question_counts[bank_id] = question_counts.get(bank_id, 0) + count
-
-    # Count FIB questions
-    for bank_id, count in FIBQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
-        question_counts[bank_id] = question_counts.get(bank_id, 0) + count
-
-    # Attach count to each question bank object
-    for bank in question_banks:
-        bank.question_count = question_counts.get(bank.id, 0)
-
-    return render(request, "admin/dashboard/admin_question_bank.html", {
-        "question_banks": question_banks
-    })
 
 @staff_member_required
 def delete_question(request, q_type, q_id, bank_id):
