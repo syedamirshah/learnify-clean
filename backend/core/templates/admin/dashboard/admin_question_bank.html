@@ -9,12 +9,9 @@
 {# Controls: Sort + Per-page                                                   #}
 {# ───────────────────────────────────────────────────────────────────────────── #}
 {% with
-  sort=(current_sort|default:request.GET.sort|default:"created")|
-        lower
-  dir=(current_dir|default:request.GET.dir|default:"desc")|
-        lower
-  per=(per_page|default:request.GET.per_page|default:"50")|
-        lower
+  sort=current_sort|default:request.GET.sort|default:"created"|lower
+  dir=current_dir|default:request.GET.dir|default:"desc"|lower
+  per=per_page|default:request.GET.per_page|default:"50"|lower
 %}
 <form method="get" style="margin-bottom: 12px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
   <div>
@@ -58,19 +55,15 @@
 
 <!-- 📋 Question Bank Table -->
 {% with
-  sort=(current_sort|default:request.GET.sort|default:"created")|
-        lower
-  dir=(current_dir|default:request.GET.dir|default:"desc")|
-        lower
-  per=(per_page|default:request.GET.per_page|default:"50")|
-        lower
+  sort=current_sort|default:request.GET.sort|default:"created"|lower
+  dir=current_dir|default:request.GET.dir|default:"desc"|lower
+  per=per_page|default:request.GET.per_page|default:"50"|lower
 %}
 <table style="width: 100%; border-collapse: collapse; background-color: white; table-layout: fixed;">
   <thead>
     <tr style="background-color: #dfe1e7; text-align: left;">
       <th style="padding: 8px; width: 40px;">#</th>
       <th style="padding: 8px; width: 36%;">
-        {# Make "Title" header clickable to sort like your quiz page #}
         <a href="?sort=title&dir={% if sort == 'title' and dir != 'desc' %}desc{% else %}asc{% endif %}&per_page={{ per }}"
            style="text-decoration:none; color:inherit;">
           Title
@@ -119,9 +112,6 @@
   </tbody>
 </table>
 
-{# ───────────────────────────────────────────────────────────────────────────── #}
-{# Pagination footer                                                            #}
-{# ───────────────────────────────────────────────────────────────────────────── #}
 {% if page_obj %}
   <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
     <div style="font-size:13px;">
@@ -153,38 +143,17 @@
 {% endif %}
 {% endwith %}
 
-<!-- 🖌️ Styles -->
 <style>
   .btn-main {
-    padding: 8px 16px;
-    background-color: #4a90e2;
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 600;
+    padding: 8px 16px; background-color: #4a90e2; color: white;
+    text-decoration: none; border-radius: 6px; font-weight: 600;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   }
   .btn-main:hover { background-color: #3c7cc4; }
 
-  .action-wrap {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 4px;
-    flex-direction: row;
-    flex-shrink: 1;
-    flex-wrap: wrap;
-  }
-
-  .btn-action {
-    background-color: #e2e6f0;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
-  }
+  .action-wrap { display: flex; flex-wrap: nowrap; gap: 4px; flex-direction: row; flex-shrink: 1; flex-wrap: wrap; }
+  .btn-action { background-color: #e2e6f0; padding: 4px 8px; font-size: 12px; border-radius: 4px;
+                text-decoration: none; font-weight: 500; color: #333; white-space: nowrap; }
   .btn-action:hover { background-color: #c5cbe2; }
 
   td { vertical-align: top; font-size: 14px; }
