@@ -632,35 +632,44 @@ def user_dashboard(request):
 
 @staff_member_required
 def admin_question_bank_view(request):
-    # ---------- read query params ----------
-    sort_key = (request.GET.get('sort') or 'created').strip()   # 'created' | 'title'
-    sort_dir = (request.GET.get('dir') or 'desc').strip()       # 'asc' | 'desc'
-    per_page = (request.GET.get('per_page') or '50').strip()    # '50' | '100' | 'all'
-    page_num = (request.GET.get('page') or '1').strip()
+    """
+    Question Bank list with simple sorting:
+      - ?sort=created|title   (default: created)
+      - ?dir=asc|desc         (default: desc)
 
-    # ---------- choose a safe "created" field (fallback to id) ----------
-    qb_fields = {f.name for f in QuestionBank._meta.get_fields()}
-    created_field = next(
-        (f for f in ('created_at', 'created', 'created_on', 'date_created', 'timestamp', 'id') if f in qb_fields),
-        'id'
-    )
+    'created' will use the first available field among:
+    created_at, created, created_on, timestamp, created_date, date_created, added_on, created_time.
+    Falls back to 'id' if none exist.
+    """
+    # ---- resolve sort field & direction ----
+    sort_param = (request.GET.get('sort') or 'created').lower()
+    dir_param = (request.GET.get('dir') or 'desc').lower()
 
-    # map UI sort to DB field; default to created
-    sort_map = {
-        'title': 'title',
-        'created': created_field,
-    }
-    sort_expr = sort_map.get(sort_key, created_field)
-    if sort_dir == 'desc':
-        sort_expr = f'-{sort_expr}'
+    # find a usable "created" field on QuestionBank, else fall back to id
+    created_field = None
+    for candidate in (
+        'created_at', 'created', 'created_on', 'timestamp',
+        'created_date', 'date_created', 'added_on', 'created_time'
+    ):
+        try:
+            QuestionBank._meta.get_field(candidate)
+            created_field = candidate
+            break
+        except FieldDoesNotExist:
+            continue
+    if created_field is None:
+        created_field = 'id'  # safe fallback
 
-    # ---------- base queryset (preserves your original behavior) ----------
-    qs = QuestionBank.objects.all().order_by(sort_expr)
+    sort_field = 'title' if sort_param == 'title' else created_field
+    sort_expression = f"-{sort_field}" if dir_param == 'desc' else sort_field
 
-    # ---------- your original question-count logic (unchanged) ----------
+    # ---- your original queryset, now ordered as requested ----
+    question_banks = QuestionBank.objects.all().order_by(sort_expression)
+
+    # ---- your existing question-count logic (unchanged) ----
     question_counts = {}
 
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as in your code
+    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as you had
 
     # Count SCQ questions
     for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
@@ -674,35 +683,18 @@ def admin_question_bank_view(request):
     for bank_id, count in FIBQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
-    # ---------- pagination ----------
-    page_obj = None
-    if per_page.lower() == 'all':
-        question_banks = list(qs)
-    else:
-        try:
-            per_page_int = int(per_page)
-        except ValueError:
-            per_page_int = 50
-        paginator = Paginator(qs, per_page_int)
-        page_obj = paginator.get_page(page_num)
-        question_banks = list(page_obj.object_list)
-
-    # Attach counts to visible items
+    # Attach count to each question bank object
     for bank in question_banks:
         bank.question_count = question_counts.get(bank.id, 0)
 
+    # ---- render with the current sort state so the template can show arrows/links ----
     return render(
         request,
         "admin/dashboard/admin_question_bank.html",
         {
             "question_banks": question_banks,
-            # controls for the template
-            "current_sort": sort_key,
-            "current_dir": sort_dir,
-            "per_page": per_page.lower(),
-            # paginator (None when 'all')
-            "page_obj": page_obj,
-            "has_pagination": page_obj is not None,
+            "current_sort": 'title' if sort_param == 'title' else 'created',
+            "current_dir": 'desc' if dir_param == 'desc' else 'asc',
         },
     )
 
