@@ -5,7 +5,36 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-<!-- ✅ Add New Bank Button -->
+{# ───────────────────────────────────────────────────────────────────────────── #}
+{# Nested filters: Grade → Chapter (dependent dropdowns)                       #}
+{# ───────────────────────────────────────────────────────────────────────────── #}
+<form method="get" id="qb-filters" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label for="grade" style="font-weight:600;">Grade</label>
+    <select id="grade" name="grade" style="min-width:220px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;">
+      <option value="">All grades</option>
+      {% for g in grades %}
+        <option value="{{ g.id }}" {% if selected_grade|stringformat:"s" == g.id|stringformat:"s" %}selected{% endif %}>
+          {{ g }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label for="chapter" style="font-weight:600;">Chapter</label>
+    <select id="chapter" name="chapter" style="min-width:280px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;" {% if not selected_grade %}disabled{% endif %}>
+      <option value="">All chapters</option>
+      {# When a grade is already selected, we’ll hydrate this via JS below #}
+    </select>
+  </div>
+
+  <div style="display:flex; gap:8px;">
+    <button type="submit" class="btn-main">🔎 Apply</button>
+    <a href="." class="btn-action" style="display:inline-flex; align-items:center;">↺ Reset</a>
+  </div>
+</form>
+
 {% if request.user.role != 'manager' %}
 <div style="margin-bottom: 20px;">
   <a href="/admin/core/questionbank/add/" class="btn-main">➕ Create New Question Bank</a>
@@ -63,44 +92,64 @@
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   }
-  .btn-main:hover {
-    background-color: #3c7cc4;
-  }
+  .btn-main:hover { background-color: #3c7cc4; }
 
   .action-wrap {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 4px;
-    flex-direction: row;
-    flex-shrink: 1;
-    flex-wrap: wrap;
+    display: flex; gap: 4px; flex-direction: row; flex-wrap: wrap;
   }
-
   .btn-action {
-    background-color: #e2e6f0;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
+    background-color: #e2e6f0; padding: 4px 8px; font-size: 12px;
+    border-radius: 4px; text-decoration: none; font-weight: 500; color: #333; white-space: nowrap;
   }
-  .btn-action:hover {
-    background-color: #c5cbe2;
-  }
+  .btn-action:hover { background-color: #c5cbe2; }
 
-  td {
-    vertical-align: top;
-    font-size: 14px; /* ✅ Smaller text for content cells */
-  }
+  td { vertical-align: top; font-size: 14px; }
+  th { font-size: 14px; }
 
-  th {
-    font-size: 14px; /* ✅ Smaller text for headers */
-  }
-
-  #content-main + div, #nav-sidebar {
-    display: none !important;
-  }
+  #content-main + div, #nav-sidebar { display: none !important; }
 </style>
+
+<!-- 🔧 Dependent dropdown script -->
+<script>
+  (function() {
+    const chaptersByGrade = JSON.parse('{{ chapters_by_grade_json|escapejs }}');
+
+    const gradeSel = document.getElementById('grade');
+    const chapterSel = document.getElementById('chapter');
+    const selectedGrade = '{{ selected_grade|default_if_none:"" }}';
+    const selectedChapter = '{{ selected_chapter|default_if_none:"" }}';
+
+    function setChapters(gradeId, keepValue) {
+      chapterSel.innerHTML = '';
+      const optAll = document.createElement('option');
+      optAll.value = '';
+      optAll.textContent = 'All chapters';
+      chapterSel.appendChild(optAll);
+
+      if (!gradeId || !chaptersByGrade[gradeId]) {
+        chapterSel.disabled = true;
+        return;
+      }
+
+      chaptersByGrade[gradeId].forEach(function(c) {
+        const opt = document.createElement('option');
+        opt.value = String(c.id);
+        opt.textContent = c.title; // change to c.name if your Chapter uses 'name'
+        if (keepValue && String(c.id) === String(keepValue)) {
+          opt.selected = true;
+        }
+        chapterSel.appendChild(opt);
+      });
+      chapterSel.disabled = false;
+    }
+
+    // Initialize
+    setChapters(selectedGrade || '', selectedChapter || '');
+
+    // On grade change, repopulate chapter list and clear chapter selection
+    gradeSel.addEventListener('change', function() {
+      setChapters(this.value, '');
+    });
+  })();
+</script>
 {% endblock %}
