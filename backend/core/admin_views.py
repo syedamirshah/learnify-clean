@@ -1,42 +1,44 @@
-import openpyxl
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from .forms import UploadForm
-from .models import User
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Case, When, IntegerField
-from django.utils.html import format_html
-from .forms import UploadSCQForm
-from .models import SCQQuestion, QuestionBank
-from core.forms import UploadSCQForm, UploadMCQForm, UploadFIBForm
-from core.models import SCQQuestion, MCQQuestion, FIBQuestion, QuestionBank , QuizQuestionAssignment , Quiz
-from django.contrib.admin.views.decorators import staff_member_required
-import uuid
-from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from .models import Quiz, QuizQuestionAssignment
 import os
-from django.contrib.auth.decorators import user_passes_test
-from django.conf import settings
-from django.http import FileResponse, Http404
-from .models import Grade, Subject, Chapter
-from django.db.models.functions import Lower
-from django import forms
-from django.core.paginator import Paginator
-from core.utils import send_account_notification_email  # ‚úÖ Add this at the top
-from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When
-from django.views.decorators.http import require_POST
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
-from django.http import FileResponse, HttpResponseRedirect
-from django.core.management import call_command
-from datetime import date  # ‚úÖ add this import at the top
 import io
-from django.http import HttpResponse
 import json
+import uuid
+from datetime import date, timedelta
+
+import openpyxl
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.storage import default_storage
+from django.core.management import call_command
+from django.core.paginator import Paginator
+from django.db.models import (
+    Count, OuterRef, Subquery, IntegerField, Value, Case, When,
+)
+from django.db.models.functions import Lower
+from django.http import (
+    Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect,
+    JsonResponse, FileResponse,
+)
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import format_html
+from django.views.decorators.http import require_POST
+from django import forms
+
+from core.models import (
+    User,            # If your User isn’t in core.models, keep your old `.models import User` instead.
+    Grade, Subject, Chapter, QuestionBank,
+    Quiz, QuizQuestionAssignment,
+    SCQQuestion, MCQQuestion, FIBQuestion,
+)
+from core.forms import UploadSCQForm, UploadMCQForm, UploadFIBForm
+from .forms import UploadForm
+
+from core.utils import send_account_notification_email
 
 
 
@@ -558,36 +560,30 @@ def admin_list_quizzes_view(request):
 
 @login_required
 def admin_question_bank_list(request):
-    # Optional: keep managers read-only; template already hides actions
-    # if request.user.role not in ('admin', 'manager'):
-    #     return HttpResponseForbidden("Not allowed.")
+    # Match quizzes page: grade by NAME, chapter by ID
+    selected_grade = (request.GET.get('grade') or '').strip()
+    selected_chapter = (request.GET.get('chapter') or '').strip()
 
-    # GET params (mirror quizzes page style)
-    selected_grade_name = (request.GET.get('grade') or '').strip()   # grade by NAME
-    selected_chapter_id = (request.GET.get('chapter') or '').strip() # chapter by ID
-
-    # Base queryset (keep your existing relateds)
+    # Base queryset (keeps your relateds & order)
     banks = (
         QuestionBank.objects
         .select_related('chapter', 'chapter__subject', 'chapter__subject__grade')
-        .all()
         .order_by('title')
     )
 
-    # Filter by grade name -> narrows chapters too
-    if selected_grade_name:
-        banks = banks.filter(chapter__subject__grade__name=selected_grade_name)
-        chapters = Chapter.objects.filter(
-            subject__grade__name=selected_grade_name
-        ).order_by('number', 'name', 'title')
-    else:
-        chapters = Chapter.objects.none()
+    # Chapters list depends on selected grade (same idea as subjects in quizzes page)
+    chapters = Chapter.objects.none()
+    if selected_grade:
+        banks = banks.filter(chapter__subject__grade__name=selected_grade)
+        grade_obj = Grade.objects.filter(name=selected_grade).first()
+        if grade_obj:
+            chapters = Chapter.objects.filter(
+                subject__grade=grade_obj
+            ).order_by('number', 'name', 'title')
 
-    # Filter by specific chapter id (if provided)
-    if selected_chapter_id:
-        banks = banks.filter(chapter_id=selected_chapter_id)
+    if selected_chapter:
+        banks = banks.filter(chapter_id=selected_chapter)
 
-    # Dropdowns (same as quizzes page: grades by name)
     grades = Grade.objects.all().order_by('name')
 
     return render(
@@ -596,9 +592,10 @@ def admin_question_bank_list(request):
         {
             'question_banks': banks,
             'grades': grades,
-            'chapters': chapters,                 # only when a grade is chosen
-            'selected_grade': selected_grade_name,
-            'selected_chapter': selected_chapter_id,
+            'chapters': chapters,                 # only populated when a grade is selected
+            'selected_grade': selected_grade,
+            'selected_chapter': selected_chapter,
+            'request': request,                   # you already pass it elsewhere; harmless here
         },
     )
 

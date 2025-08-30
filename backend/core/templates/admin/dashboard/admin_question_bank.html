@@ -6,8 +6,8 @@
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
 {# ───────────────────────────────────────────────────────────────────────────── #}
-{# Filters (quizzes-style): Grade (by name) → Chapter (by id)                  #}
-{# View provides: grades, chapters, selected_grade, selected_chapter           #}
+{# Filters – SAME PATTERN as quizzes page: Grade (by name) → Chapter (by id)   #}
+{# Context: grades, chapters, selected_grade, selected_chapter                 #}
 {# ───────────────────────────────────────────────────────────────────────────── #}
 <form method="get" style="margin-bottom: 16px;">
   <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
@@ -16,14 +16,9 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for g in grades %}
-          {# value must match what the view filters on: grade__name #}
-          <option value="{{ g.name|default:g.title }}"
-                  {% if request.GET.grade %}
-                    {% if request.GET.grade == (g.name|default:g.title) %}selected{% endif %}
-                  {% else %}
-                    {% if selected_grade == (g.name|default:g.title) %}selected{% endif %}
-                  {% endif %}>
-            {{ g.name|default:g.title|default:g }}
+          <option value="{{ g.name }}"
+                  {% if request.GET.grade == g.name or selected_grade == g.name %}selected{% endif %}>
+            {{ g.name }}
           </option>
         {% endfor %}
       </select>
@@ -34,17 +29,11 @@
       <select name="chapter" id="chapter" style="padding:6px 8px; min-width:240px;"
               {% if not request.GET.grade and not selected_grade %}disabled{% endif %}>
         <option value="">All Chapters</option>
-        {# Only populate when a grade is chosen (server-side, like quizzes) #}
         {% if request.GET.grade or selected_grade %}
           {% for c in chapters %}
             <option value="{{ c.id }}"
-                    {% if request.GET.chapter %}
-                      {% if request.GET.chapter == c.id|stringformat:'s' %}selected{% endif %}
-                    {% else %}
-                      {% if selected_chapter == c.id|stringformat:'s' %}selected{% endif %}
-                    {% endif %}>
-              {# Show “number — title” if available, else fall back #}
-              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name|default:c }}
+                    {% if request.GET.chapter == c.id|stringformat:'s' or selected_chapter == c.id|stringformat:'s' %}selected{% endif %}>
+              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name }}
             </option>
           {% endfor %}
         {% endif %}
@@ -117,9 +106,7 @@
   }
   .btn-main:hover { background-color: #3c7cc4; }
 
-  .action-wrap {
-    display: flex; gap: 4px; flex-direction: row; flex-wrap: wrap;
-  }
+  .action-wrap { display: flex; gap: 4px; flex-direction: row; flex-wrap: wrap; }
   .btn-action {
     background-color: #e2e6f0; padding: 4px 8px; font-size: 12px;
     border-radius: 4px; text-decoration: none; font-weight: 500; color: #333; white-space: nowrap;
@@ -131,4 +118,17 @@
 
   #content-main + div, #nav-sidebar { display: none !important; }
 </style>
+
+<script>
+  // Small UX touch: disable chapter select when no grade selected
+  (function () {
+    var grade = document.getElementById('grade');
+    var chapter = document.getElementById('chapter');
+    function toggle() { chapter.disabled = !grade.value; }
+    if (grade && chapter) {
+      grade.addEventListener('change', toggle);
+      toggle();
+    }
+  })();
+</script>
 {% endblock %}
