@@ -1,44 +1,42 @@
-import os
-import io
-import json
-import uuid
-from datetime import date, timedelta
-
 import openpyxl
-
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.files.storage import default_storage
-from django.core.management import call_command
-from django.core.paginator import Paginator
-from django.db.models import (
-    Count, OuterRef, Subquery, IntegerField, Value, Case, When,
-)
-from django.db.models.functions import Lower
-from django.http import (
-    Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect,
-    JsonResponse, FileResponse,
-)
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone
-from django.utils.html import format_html
-from django.views.decorators.http import require_POST
-from django import forms
-
-from core.models import (
-    User,            # If your User isn’t in core.models, keep your old `.models import User` instead.
-    Grade, Subject, Chapter, QuestionBank,
-    Quiz, QuizQuestionAssignment,
-    SCQQuestion, MCQQuestion, FIBQuestion,
-)
-from core.forms import UploadSCQForm, UploadMCQForm, UploadFIBForm
+from django.contrib import messages
 from .forms import UploadForm
-
-from core.utils import send_account_notification_email
+from .models import User
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Case, When, IntegerField
+from django.utils.html import format_html
+from .forms import UploadSCQForm
+from .models import SCQQuestion, QuestionBank
+from core.forms import UploadSCQForm, UploadMCQForm, UploadFIBForm
+from core.models import SCQQuestion, MCQQuestion, FIBQuestion, QuestionBank , QuizQuestionAssignment , Quiz
+from django.contrib.admin.views.decorators import staff_member_required
+import uuid
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from .models import Quiz, QuizQuestionAssignment
+import os
+from django.contrib.auth.decorators import user_passes_test
+from django.conf import settings
+from django.http import FileResponse, Http404
+from .models import Grade, Subject, Chapter
+from django.db.models.functions import Lower
+from django import forms
+from django.core.paginator import Paginator
+from core.utils import send_account_notification_email  # ‚úÖ Add this at the top
+from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+from django.http import FileResponse, HttpResponseRedirect
+from django.core.management import call_command
+from datetime import date  # ‚úÖ add this import at the top
+import io
+from django.http import HttpResponse
+import json
+from django.core.files.storage import default_storage
 
 
 
@@ -557,71 +555,6 @@ def admin_list_quizzes_view(request):
         'current_dir': sort_dir,
         'headers': headers,  # ‚úÖ passed to template
     })
-
-@login_required
-def admin_question_bank_view(request):
-    """
-    Question Bank list with optional filters:
-      - grade (by Grade.name, same as quizzes page)
-      - chapter (by Chapter.id)
-    Works whether QuestionBank has a FK 'chapter' or an M2M 'chapters'.
-    """
-    # read filters
-    selected_grade = (request.GET.get('grade') or '').strip()
-    selected_chapter = (request.GET.get('chapter') or '').strip()
-
-    # base queryset
-    banks = QuestionBank.objects.all().order_by('title')
-
-    # introspect the QuestionBank relations
-    fields = {f.name: f for f in QuestionBank._meta.get_fields()}
-    has_fk_chapter = (
-        'chapter' in fields and fields['chapter'].is_relation and not fields['chapter'].many_to_many
-    )
-    has_m2m_chapters = (
-        'chapters' in fields and fields['chapters'].is_relation and fields['chapters'].many_to_many
-    )
-
-    # when a grade is selected, filter banks and build chapter dropdown
-    if selected_grade:
-        if has_fk_chapter:
-            banks = banks.filter(chapter__subject__grade__name=selected_grade)
-            chapters = Chapter.objects.filter(
-                subject__grade__name=selected_grade
-            ).order_by('number', 'name', 'title')
-        elif has_m2m_chapters:
-            banks = banks.filter(chapters__subject__grade__name=selected_grade).distinct()
-            chapters = Chapter.objects.filter(
-                subject__grade__name=selected_grade
-            ).order_by('number', 'name', 'title')
-        else:
-            # No link from QuestionBank to Chapter — keep UI alive but no chapter options
-            chapters = Chapter.objects.none()
-    else:
-        chapters = Chapter.objects.none()
-
-    # chapter filter (if provided)
-    if selected_chapter:
-        if has_fk_chapter:
-            banks = banks.filter(chapter_id=selected_chapter)
-        elif has_m2m_chapters:
-            banks = banks.filter(chapters__id=selected_chapter).distinct()
-        # else: no relation; ignore silently
-
-    # grade dropdown (same as quizzes page — uses Grade.name)
-    grades = Grade.objects.all().order_by('name')
-
-    return render(
-        request,
-        'admin/dashboard/admin_question_bank.html',
-        {
-            'question_banks': banks,
-            'grades': grades,
-            'chapters': chapters,
-            'selected_grade': selected_grade,
-            'selected_chapter': selected_chapter,
-        },
-    )
 
 @staff_member_required
 def list_backups(request):
