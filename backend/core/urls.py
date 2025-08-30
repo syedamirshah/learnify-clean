@@ -79,7 +79,7 @@ urlpatterns = [
     path('users/', user_list, name='user-list'),
 
     # ---------- Quiz Management ----------
-    path('admin/quizzes/', list_all_quizzes, name='admin-list-quizzes'),
+    path('admin/quizzes/', list_all_quizzes, name='admin-list-quizzes-legacy'),
     path('internal/quiz-list/', admin_list_quizzes_view, name='admin-quiz-list'),
     path('admin/quizzes/create-metadata/', create_metadata_view, name='create-metadata'),
     path('admin/core/list-quizzes/', admin_list_quizzes_view, name='admin-list-quizzes'),
