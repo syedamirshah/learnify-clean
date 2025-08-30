@@ -6,8 +6,8 @@
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
 {# ───────────────────────────────────────────────────────────────────────────── #}
-{# Filters (same approach as quizzes page): Grade (by name) → Chapter (by id)  #}
-{# Context from view: grades, chapters, selected_grade, selected_chapter       #}
+{# Filters (quizzes-style): Grade (by name) → Chapter (by id)                  #}
+{# View provides: grades, chapters, selected_grade, selected_chapter           #}
 {# ───────────────────────────────────────────────────────────────────────────── #}
 <form method="get" style="margin-bottom: 16px;">
   <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
@@ -16,14 +16,14 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for g in grades %}
-          {# quizzes page uses grade.name as value; mirror that here #}
-          <option value="{{ g.name }}"
+          {# value must match what the view filters on: grade__name #}
+          <option value="{{ g.name|default:g.title }}"
                   {% if request.GET.grade %}
-                    {% if request.GET.grade == g.name %}selected{% endif %}
+                    {% if request.GET.grade == (g.name|default:g.title) %}selected{% endif %}
                   {% else %}
-                    {% if selected_grade == g.name %}selected{% endif %}
+                    {% if selected_grade == (g.name|default:g.title) %}selected{% endif %}
                   {% endif %}>
-            {{ g.name }}
+            {{ g.name|default:g.title|default:g }}
           </option>
         {% endfor %}
       </select>
@@ -43,7 +43,8 @@
                     {% else %}
                       {% if selected_chapter == c.id|stringformat:'s' %}selected{% endif %}
                     {% endif %}>
-              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name }}
+              {# Show “number — title” if available, else fall back #}
+              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name|default:c }}
             </option>
           {% endfor %}
         {% endif %}
