@@ -477,9 +477,16 @@ def admin_list_quizzes_view(request):
     if request.user.role != 'admin':
         return HttpResponseForbidden("Only admins can view this page.")
 
+    # ---- default: newest first ----
+    # pick a creation field that exists (created > created_at > id)
+    quiz_field_names = {f.name for f in Quiz._meta.get_fields()}
+    created_field = 'created' if 'created' in quiz_field_names else (
+        'created_at' if 'created_at' in quiz_field_names else 'id'
+    )
+
     # Read query parameters
-    sort_field = request.GET.get('sort', 'title')
-    sort_dir = request.GET.get('dir', 'asc')
+    sort_field = request.GET.get('sort', 'created')   # default: created
+    sort_dir = request.GET.get('dir', 'desc')         # default: newest first
     selected_grade = request.GET.get('grade')
     selected_subject = request.GET.get('subject')
 
@@ -488,9 +495,10 @@ def admin_list_quizzes_view(request):
         'title': 'title',
         'grade': 'grade__name',
         'subject': 'subject__name',
-        'chapter': 'chapter__name'
+        'chapter': 'chapter__name',
+        'created': created_field,   # allow default sort by creation
     }
-    sort_expression = valid_sort_fields.get(sort_field, 'title')
+    sort_expression = valid_sort_fields.get(sort_field, created_field)
     if sort_dir == 'desc':
         sort_expression = f'-{sort_expression}'
 
@@ -538,7 +546,7 @@ def admin_list_quizzes_view(request):
     else:
         subjects = Subject.objects.all().order_by('name')
 
-    # Table headers with (field, label) format for sortable columns
+    # Table headers (unchanged)
     headers = [
         ('title', 'Title'),
         ('grade', 'Grade'),
@@ -553,7 +561,7 @@ def admin_list_quizzes_view(request):
         'request': request,
         'current_sort': sort_field,
         'current_dir': sort_dir,
-        'headers': headers,  # ‚úÖ passed to template
+        'headers': headers,
     })
 
 @staff_member_required
