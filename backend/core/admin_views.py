@@ -558,57 +558,46 @@ def admin_list_quizzes_view(request):
 
 @login_required
 def admin_question_bank_view(request):
-    """
-    Question Bank list with filters:
-      - grade (by Grade.name) -> same as quizzes page
-      - chapter (by Chapter.id)
-    Filtering of banks is applied only if QuestionBank has a link to Chapter:
-      - FK  : questionbank.chapter
-      - M2M : questionbank.chapters
-    """
-    selected_grade = (request.GET.get('grade') or '').strip()
-    selected_chapter = (request.GET.get('chapter') or '').strip()
+    if request.user.role not in ("admin", "manager"):
+        return HttpResponseForbidden("Only admins/managers can view this page.")
 
-    # Start with all banks; do NOT select_related('chapter') unless we know it exists.
-    banks = QuestionBank.objects.all().order_by('title')
+    # Read filters (mirror quiz page: grade by NAME, chapter by ID)
+    selected_grade = (request.GET.get("grade") or "").strip()
+    selected_chapter = (request.GET.get("chapter") or "").strip()
 
-    # Discover how (or if) QuestionBank relates to Chapter
-    fields = {f.name: f for f in QuestionBank._meta.get_fields()}
-    has_fk_chapter = 'chapter' in fields and fields['chapter'].is_relation and not fields['chapter'].many_to_many
-    has_m2m_chapters = 'chapters' in fields and fields['chapters'].is_relation and fields['chapters'].many_to_many
+    # Dropdown: grades always populated
+    grades = Grade.objects.all().order_by("name")
 
-    # Build chapters dropdown based on chosen grade (always safe)
+    # Dropdown: chapters only when a grade is chosen
+    chapters = Chapter.objects.none()
     if selected_grade:
-        chapters = Chapter.objects.filter(
-            subject__grade__name=selected_grade
-        ).order_by('number', 'name', 'title')
-    else:
-        chapters = Chapter.objects.none()
+        grade_obj = Grade.objects.filter(name=selected_grade).first()
+        if grade_obj:
+            chapters = Chapter.objects.filter(
+                subject__grade=grade_obj
+            ).order_by("number", "title", "name")
 
-    # Apply filters to banks (only if the link exists)
-    if selected_grade:
-        if has_fk_chapter:
+    # Base queryset
+    banks = QuestionBank.objects.all().order_by("title")
+
+    # Apply filters if your QuestionBank has a FK named "chapter"
+    has_chapter_fk = any(getattr(f, "name", "") == "chapter" for f in QuestionBank._meta.get_fields())
+    if has_chapter_fk:
+        if selected_grade:
             banks = banks.filter(chapter__subject__grade__name=selected_grade)
-        elif has_m2m_chapters:
-            banks = banks.filter(chapters__subject__grade__name=selected_grade).distinct()
-
-    if selected_chapter:
-        if has_fk_chapter:
+        if selected_chapter:
             banks = banks.filter(chapter_id=selected_chapter)
-        elif has_m2m_chapters:
-            banks = banks.filter(chapters__id=selected_chapter).distinct()
-
-    grades = Grade.objects.all().order_by('name')
+    # else: leave banks unfiltered by grade/chapter (template still shows dropdowns)
 
     return render(
         request,
-        'admin/dashboard/admin_question_bank.html',
+        "admin/dashboard/admin_question_bank.html",
         {
-            'question_banks': banks,
-            'grades': grades,
-            'chapters': chapters,
-            'selected_grade': selected_grade,
-            'selected_chapter': selected_chapter,
+            "question_banks": banks,
+            "grades": grades,
+            "chapters": chapters,
+            # The template reads directly from request.GET to mark selections,
+            # same as your quiz page.
         },
     )
 
