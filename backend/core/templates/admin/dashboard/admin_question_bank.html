@@ -5,46 +5,6 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-{# ─────────────────────────────────────────────────────────────── #}
-{# Filters — Grade (by name) → Chapter (by id)                    #}
-{# View should pass: grades, chapters, request.GET.grade/chapter  #}
-{# ─────────────────────────────────────────────────────────────── #}
-<!-- 🔍 Filters (same pattern as quiz page): Grade (name) → Chapter (id) -->
-<!-- 🔍 Filters (Grade by name → Chapter by id), same style as quizzes page -->
-<!-- 🔍 Filters -->
-<form method="get" style="margin-bottom: 24px;">
-  <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-    <div>
-      <label for="grade"><strong>Filter by Grade:</strong></label><br>
-      <select name="grade" id="grade">
-        <option value="">All Grades</option>
-        {% for grade in grades %}
-          <option value="{{ grade.name }}" {% if request.GET.grade == grade.name %}selected{% endif %}>
-            {{ grade.name }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label for="chapter"><strong>Filter by Chapter:</strong></label><br>
-      <select name="chapter" id="chapter">
-        <option value="">All Chapters</option>
-        {% for c in chapters %}
-          <option value="{{ c.id }}" {% if request.GET.chapter == c.id|stringformat:'s' %}selected{% endif %}>
-            {% if c.number %}{{ c.number }} — {% endif %}{% firstof c.title c.name %}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <button type="submit" style="margin-top: 20px;">Apply</button>
-      <a href="." class="btn-action" style="margin-left:8px;">Reset</a>
-    </div>
-  </div>
-</form>
-
 <!-- ✅ Add New Bank Button -->
 {% if request.user.role != 'manager' %}
 <div style="margin-bottom: 20px;">
@@ -103,7 +63,9 @@
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   }
-  .btn-main:hover { background-color: #3c7cc4; }
+  .btn-main:hover {
+    background-color: #3c7cc4;
+  }
 
   .action-wrap {
     display: flex;
@@ -124,22 +86,21 @@
     color: #333;
     white-space: nowrap;
   }
-  .btn-action:hover { background-color: #c5cbe2; }
+  .btn-action:hover {
+    background-color: #c5cbe2;
+  }
 
-  td { vertical-align: top; font-size: 14px; }
-  th { font-size: 14px; }
+  td {
+    vertical-align: top;
+    font-size: 14px; /* ✅ Smaller text for content cells */
+  }
 
-  #content-main + div, #nav-sidebar { display: none !important; }
+  th {
+    font-size: 14px; /* ✅ Smaller text for headers */
+  }
+
+  #content-main + div, #nav-sidebar {
+    display: none !important;
+  }
 </style>
-
-<script>
-  // Disable chapter dropdown when no grade is selected (mirrors quizzes page UX)
-  (function () {
-    var grade = document.getElementById('grade');
-    var chapter = document.getElementById('chapter');
-    function toggle() { if (chapter) chapter.disabled = !grade.value; }
-    if (grade) grade.addEventListener('change', toggle);
-    toggle();
-  })();
-</script>
 {% endblock %}
