@@ -4,76 +4,84 @@
 {% block title %}Quizzes Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-container" style="padding: 30px;">
-    <h1 style="margin-bottom: 30px;">📋 Quiz Dashboard</h1>
+<div class="dashboard-container">
+  <h1>📋 Quiz Dashboard</h1>
 
-    <div class="section" style="margin-bottom: 40px;">
-        <h2 style="margin-bottom: 10px;">1️⃣ Create Metadata</h2>
-        <p>Create and manage Grade, Subject, and Chapter metadata before assigning them to quizzes.</p>
-        <a href="/admin/core/grade/" class="button small" style="margin-right: 10px;">🎓 Manage Grades</a>
-        <a href="/admin/core/subject/" class="button small" style="margin-right: 10px;">📘 Manage Subjects</a>
+  <div class="dashboard-grid">
+    <section class="card">
+      <h2>1️⃣ Create Metadata</h2>
+      <p>Create and manage Grade, Subject, and Chapter metadata before assigning them to quizzes.</p>
+      <div class="actions">
+        <a href="/admin/core/grade/" class="button small">🎓 Manage Grades</a>
+        <a href="/admin/core/subject/" class="button small">📘 Manage Subjects</a>
         <a href="/admin/core/chapter/" class="button small">📚 Manage Chapters</a>
-    </div>
+      </div>
+    </section>
 
-    <div class="section" style="margin-bottom: 40px;">
-        <h2 style="margin-bottom: 10px;">2️⃣ Create Quiz</h2>
-        <p>Create a new quiz and specify title, metadata, and marks per question.</p>
+    <section class="card">
+      <h2>2️⃣ Create Quiz</h2>
+      <p>Create a new quiz and specify title, metadata, and marks per question.</p>
+      <div class="actions">
         <a href="/admin/core/quiz/add/" class="button small">➕ Create New Quiz</a>
-    </div>
+      </div>
+    </section>
 
-    <div class="section" style="margin-bottom: 40px;">
-        <h2 style="margin-bottom: 10px;">3️⃣ Assign Questions to Quiz</h2>
-        <p>Select question banks and number of questions to add to a quiz.</p>
+    <section class="card">
+      <h2>3️⃣ Assign Questions to Quiz</h2>
+      <p>Select question banks and number of questions to add to a quiz.</p>
+      <div class="actions">
         <a href="/admin/core/quiz-question-assignments/" class="button small">➕ Assign Questions to Quiz</a>
-    </div>
+      </div>
+    </section>
 
-    <div class="section">
-        <h2 style="margin-bottom: 10px;">4️⃣ List View of Quizzes</h2>
-        <p>View all quizzes with metadata, linked banks, and total questions. Edit/delete as needed.</p>
+    <section class="card">
+      <h2>4️⃣ List View of Quizzes</h2>
+      <p>View all quizzes with metadata, linked banks, and total questions. Edit/delete as needed.</p>
+      <div class="actions">
         <a href="/admin/core/list-quizzes/" class="button small">📋 View Quizzes</a>
-    </div>
+      </div>
+    </section>
+  </div>
 </div>
 
 <style>
-    .button {
-        background-color: #007bff;
-        color: white;
-        padding: 10px 18px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 500;
-        display: inline-block;
-    }
+  /* container + heading */
+  .dashboard-container { padding: 16px; }
+  .dashboard-container h1 { margin: 0 0 14px; color: #2c3e50; font-size: 22px; }
 
-    .button.small {
-        padding: 6px 14px;
-        font-size: 14px;
-    }
+  /* 2×2 compact grid; collapses to 1 column on narrow screens */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    gap: 12px;                  /* tighter than 40px */
+  }
+  @media (max-width: 900px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+  }
 
-    .button:hover {
-        background-color: #0056b3;
-    }
+  /* card */
+  .card {
+    background: #f9f9f9;
+    padding: 12px;              /* was 20px */
+    border-radius: 10px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.08);  /* lighter */
+  }
+  .card h2 { margin: 0 0 6px; font-size: 16px; color: #2c3e50; }
+  .card p  { margin: 0 0 8px; font-size: 13px; color: #444; }
 
-    .dashboard-container h1,
-    .dashboard-container h2 {
-        color: #2c3e50;
-    }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .section {
-        background-color: #f9f9f9;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0px 0px 6px rgba(0,0,0,0.1);
-        margin-bottom: 40px;
-    }
-
-    table th, table td {
-        text-align: left;
-    }
-
-    input[type="number"] {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
+  /* buttons (unchanged look, just slightly tighter) */
+  .button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+  }
+  .button.small { padding: 6px 12px; font-size: 13px; }
+  .button:hover { background-color: #0056b3; }
 </style>
 {% endblock %}

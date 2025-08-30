@@ -750,7 +750,11 @@ def quiz_question_assignment_view(request):
     if selected_grade_id:
         quizzes = quizzes.filter(grade_id=selected_grade_id)
 
-    question_banks = QuestionBank.objects.all().order_by(Lower('title'))  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Alphabetical sorting
+    # NEWEST FIRST: created_at desc if available, else id desc
+    if hasattr(QuestionBank, 'created_at'):
+        question_banks = QuestionBank.objects.all().order_by('-created_at')
+    else:
+        question_banks = QuestionBank.objects.all().order_by('-id')
 
     if request.method == 'POST':
         quiz_id = request.POST.get("quiz_id")
