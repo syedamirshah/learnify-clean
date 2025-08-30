@@ -556,6 +556,52 @@ def admin_list_quizzes_view(request):
         'headers': headers,  # ‚úÖ passed to template
     })
 
+@login_required
+def admin_question_bank_list(request):
+    # Optional: keep managers read-only; template already hides actions
+    # if request.user.role not in ('admin', 'manager'):
+    #     return HttpResponseForbidden("Not allowed.")
+
+    # GET params (mirror quizzes page style)
+    selected_grade_name = (request.GET.get('grade') or '').strip()   # grade by NAME
+    selected_chapter_id = (request.GET.get('chapter') or '').strip() # chapter by ID
+
+    # Base queryset (keep your existing relateds)
+    banks = (
+        QuestionBank.objects
+        .select_related('chapter', 'chapter__subject', 'chapter__subject__grade')
+        .all()
+        .order_by('title')
+    )
+
+    # Filter by grade name -> narrows chapters too
+    if selected_grade_name:
+        banks = banks.filter(chapter__subject__grade__name=selected_grade_name)
+        chapters = Chapter.objects.filter(
+            subject__grade__name=selected_grade_name
+        ).order_by('number', 'name', 'title')
+    else:
+        chapters = Chapter.objects.none()
+
+    # Filter by specific chapter id (if provided)
+    if selected_chapter_id:
+        banks = banks.filter(chapter_id=selected_chapter_id)
+
+    # Dropdowns (same as quizzes page: grades by name)
+    grades = Grade.objects.all().order_by('name')
+
+    return render(
+        request,
+        'admin/dashboard/admin_question_bank.html',
+        {
+            'question_banks': banks,
+            'grades': grades,
+            'chapters': chapters,                 # only when a grade is chosen
+            'selected_grade': selected_grade_name,
+            'selected_chapter': selected_chapter_id,
+        },
+    )
+
 @staff_member_required
 def list_backups(request):
     """

@@ -6,39 +6,61 @@
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
 {# ───────────────────────────────────────────────────────────────────────────── #}
-{# Nested filters: Grade → Chapter (dependent dropdowns)                       #}
+{# Filters (same approach as quizzes page): Grade (by name) → Chapter (by id)  #}
+{# Context from view: grades, chapters, selected_grade, selected_chapter       #}
 {# ───────────────────────────────────────────────────────────────────────────── #}
-<form method="get" id="qb-filters" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
-  <div style="display:flex; flex-direction:column; gap:6px;">
-    <label for="grade" style="font-weight:600;">Grade</label>
-    <select id="grade" name="grade" style="min-width:220px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;">
-      <option value="">All grades</option>
-      {% for g in grades %}
-        <option value="{{ g.id }}" {% if selected_grade|stringformat:"s" == g.id|stringformat:"s" %}selected{% endif %}>
-          {{ g }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
+<form method="get" style="margin-bottom: 16px;">
+  <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label for="grade"><strong>Filter by Grade:</strong></label><br>
+      <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
+        <option value="">All Grades</option>
+        {% for g in grades %}
+          {# quizzes page uses grade.name as value; mirror that here #}
+          <option value="{{ g.name }}"
+                  {% if request.GET.grade %}
+                    {% if request.GET.grade == g.name %}selected{% endif %}
+                  {% else %}
+                    {% if selected_grade == g.name %}selected{% endif %}
+                  {% endif %}>
+            {{ g.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-  <div style="display:flex; flex-direction:column; gap:6px;">
-    <label for="chapter" style="font-weight:600;">Chapter</label>
-    <select id="chapter" name="chapter" style="min-width:280px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;" {% if not selected_grade %}disabled{% endif %}>
-      <option value="">All chapters</option>
-      {# When a grade is already selected, we’ll hydrate this via JS below #}
-    </select>
-  </div>
+    <div>
+      <label for="chapter"><strong>Filter by Chapter:</strong></label><br>
+      <select name="chapter" id="chapter" style="padding:6px 8px; min-width:240px;"
+              {% if not request.GET.grade and not selected_grade %}disabled{% endif %}>
+        <option value="">All Chapters</option>
+        {# Only populate when a grade is chosen (server-side, like quizzes) #}
+        {% if request.GET.grade or selected_grade %}
+          {% for c in chapters %}
+            <option value="{{ c.id }}"
+                    {% if request.GET.chapter %}
+                      {% if request.GET.chapter == c.id|stringformat:'s' %}selected{% endif %}
+                    {% else %}
+                      {% if selected_chapter == c.id|stringformat:'s' %}selected{% endif %}
+                    {% endif %}>
+              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name }}
+            </option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
 
-  <div style="display:flex; gap:8px;">
-    <button type="submit" class="btn-main">🔎 Apply</button>
-    <a href="." class="btn-action" style="display:inline-flex; align-items:center;">↺ Reset</a>
+    <div>
+      <button type="submit" class="btn-main" style="margin-top:2px;">Apply</button>
+      <a href="." class="btn-action" style="margin-left:6px;">Reset</a>
+    </div>
   </div>
 </form>
 
 {% if request.user.role != 'manager' %}
-<div style="margin-bottom: 20px;">
-  <a href="/admin/core/questionbank/add/" class="btn-main">➕ Create New Question Bank</a>
-</div>
+  <div style="margin-bottom: 20px;">
+    <a href="/admin/core/questionbank/add/" class="btn-main">➕ Create New Question Bank</a>
+  </div>
 {% endif %}
 
 <!-- 📋 Question Bank Table -->
@@ -54,29 +76,29 @@
   </thead>
   <tbody>
     {% for bank in question_banks %}
-    <tr style="border-bottom: 1px solid #ccc;">
-      <td style="padding: 8px;">{{ forloop.counter }}</td>
-      <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
-      <td style="padding: 8px;">{{ bank.get_type_display }}</td>
-      <td style="padding: 8px;">{{ bank.question_count }}</td>
-      <td style="padding: 8px;">
-        {% if request.user.role != 'manager' %}
-          <div class="action-wrap">
-            <a href="{% url 'edit-question-bank' bank.id %}" class="btn-action">✏️ Edit</a>
-            <a href="{% url 'delete-question-bank' bank.id %}" class="btn-action">🗑️ Delete</a>
-            <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
-            <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
-            <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
-          </div>
-        {% else %}
-          <span style="color: gray;">🔒 No actions available</span>
-        {% endif %}
-      </td>
-    </tr>
+      <tr style="border-bottom: 1px solid #ccc;">
+        <td style="padding: 8px;">{{ forloop.counter }}</td>
+        <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
+        <td style="padding: 8px;">{{ bank.get_type_display }}</td>
+        <td style="padding: 8px;">{{ bank.question_count }}</td>
+        <td style="padding: 8px;">
+          {% if request.user.role != 'manager' %}
+            <div class="action-wrap">
+              <a href="{% url 'edit-question-bank' bank.id %}" class="btn-action">✏️ Edit</a>
+              <a href="{% url 'delete-question-bank' bank.id %}" class="btn-action">🗑️ Delete</a>
+              <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
+              <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
+              <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
+            </div>
+          {% else %}
+            <span style="color: gray;">🔒 No actions available</span>
+          {% endif %}
+        </td>
+      </tr>
     {% empty %}
-    <tr>
-      <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
-    </tr>
+      <tr>
+        <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>
@@ -108,48 +130,4 @@
 
   #content-main + div, #nav-sidebar { display: none !important; }
 </style>
-
-<!-- 🔧 Dependent dropdown script -->
-<script>
-  (function() {
-    const chaptersByGrade = JSON.parse('{{ chapters_by_grade_json|escapejs }}');
-
-    const gradeSel = document.getElementById('grade');
-    const chapterSel = document.getElementById('chapter');
-    const selectedGrade = '{{ selected_grade|default_if_none:"" }}';
-    const selectedChapter = '{{ selected_chapter|default_if_none:"" }}';
-
-    function setChapters(gradeId, keepValue) {
-      chapterSel.innerHTML = '';
-      const optAll = document.createElement('option');
-      optAll.value = '';
-      optAll.textContent = 'All chapters';
-      chapterSel.appendChild(optAll);
-
-      if (!gradeId || !chaptersByGrade[gradeId]) {
-        chapterSel.disabled = true;
-        return;
-      }
-
-      chaptersByGrade[gradeId].forEach(function(c) {
-        const opt = document.createElement('option');
-        opt.value = String(c.id);
-        opt.textContent = c.title; // change to c.name if your Chapter uses 'name'
-        if (keepValue && String(c.id) === String(keepValue)) {
-          opt.selected = true;
-        }
-        chapterSel.appendChild(opt);
-      });
-      chapterSel.disabled = false;
-    }
-
-    // Initialize
-    setChapters(selectedGrade || '', selectedChapter || '');
-
-    // On grade change, repopulate chapter list and clear chapter selection
-    gradeSel.addEventListener('change', function() {
-      setChapters(this.value, '');
-    });
-  })();
-</script>
 {% endblock %}
