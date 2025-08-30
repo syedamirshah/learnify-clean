@@ -12,11 +12,12 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for g in grades %}
-          {% with val=g.name|default:g.title %}
+          {% with gname=g.name gtitle=g.title %}
             <option
-              value="{{ val }}"
-              {% if request.GET.grade == val or selected_grade == val %}selected{% endif %}>
-              {{ val }}
+              value="{% firstof gname gtitle %}"
+              {% if request.GET.grade == gname or request.GET.grade == gtitle
+                    or selected_grade == gname or selected_grade == gtitle %}selected{% endif %}>
+              {% firstof gname gtitle %}
             </option>
           {% endwith %}
         {% endfor %}
