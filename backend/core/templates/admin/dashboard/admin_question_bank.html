@@ -5,7 +5,7 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-<!-- 🔍 Filters (mirrors quizzes page): Grade (by name) → Chapter (by id) -->
+<!-- 🔍 Filter: Grade (same pattern as quizzes page) -->
 <form method="get" style="margin-bottom: 16px;">
   <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
     <div>
@@ -18,22 +18,6 @@
             {{ g.name }}
           </option>
         {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label for="chapter"><strong>Filter by Chapter:</strong></label><br>
-      <select name="chapter" id="chapter" style="padding:6px 8px; min-width:240px;"
-              {% if not request.GET.grade and not selected_grade %}disabled{% endif %}>
-        <option value="">All Chapters</option>
-        {% if request.GET.grade or selected_grade %}
-          {% for c in chapters %}
-            <option value="{{ c.id }}"
-                    {% if request.GET.chapter == c.id|stringformat:'s' or selected_chapter == c.id|stringformat:'s' %}selected{% endif %}>
-              {% if c.number %}{{ c.number }} — {% endif %}{% firstof c.title c.name %}
-            </option>
-          {% endfor %}
-        {% endif %}
       </select>
     </div>
 
@@ -64,29 +48,29 @@
   </thead>
   <tbody>
     {% for bank in question_banks %}
-    <tr style="border-bottom: 1px solid #ccc;">
-      <td style="padding: 8px;">{{ forloop.counter }}</td>
-      <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
-      <td style="padding: 8px;">{{ bank.get_type_display }}</td>
-      <td style="padding: 8px;">{{ bank.question_count }}</td>
-      <td style="padding: 8px;">
-        {% if request.user.role != 'manager' %}
-          <div class="action-wrap">
-            <a href="{% url 'edit-question-bank' bank.id %}" class="btn-action">✏️ Edit</a>
-            <a href="{% url 'delete-question-bank' bank.id %}" class="btn-action">🗑️ Delete</a>
-            <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
-            <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
-            <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
-          </div>
-        {% else %}
-          <span style="color: gray;">🔒 No actions available</span>
-        {% endif %}
-      </td>
-    </tr>
+      <tr style="border-bottom: 1px solid #ccc;">
+        <td style="padding: 8px;">{{ forloop.counter }}</td>
+        <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
+        <td style="padding: 8px;">{{ bank.get_type_display }}</td>
+        <td style="padding: 8px;">{{ bank.question_count }}</td>
+        <td style="padding: 8px;">
+          {% if request.user.role != 'manager' %}
+            <div class="action-wrap">
+              <a href="{% url 'edit-question-bank' bank.id %}" class="btn-action">✏️ Edit</a>
+              <a href="{% url 'delete-question-bank' bank.id %}" class="btn-action">🗑️ Delete</a>
+              <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
+              <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
+              <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
+            </div>
+          {% else %}
+            <span style="color: gray;">🔒 No actions available</span>
+          {% endif %}
+        </td>
+      </tr>
     {% empty %}
-    <tr>
-      <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
-    </tr>
+      <tr>
+        <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>
@@ -130,15 +114,4 @@
 
   #content-main + div, #nav-sidebar { display: none !important; }
 </style>
-
-<!-- small UX: disable chapter when no grade -->
-<script>
-  (function () {
-    var grade = document.getElementById('grade');
-    var chapter = document.getElementById('chapter');
-    function toggle() { if (chapter) chapter.disabled = !grade.value; }
-    if (grade) grade.addEventListener('change', toggle);
-    toggle();
-  })();
-</script>
 {% endblock %}
