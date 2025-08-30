@@ -1,4 +1,3 @@
-from itertools import chain  # harmless even if you don’t use it later
 import openpyxl
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -632,44 +631,13 @@ def user_dashboard(request):
 
 @staff_member_required
 def admin_question_bank_view(request):
-    """
-    Question Bank list with simple sorting:
-      - ?sort=created|title   (default: created)
-      - ?dir=asc|desc         (default: desc)
+    # Fetch all question banks
+    question_banks = QuestionBank.objects.all().order_by('title')
 
-    'created' will use the first available field among:
-    created_at, created, created_on, timestamp, created_date, date_created, added_on, created_time.
-    Falls back to 'id' if none exist.
-    """
-    # ---- resolve sort field & direction ----
-    sort_param = (request.GET.get('sort') or 'created').lower()
-    dir_param = (request.GET.get('dir') or 'desc').lower()
-
-    # find a usable "created" field on QuestionBank, else fall back to id
-    created_field = None
-    for candidate in (
-        'created_at', 'created', 'created_on', 'timestamp',
-        'created_date', 'date_created', 'added_on', 'created_time'
-    ):
-        try:
-            QuestionBank._meta.get_field(candidate)
-            created_field = candidate
-            break
-        except FieldDoesNotExist:
-            continue
-    if created_field is None:
-        created_field = 'id'  # safe fallback
-
-    sort_field = 'title' if sort_param == 'title' else created_field
-    sort_expression = f"-{sort_field}" if dir_param == 'desc' else sort_field
-
-    # ---- your original queryset, now ordered as requested ----
-    question_banks = QuestionBank.objects.all().order_by(sort_expression)
-
-    # ---- your existing question-count logic (unchanged) ----
+    # Create a dictionary to hold question counts by bank_id
     question_counts = {}
 
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # keep as you had
+    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # Adjust if models live elsewhere
 
     # Count SCQ questions
     for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
@@ -687,16 +655,9 @@ def admin_question_bank_view(request):
     for bank in question_banks:
         bank.question_count = question_counts.get(bank.id, 0)
 
-    # ---- render with the current sort state so the template can show arrows/links ----
-    return render(
-        request,
-        "admin/dashboard/admin_question_bank.html",
-        {
-            "question_banks": question_banks,
-            "current_sort": 'title' if sort_param == 'title' else 'created',
-            "current_dir": 'desc' if dir_param == 'desc' else 'asc',
-        },
-    )
+    return render(request, "admin/dashboard/admin_question_bank.html", {
+        "question_banks": question_banks
+    })
 
 @staff_member_required
 def delete_question(request, q_type, q_id, bank_id):

@@ -5,8 +5,6 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-{% with sort=current_sort|default:request.GET.sort|default:"created"|lower dir=current_dir|default:request.GET.dir|default:"desc"|lower %}
-
 <!-- ✅ Add New Bank Button -->
 {% if request.user.role != 'manager' %}
 <div style="margin-bottom: 20px;">
@@ -19,30 +17,8 @@
   <thead>
     <tr style="background-color: #dfe1e7; text-align: left;">
       <th style="padding: 8px; width: 40px;">#</th>
-
-      <!-- Title (sortable) -->
-      <th style="padding: 8px; width: 32%;">
-        <a href="?sort=title&dir={% if sort == 'title' and dir != 'desc' %}desc{% else %}asc{% endif %}"
-           style="text-decoration:none; color:inherit;">
-          Title
-          {% if sort == 'title' %}
-            {% if dir == 'desc' %} 🔽{% else %} 🔼{% endif %}
-          {% endif %}
-        </a>
-      </th>
-
-      <!-- Created (sortable) -->
-      <th style="padding: 8px; width: 16%;">
-        <a href="?sort=created&dir={% if sort == 'created' and dir != 'desc' %}desc{% else %}asc{% endif %}"
-           style="text-decoration:none; color:inherit;">
-          Created
-          {% if sort == 'created' %}
-            {% if dir == 'desc' %} 🔽{% else %} 🔼{% endif %}
-          {% endif %}
-        </a>
-      </th>
-
-      <th style="padding: 8px; width: 16%;">Type</th>
+      <th style="padding: 8px; width: 36%;">Title</th>
+      <th style="padding: 8px; width: 18%;">Type</th>
       <th style="padding: 8px; width: 80px;">Questions</th>
       <th style="padding: 8px;">Actions</th>
     </tr>
@@ -51,21 +27,7 @@
     {% for bank in question_banks %}
     <tr style="border-bottom: 1px solid #ccc;">
       <td style="padding: 8px;">{{ forloop.counter }}</td>
-
       <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
-
-      <td style="padding: 8px;">
-        {% if bank.created_at %}{{ bank.created_at|date:"Y-m-d H:i" }}
-        {% elif bank.created %}{{ bank.created|date:"Y-m-d H:i" }}
-        {% elif bank.created_on %}{{ bank.created_on|date:"Y-m-d H:i" }}
-        {% elif bank.timestamp %}{{ bank.timestamp|date:"Y-m-d H:i" }}
-        {% elif bank.created_date %}{{ bank.created_date|date:"Y-m-d H:i" }}
-        {% elif bank.date_created %}{{ bank.date_created|date:"Y-m-d H:i" }}
-        {% elif bank.added_on %}{{ bank.added_on|date:"Y-m-d H:i" }}
-        {% elif bank.created_time %}{{ bank.created_time|date:"Y-m-d H:i" }}
-        {% else %}-{% endif %}
-      </td>
-
       <td style="padding: 8px;">{{ bank.get_type_display }}</td>
       <td style="padding: 8px;">{{ bank.question_count }}</td>
       <td style="padding: 8px;">
@@ -84,13 +46,11 @@
     </tr>
     {% empty %}
     <tr>
-      <td colspan="6" style="padding: 15px; text-align: center;">No question banks found.</td>
+      <td colspan="5" style="padding: 15px; text-align: center;">No question banks found.</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-
-{% endwith %}
 
 <!-- 🖌️ Styles -->
 <style>
@@ -103,7 +63,9 @@
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   }
-  .btn-main:hover { background-color: #3c7cc4; }
+  .btn-main:hover {
+    background-color: #3c7cc4;
+  }
 
   .action-wrap {
     display: flex;
@@ -124,11 +86,21 @@
     color: #333;
     white-space: nowrap;
   }
-  .btn-action:hover { background-color: #c5cbe2; }
+  .btn-action:hover {
+    background-color: #c5cbe2;
+  }
 
-  td { vertical-align: top; font-size: 14px; }
-  th { font-size: 14px; }
+  td {
+    vertical-align: top;
+    font-size: 14px; /* ✅ Smaller text for content cells */
+  }
 
-  #content-main + div, #nav-sidebar { display: none !important; }
+  th {
+    font-size: 14px; /* ✅ Smaller text for headers */
+  }
+
+  #content-main + div, #nav-sidebar {
+    display: none !important;
+  }
 </style>
 {% endblock %}
