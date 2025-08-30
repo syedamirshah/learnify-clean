@@ -1,3 +1,4 @@
+from itertools import chain  # harmless even if you don’t use it later
 import openpyxl
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -667,19 +668,31 @@ def admin_question_bank_view(request):
     if bank_ids is not None:
         question_banks = question_banks.filter(id__in=bank_ids)
 
-    # --- your existing question count logic (unchanged) ---
+    # --- your existing question count logic (unchanged in effect) ---
     question_counts = {}
 
     # Count SCQ questions
-    for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
+    for bank_id, count in (
+        SCQQuestion.objects.values_list('question_bank')
+        .annotate(c=Count('id'))
+        .values_list('question_bank', 'c')
+    ):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
     # Count MCQ questions
-    for bank_id, count in MCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
+    for bank_id, count in (
+        MCQQuestion.objects.values_list('question_bank')
+        .annotate(c=Count('id'))
+        .values_list('question_bank', 'c')
+    ):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
     # Count FIB questions
-    for bank_id, count in FIBQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
+    for bank_id, count in (
+        FIBQuestion.objects.values_list('question_bank')
+        .annotate(c=Count('id'))
+        .values_list('question_bank', 'c')
+    ):
         question_counts[bank_id] = question_counts.get(bank_id, 0) + count
 
     # Attach count to each question bank object
