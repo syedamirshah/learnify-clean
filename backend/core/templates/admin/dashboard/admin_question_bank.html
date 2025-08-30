@@ -9,6 +9,7 @@
 {# Filters — Grade (by name) → Chapter (by id)                    #}
 {# View should pass: grades, chapters, request.GET.grade/chapter  #}
 {# ─────────────────────────────────────────────────────────────── #}
+<!-- 🔍 Filters (same pattern as quiz page): Grade (name) → Chapter (id) -->
 <form method="get" style="margin-bottom: 16px;">
   <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
     <div>
@@ -16,7 +17,8 @@
       <select name="grade" id="grade" style="padding:6px 8px; min-width:200px;">
         <option value="">All Grades</option>
         {% for grade in grades %}
-          <option value="{{ grade.name }}" {% if request.GET.grade == grade.name %}selected{% endif %}>
+          <option value="{{ grade.name }}"
+                  {% if request.GET.grade == grade.name or selected_grade == grade.name %}selected{% endif %}>
             {{ grade.name }}
           </option>
         {% endfor %}
@@ -25,12 +27,14 @@
 
     <div>
       <label for="chapter"><strong>Filter by Chapter:</strong></label><br>
-      <select name="chapter" id="chapter" style="padding:6px 8px; min-width:240px;" {% if not request.GET.grade %}disabled{% endif %}>
+      <select name="chapter" id="chapter" style="padding:6px 8px; min-width:240px;"
+              {% if not request.GET.grade and not selected_grade %}disabled{% endif %}>
         <option value="">All Chapters</option>
-        {% if request.GET.grade %}
+        {% if request.GET.grade or selected_grade %}
           {% for c in chapters %}
-            <option value="{{ c.id }}" {% if request.GET.chapter == c.id|stringformat:'s' %}selected{% endif %}>
-              {% if c.number %}{{ c.number }} — {% endif %}{{ c.title|default:c.name }}
+            <option value="{{ c.id }}"
+                    {% if request.GET.chapter == c.id|stringformat:'s' or selected_chapter == c.id|stringformat:'s' %}selected{% endif %}>
+              {% if c.number %}{{ c.number }} — {% endif %}{% firstof c.title c.name %}
             </option>
           {% endfor %}
         {% endif %}

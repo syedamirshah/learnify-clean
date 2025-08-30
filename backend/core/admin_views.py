@@ -558,9 +558,16 @@ def admin_list_quizzes_view(request):
 
 @login_required
 def admin_question_bank_view(request):
-    # Read filters
-    selected_grade = (request.GET.get('grade') or '').strip()     # grade by name, same as quiz page
-    selected_chapter = (request.GET.get('chapter') or '').strip() # chapter id as string
+    """
+    Question Bank list with Grade (by name) -> Chapter (by id) filters,
+    matching the quiz list filtering pattern.
+    """
+    # If you want same restriction as quizzes page, uncomment below:
+    # if request.user.role != 'admin':
+    #     return HttpResponseForbidden("Only admins can view this page.")
+
+    selected_grade = (request.GET.get('grade') or "").strip()      # grade NAME
+    selected_chapter = (request.GET.get('chapter') or "").strip()  # chapter ID
 
     # Base queryset
     banks = (
@@ -570,10 +577,10 @@ def admin_question_bank_view(request):
         .order_by('title')
     )
 
-    # Grades for dropdown (same approach as quizzes page: by name)
+    # Grades for dropdown (IDENTICAL approach to quiz page)
     grades = Grade.objects.all().order_by('name')
 
-    # Chapters narrow when a grade is chosen
+    # Chapters depend on selected grade (server-side population)
     if selected_grade:
         banks = banks.filter(chapter__subject__grade__name=selected_grade)
         chapters = Chapter.objects.filter(
@@ -591,11 +598,11 @@ def admin_question_bank_view(request):
         'admin/dashboard/admin_question_bank.html',
         {
             'question_banks': banks,
-            'grades': grades,
-            'chapters': chapters,
+            'grades': grades,                   # <-- feeds the grade dropdown
+            'chapters': chapters,               # <-- only when a grade is chosen
             'selected_grade': selected_grade,
             'selected_chapter': selected_chapter,
-            'request': request,  # your template already uses it
+            'request': request,                 # template already uses this
         },
     )
 
