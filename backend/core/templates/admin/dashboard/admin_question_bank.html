@@ -5,7 +5,7 @@
 {% block content %}
 <h1 style="margin-bottom: 20px;">📚 <b>Question Bank Management</b></h1>
 
-{% with sort=(current_sort|default:request.GET.sort|default:"created")|lower dir=(current_dir|default:request.GET.dir|default:"desc")|lower %}
+{% with sort=current_sort|default:request.GET.sort|default:"created"|lower dir=current_dir|default:request.GET.dir|default:"desc"|lower %}
 
 <!-- ✅ Add New Bank Button -->
 {% if request.user.role != 'manager' %}
@@ -55,7 +55,6 @@
       <td style="padding: 8px; word-wrap: break-word;">{{ bank.title }}</td>
 
       <td style="padding: 8px;">
-        {# Show the first available created-like field; fall back to "-" #}
         {% if bank.created_at %}{{ bank.created_at|date:"Y-m-d H:i" }}
         {% elif bank.created %}{{ bank.created|date:"Y-m-d H:i" }}
         {% elif bank.created_on %}{{ bank.created_on|date:"Y-m-d H:i" }}
