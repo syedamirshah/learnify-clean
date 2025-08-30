@@ -631,13 +631,44 @@ def user_dashboard(request):
 
 @staff_member_required
 def admin_question_bank_view(request):
-    # Fetch all question banks
+    # --- read filters from query string ---
+    selected_grade = (request.GET.get('grade') or '').strip()      # e.g. "Grade 3"
+    selected_chapter = (request.GET.get('chapter') or '').strip()  # chapter id as str
+
+    # --- base queryset (keep original) ---
     question_banks = QuestionBank.objects.all().order_by('title')
 
-    # Create a dictionary to hold question counts by bank_id
-    question_counts = {}
+    # --- apply filters via question tables (since QuestionBank has no direct grade/chapter) ---
+    bank_ids = None
+    if selected_grade:
+        # union of bank ids across all 3 question types for the chosen grade
+        grade_ids = set(chain(
+            SCQQuestion.objects.filter(chapter__subject__grade__name=selected_grade)
+                .values_list('question_bank_id', flat=True).distinct(),
+            MCQQuestion.objects.filter(chapter__subject__grade__name=selected_grade)
+                .values_list('question_bank_id', flat=True).distinct(),
+            FIBQuestion.objects.filter(chapter__subject__grade__name=selected_grade)
+                .values_list('question_bank_id', flat=True).distinct(),
+        ))
+        bank_ids = grade_ids
 
-    from core.models import SCQQuestion, MCQQuestion, FIBQuestion  # Adjust if models live elsewhere
+    if selected_chapter:
+        # union of bank ids across all 3 question types for the chosen chapter
+        chap_ids = set(chain(
+            SCQQuestion.objects.filter(chapter_id=selected_chapter)
+                .values_list('question_bank_id', flat=True).distinct(),
+            MCQQuestion.objects.filter(chapter_id=selected_chapter)
+                .values_list('question_bank_id', flat=True).distinct(),
+            FIBQuestion.objects.filter(chapter_id=selected_chapter)
+                .values_list('question_bank_id', flat=True).distinct(),
+        ))
+        bank_ids = chap_ids if bank_ids is None else (bank_ids & chap_ids)
+
+    if bank_ids is not None:
+        question_banks = question_banks.filter(id__in=bank_ids)
+
+    # --- your existing question count logic (unchanged) ---
+    question_counts = {}
 
     # Count SCQ questions
     for bank_id, count in SCQQuestion.objects.values_list('question_bank',).annotate(c=Count('id')):
@@ -655,8 +686,26 @@ def admin_question_bank_view(request):
     for bank in question_banks:
         bank.question_count = question_counts.get(bank.id, 0)
 
+    # --- dropdown data for the template (mirrors the quizzes page) ---
+    grades = Grade.objects.all().order_by('name')
+
+    if selected_grade:
+        grade_obj = Grade.objects.filter(name=selected_grade).first()
+        chapters = (
+            Chapter.objects.filter(subject__grade=grade_obj)
+                   .order_by('number', 'title', 'name')
+            if grade_obj else Chapter.objects.none()
+        )
+    else:
+        chapters = Chapter.objects.none()
+
     return render(request, "admin/dashboard/admin_question_bank.html", {
-        "question_banks": question_banks
+        "question_banks": question_banks,
+        "grades": grades,
+        "chapters": chapters,
+        "selected_grade": selected_grade,
+        "selected_chapter": selected_chapter,
+        "request": request,   # lets template keep selections like your quiz page
     })
 
 @staff_member_required
