@@ -130,8 +130,14 @@ const LandingPage = () => {
 
   // Soft neutral tints we’ll cycle through for chapter cards
   const chapterCardTints = [
-    "bg-gray-50", "bg-gray-100", "bg-zinc-50", "bg-zinc-100",
-    "bg-stone-50", "bg-stone-100", "bg-slate-50", "bg-slate-100"
+    "bg-gray-50",   // neutral
+    "bg-green-50",  // very light green
+    "bg-blue-50",   // soft blue
+    "bg-yellow-50", // pale yellow
+    "bg-pink-50",   // soft pink
+    "bg-purple-50", // lavender
+    "bg-teal-50",   // mint
+    "bg-orange-50", // peach
   ];
 
   return (
