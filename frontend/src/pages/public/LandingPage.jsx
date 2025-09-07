@@ -12,11 +12,11 @@ const LandingPage = () => {
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
 
-  // Force full-page light-green background (no white gutters)
+  // Force full-page light-green background everywhere
   useEffect(() => {
-    const prev = document.body.style.backgroundColor;
+    const prevBG = document.body.style.backgroundColor;
     document.body.style.backgroundColor = '#f6fff6';
-    return () => { document.body.style.backgroundColor = prev; };
+    return () => { document.body.style.backgroundColor = prevBG; };
   }, []);
 
   // Load role and name
@@ -128,8 +128,14 @@ const LandingPage = () => {
     return out;
   };
 
+  // Soft neutral tints we’ll cycle through for chapter cards
+  const chapterCardTints = [
+    "bg-gray-50", "bg-gray-100", "bg-zinc-50", "bg-zinc-100",
+    "bg-stone-50", "bg-stone-100", "bg-slate-50", "bg-slate-100"
+  ];
+
   return (
-    <div className="min-h-screen font-[Nunito] text-gray-800">
+    <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
       {/* Header */}
       <header className="flex justify-between items-center px-4 pt-4 pb-2">
         <div className="flex items-center space-x-6">
@@ -245,65 +251,71 @@ const LandingPage = () => {
       </section>
 
       {/* Dynamic Quiz View */}
-      <div className="mt-14 px-6 max-w-[1200px] mx-auto">
+      <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
           <div key={`grade-${gradeIndex}`} className="mb-12">
-            <h2 className="text-2xl font-bold text-green-800 text-center mb-8">
+            {/* (i) tighter gap above subjects */}
+            <h2 className="text-2xl font-bold text-green-800 text-center mb-3">
               {gradeItem.grade}
             </h2>
 
             {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
-                {/* Subject title only (no box) */}
-                <h3 className="text-xl text-green-700 font-extrabold text-center mb-6">
+              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-8">
+                {/* subject label only */}
+                <h3 className="text-xl text-green-700 font-extrabold text-center mb-3">
                   {subjectItem.subject}
                 </h3>
 
-                {/* Each CHAPTER is a card; still use your balanced columns */}
+                {/* Each CHAPTER is a card; balanced into 3 columns */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                  {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
-                    <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
-                      {column.map((chapterItem, chapterIndex) => (
-                        <article
-                          key={`chapter-${colIdx}-${chapterIndex}`}
-                          className="relative rounded-2xl shadow-lg border border-green-200 bg-[#d9f5d9] p-5"
-                        >
-                          {/* sticker icon on each chapter card */}
-                          <div className="absolute right-4 -top-6 w-12 h-12 bg-white border-4 border-[#f6fff6] rounded-full shadow grid place-items-center text-xl">
-                            📗
-                          </div>
+                  {(() => {
+                    // local counter to cycle colors across cards
+                    let colorCounter = 0;
+                    return splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
+                      <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
+                        {column.map((chapterItem, chapterIndex) => {
+                          const tint = chapterCardTints[colorCounter % chapterCardTints.length];
+                          colorCounter += 1;
+                          return (
+                            <article
+                              key={`chapter-${colIdx}-${chapterIndex}`}
+                              className={`rounded-2xl shadow border border-gray-200 ${tint} p-5`}
+                            >
+                              {/* (v) removed sticker/emoji */}
 
-                          {/* Chapter title */}
-                          <div className="mb-2">
-                            <span className="text-green-800 font-bold">
-                              {chapterItem.chapter}.
-                            </span>
-                          </div>
+                              {/* Chapter title */}
+                              <div className="mb-2">
+                                <span className="text-green-800 font-bold">
+                                  {chapterItem.chapter}.
+                                </span>
+                              </div>
 
-                          {/* Quizzes list (sorted) */}
-                          <ul className="list-disc ml-5 space-y-1">
-                            {[...chapterItem.quizzes]
-                              .sort((a, b) => {
-                                const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
-                                return (a.title || '').localeCompare(b.title || '');
-                              })
-                              .map((quiz) => (
-                                <li key={`quiz-${quiz.id}`}>
-                                  <Link
-                                    to={`/student/attempt-quiz/${quiz.id}`}
-                                    className="text-green-900 hover:text-green-700 hover:underline"
-                                  >
-                                    {quiz.title}
-                                  </Link>
-                                </li>
-                              ))}
-                          </ul>
-                        </article>
-                      ))}
-                    </div>
-                  ))}
+                              {/* (iii) no bullets; (iv) left aligned */}
+                              <ul className="list-none pl-0 ml-0 space-y-1 text-left">
+                                {[...chapterItem.quizzes]
+                                  .sort((a, b) => {
+                                    const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                    const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                    if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+                                    return (a.title || '').localeCompare(b.title || '');
+                                  })
+                                  .map((quiz) => (
+                                    <li key={`quiz-${quiz.id}`}>
+                                      <Link
+                                        to={`/student/attempt-quiz/${quiz.id}`}
+                                        className="inline-block text-green-900 hover:text-green-700 hover:underline"
+                                      >
+                                        {quiz.title}
+                                      </Link>
+                                    </li>
+                                  ))}
+                              </ul>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
             ))}
