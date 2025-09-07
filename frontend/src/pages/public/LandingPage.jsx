@@ -24,7 +24,6 @@ const LandingPage = () => {
   useEffect(() => {
     const status = localStorage.getItem('account_status');
     const role = localStorage.getItem('user_role');
-
     if ((role === 'student' || role === 'teacher') && status === 'expired') {
       alert("Your subscription has expired. Redirecting to renewal page...");
       navigate('/account/renew-subscription');
@@ -45,18 +44,13 @@ const LandingPage = () => {
 
   const handleLogin = async () => {
     try {
-      const res = await axiosInstance.post('token/', {
-        username,
-        password,
-      });
-
+      const res = await axiosInstance.post('token/', { username, password });
       localStorage.setItem('access_token', res.data.access);
       localStorage.setItem('refresh_token', res.data.refresh);
       localStorage.setItem('account_status', res.data.account_status);
       localStorage.setItem('role', res.data.role);
 
       const me = await axiosInstance.get('user/me/');
-
       const role = me.data.role;
       const fullName = me.data.full_name || me.data.username;
       const status = me.data.account_status;
@@ -77,7 +71,6 @@ const LandingPage = () => {
       } else {
         navigate('/');
       }
-
     } catch (err) {
       if (err.response?.data?.detail) {
         alert("Login failed: " + err.response.data.detail);
@@ -99,41 +92,37 @@ const LandingPage = () => {
     window.location.href = '/';
   };
 
-  // Estimate a chapter "height": 1 for the title + one per quiz.
-const chapterWeight = (ch) =>
-  1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
+  // ====== Your existing helpers (unchanged) ======
+  const chapterWeight = (ch) =>
+    1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
 
-/**
- * Split an ordered chapter list into `cols` sequential columns,
- * trying to balance total height per column. Order is preserved;
- * chapters are never split.
- */
-const splitChaptersBalanced = (chapters, cols = 3) => {
-  const total = chapters.reduce((s, ch) => s + chapterWeight(ch), 0);
-  const target = Math.ceil(total / cols);
+  const splitChaptersBalanced = (chapters, cols = 3) => {
+    const total = chapters.reduce((s, ch) => s + chapterWeight(ch), 0);
+    const target = Math.ceil(total / cols);
 
-  const out = Array.from({ length: cols }, () => []);
-  let col = 0;
-  let used = 0;
+    const out = Array.from({ length: cols }, () => []);
+    let col = 0;
+    let used = 0;
 
-  chapters.forEach((ch, i) => {
-    const w = chapterWeight(ch);
-    const remainingChapters = chapters.length - i - 1;
-    const remainingCols = cols - col - 1;
+    chapters.forEach((ch, i) => {
+      const w = chapterWeight(ch);
+      const remainingChapters = chapters.length - i - 1;
+      const remainingCols = cols - col - 1;
 
-    if (used > 0 && used + w > target && remainingCols >= 1) {
-      col += 1;
-      used = 0;
-    }
-    out[col].push(ch);
-    used += w;
-  });
+      if (used > 0 && used + w > target && remainingCols >= 1) {
+        col += 1;
+        used = 0;
+      }
+      out[col].push(ch);
+      used += w;
+    });
 
-  return out;
-};
+    return out;
+  };
 
   return (
-    <div className="bg-white min-h-screen font-[Calibri] text-gray-800">
+    <div className="bg-[#f6fff6] min-h-screen font-[Nunito] text-gray-800">
+      {/* Header */}
       <header className="flex justify-between items-center px-4 pt-4 pb-2">
         <div className="flex items-center space-x-6">
           <img src={logo} alt="Learnify Pakistan Logo" className="h-24" />
@@ -184,6 +173,7 @@ const splitChaptersBalanced = (chapters, cols = 3) => {
         </div>
       </header>
 
+      {/* Navbar */}
       <nav className="flex justify-evenly items-center text-center text-lg font-normal bg-[#42b72a] text-white relative z-30">
         <div className="py-2">
           <Link to="/why-join" className="text-white hover:underline">
@@ -201,11 +191,9 @@ const splitChaptersBalanced = (chapters, cols = 3) => {
               </div>
             </>
           )}
-
           {role === 'teacher' && (
             <Link to="/teacher/assessment" className="text-white hover:underline font-normal">Assessment</Link>
           )}
-
           {!role && (
             <Link to="/assessment/public" className="text-white hover:underline font-normal">Assessment</Link>
           )}
@@ -214,11 +202,9 @@ const splitChaptersBalanced = (chapters, cols = 3) => {
         <div className="py-2">
           <Link to="/honor-board" className="text-white hover:underline">Learnify Heroes</Link>
         </div>
-
         <div className="py-2">
           <Link to="/membership" className="text-white hover:underline">Membership</Link>
         </div>
-
         <div className="py-2">
           <Link to="/help-center" className="text-white hover:underline">Help Center</Link>
         </div>
@@ -241,11 +227,10 @@ const splitChaptersBalanced = (chapters, cols = 3) => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-[#f6fff6] border border-green-300 shadow-md rounded-xl mt-10 p-8 max-w-7xl mx-auto">
+      <section className="bg-[#ecfbec] border border-green-300 shadow-md rounded-xl mt-10 p-8 max-w-7xl mx-auto">
         <h2 className="text-3xl text-center font-bold text-[#1E7F12] mb-4">
           Learnify Pakistan: A Smarter Way to Learn
         </h2>
-
         <p className="text-lg text-gray-700 text-center max-w-4xl mx-auto">
           Learnify Pakistan is a modern digital learning platform designed especially for primary school students, teachers, and parents. Fully aligned with the National Curriculum, it offers an inclusive and affordable way to master school subjects, track performance in real time, and foster meaningful learning - inside and outside the classroom. Learnify brings education to life through unlimited quizzes, smart feedback, and parent-teacher visibility like never before.
         </p>
@@ -255,56 +240,67 @@ const splitChaptersBalanced = (chapters, cols = 3) => {
       <div className="mt-14 px-6 max-w-7xl mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
           <div key={`grade-${gradeIndex}`} className="mb-12">
-            <h2 className="text-2xl font-bold text-green-800 text-center mb-4">
+            <h2 className="text-2xl font-bold text-green-800 text-center mb-8">
               {gradeItem.grade}
             </h2>
 
-            {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
-                <h3 className="text-xl text-green-700 font-semibold text-center mb-4">
-                  {subjectItem.subject}
-                </h3>
+            {/* Subjects as playful green cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {gradeItem.subjects.map((subjectItem, subjectIndex) => (
+                <article
+                  key={`subject-${gradeIndex}-${subjectIndex}`}
+                  className="relative rounded-2xl shadow-lg border border-green-200 bg-[#d9f5d9] p-6"
+                >
+                  {/* sticker icon */}
+                  <div className="absolute right-4 -top-6 w-14 h-14 bg-white border-4 border-[#f6fff6] rounded-full shadow grid place-items-center text-2xl">
+                    📘
+                  </div>
 
-                {/* Chapters and Quizzes — 3 equal-height columns */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-                {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
-                    <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
-                      {column.map((chapterItem, chapterIndex) => (
-                        <div key={`chapter-${colIdx}-${chapterIndex}`} className="px-2">
-                          {/* Chapter Title */}
-                          <div className="mb-2">
-                            <span className="text-green-700 font-bold text-base">
-                              {chapterItem.chapter}.
-                            </span>
-                          </div>
+                  <h3 className="text-xl font-extrabold text-green-800 mb-4">
+                    {subjectItem.subject}
+                  </h3>
 
-                          {/* Numbered Quiz List — sorted by leading number */}
-                          <div className="space-y-1">
-                            {[...chapterItem.quizzes]
-                              .sort((a, b) => {
-                                const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
-                                return (a.title || '').localeCompare(b.title || '');
-                              })
-                              .map((quiz) => (
-                                <div key={`quiz-${quiz.id}`} className="flex items-start gap-2 ml-1">
-                                  <Link
-                                    to={`/student/attempt-quiz/${quiz.id}`}
-                                    className="text-green-800 hover:text-green-600 hover:underline"
-                                  >
-                                    {quiz.title}
-                                  </Link>
-                                </div>
-                              ))}
+                  {/* Chapters & quizzes — keep your balanced 3-column logic per subject */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                    {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
+                      <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-4 h-full">
+                        {column.map((chapterItem, chapterIndex) => (
+                          <div key={`chapter-${colIdx}-${chapterIndex}`} className="px-1">
+                            {/* Chapter Title */}
+                            <div className="mb-1">
+                              <span className="text-green-700 font-semibold">
+                                {chapterItem.chapter}.
+                              </span>
+                            </div>
+
+                            {/* Numbered Quiz List — sorted by leading number */}
+                            <ul className="list-disc ml-5 space-y-1">
+                              {[...chapterItem.quizzes]
+                                .sort((a, b) => {
+                                  const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                  const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                  if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+                                  return (a.title || '').localeCompare(b.title || '');
+                                })
+                                .map((quiz) => (
+                                  <li key={`quiz-${quiz.id}`}>
+                                    <Link
+                                      to={`/student/attempt-quiz/${quiz.id}`}
+                                      className="text-green-800 hover:text-green-600 hover:underline"
+                                    >
+                                      {quiz.title}
+                                    </Link>
+                                  </li>
+                                ))}
+                            </ul>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         ))}
       </div>
