@@ -12,6 +12,13 @@ const LandingPage = () => {
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
 
+  // Force full-page light-green background (no white gutters)
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#f6fff6';
+    return () => { document.body.style.backgroundColor = prev; };
+  }, []);
+
   // Load role and name
   useEffect(() => {
     const storedRole = localStorage.getItem('user_role');
@@ -45,6 +52,7 @@ const LandingPage = () => {
   const handleLogin = async () => {
     try {
       const res = await axiosInstance.post('token/', { username, password });
+
       localStorage.setItem('access_token', res.data.access);
       localStorage.setItem('refresh_token', res.data.refresh);
       localStorage.setItem('account_status', res.data.account_status);
@@ -92,7 +100,7 @@ const LandingPage = () => {
     window.location.href = '/';
   };
 
-  // ====== Your existing helpers (unchanged) ======
+  // ====== existing helpers (unchanged) ======
   const chapterWeight = (ch) =>
     1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
 
@@ -121,7 +129,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="bg-[#f6fff6] min-h-screen font-[Nunito] text-gray-800">
+    <div className="min-h-screen font-[Nunito] text-gray-800">
       {/* Header */}
       <header className="flex justify-between items-center px-4 pt-4 pb-2">
         <div className="flex items-center space-x-6">
@@ -237,70 +245,68 @@ const LandingPage = () => {
       </section>
 
       {/* Dynamic Quiz View */}
-      <div className="mt-14 px-6 max-w-7xl mx-auto">
+      <div className="mt-14 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
           <div key={`grade-${gradeIndex}`} className="mb-12">
             <h2 className="text-2xl font-bold text-green-800 text-center mb-8">
               {gradeItem.grade}
             </h2>
 
-            {/* Subjects as playful green cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-                <article
-                  key={`subject-${gradeIndex}-${subjectIndex}`}
-                  className="relative rounded-2xl shadow-lg border border-green-200 bg-[#d9f5d9] p-6"
-                >
-                  {/* sticker icon */}
-                  <div className="absolute right-4 -top-6 w-14 h-14 bg-white border-4 border-[#f6fff6] rounded-full shadow grid place-items-center text-2xl">
-                    📘
-                  </div>
+            {gradeItem.subjects.map((subjectItem, subjectIndex) => (
+              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
+                {/* Subject title only (no box) */}
+                <h3 className="text-xl text-green-700 font-extrabold text-center mb-6">
+                  {subjectItem.subject}
+                </h3>
 
-                  <h3 className="text-xl font-extrabold text-green-800 mb-4">
-                    {subjectItem.subject}
-                  </h3>
-
-                  {/* Chapters & quizzes — keep your balanced 3-column logic per subject */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                    {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
-                      <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-4 h-full">
-                        {column.map((chapterItem, chapterIndex) => (
-                          <div key={`chapter-${colIdx}-${chapterIndex}`} className="px-1">
-                            {/* Chapter Title */}
-                            <div className="mb-1">
-                              <span className="text-green-700 font-semibold">
-                                {chapterItem.chapter}.
-                              </span>
-                            </div>
-
-                            {/* Numbered Quiz List — sorted by leading number */}
-                            <ul className="list-disc ml-5 space-y-1">
-                              {[...chapterItem.quizzes]
-                                .sort((a, b) => {
-                                  const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                  const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                  if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
-                                  return (a.title || '').localeCompare(b.title || '');
-                                })
-                                .map((quiz) => (
-                                  <li key={`quiz-${quiz.id}`}>
-                                    <Link
-                                      to={`/student/attempt-quiz/${quiz.id}`}
-                                      className="text-green-800 hover:text-green-600 hover:underline"
-                                    >
-                                      {quiz.title}
-                                    </Link>
-                                  </li>
-                                ))}
-                            </ul>
+                {/* Each CHAPTER is a card; still use your balanced columns */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                  {splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
+                    <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
+                      {column.map((chapterItem, chapterIndex) => (
+                        <article
+                          key={`chapter-${colIdx}-${chapterIndex}`}
+                          className="relative rounded-2xl shadow-lg border border-green-200 bg-[#d9f5d9] p-5"
+                        >
+                          {/* sticker icon on each chapter card */}
+                          <div className="absolute right-4 -top-6 w-12 h-12 bg-white border-4 border-[#f6fff6] rounded-full shadow grid place-items-center text-xl">
+                            📗
                           </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
+
+                          {/* Chapter title */}
+                          <div className="mb-2">
+                            <span className="text-green-800 font-bold">
+                              {chapterItem.chapter}.
+                            </span>
+                          </div>
+
+                          {/* Quizzes list (sorted) */}
+                          <ul className="list-disc ml-5 space-y-1">
+                            {[...chapterItem.quizzes]
+                              .sort((a, b) => {
+                                const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+                                return (a.title || '').localeCompare(b.title || '');
+                              })
+                              .map((quiz) => (
+                                <li key={`quiz-${quiz.id}`}>
+                                  <Link
+                                    to={`/student/attempt-quiz/${quiz.id}`}
+                                    className="text-green-900 hover:text-green-700 hover:underline"
+                                  >
+                                    {quiz.title}
+                                  </Link>
+                                </li>
+                              ))}
+                          </ul>
+                        </article>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
