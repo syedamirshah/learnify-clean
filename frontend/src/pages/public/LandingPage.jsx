@@ -20,9 +20,9 @@ const LandingPage = () => {
   // optional: completed quiz ids for the logged-in student
   const [completedIds, setCompletedIds] = useState(new Set());
 
-  // inline detail drawer state
+  // legacy drawer state (kept) + new per-card toggle key
   const [openDetail, setOpenDetail] = useState(null);
-  // { gradeIndex, subjectIndex, chapterIndex, subjectName, chapterTitle, quizzes: [] }
+  const [openCardKey, setOpenCardKey] = useState(null); // `${gradeIndex}-${subjectIndex}-${chapterFlatIdx}`
 
   const navigate = useNavigate();
 
@@ -78,7 +78,7 @@ const LandingPage = () => {
       });
   }, [role]);
 
-  /* ====== existing helpers (unchanged) ====== */
+  /* ====== existing helpers (kept) ====== */
   const chapterWeight = (ch) =>
     1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
 
@@ -174,14 +174,13 @@ const LandingPage = () => {
   const getTopics = (subject, chapterTitle) =>
     CHAPTER_TOPICS[chapterKey(subject, chapterTitle)] || "";
 
-  const countCompletedIn = (quizArr) =>
-    quizArr?.reduce((acc, q) => acc + (completedIds.has(String(q.id)) ? 1 : 0), 0);
+  const countCompletedIn = (quizArr = []) =>
+    quizArr.reduce((acc, q) => acc + (completedIds.has(String(q.id)) ? 1 : 0), 0);
 
-  /* Open/close inline detail drawer */
+  /* Legacy drawer helpers (kept for compatibility) */
   const openChapterDetail = (payload) => setOpenDetail(payload);
   const closeChapterDetail = () => setOpenDetail(null);
 
-  /* Keep drawer content stable */
   const drawer = useMemo(() => {
     if (!openDetail) return null;
     const { subjectName, chapterTitle, quizzes } = openDetail;
@@ -193,6 +192,16 @@ const LandingPage = () => {
     });
     return { subjectName, chapterTitle, sorted };
   }, [openDetail]);
+
+  /* New: sort chapters by leading number for left→right order */
+  const sortByLeadingNumber = (arr, field = 'chapter') => {
+    const getNum = (txt) => parseInt((txt || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+    return [...(arr || [])].sort((a, b) => {
+      const A = getNum(a[field]); const B = getNum(b[field]);
+      if (Number.isFinite(A) && Number.isFinite(B) && A !== B) return A - B;
+      return (a[field] || '').localeCompare(b[field] || '');
+    });
+  };
 
   return (
     <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
@@ -319,128 +328,135 @@ const LandingPage = () => {
               {gradeItem.grade}
             </h2>
 
-            {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
-                {/* Subject heading */}
-                <h3 className="text-xl text-green-700 font-extrabold text-center mb-3">
-                  {subjectItem.subject}
-                </h3>
+            {gradeItem.subjects.map((subjectItem, subjectIndex) => {
+              // 1) order chapters 1,2,3… left→right
+              const sortedChapters = sortByLeadingNumber(subjectItem.chapters || [], 'chapter');
+              // counter for color cycling
+              let tintIdx = 0;
 
-                {/* Chapters as equal-height cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                  {(() => {
-                    // local counter to cycle colors across cards for this subject
-                    let tintIdx = 0;
-                    return splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
-                      <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
-                        {column.map((chapterItem, chapterIndex) => {
-                          const tint = chapterCardTints[tintIdx % chapterCardTints.length];
-                          tintIdx += 1;
+              return (
+                <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
+                  {/* Subject heading */}
+                  <h3 className="text-xl text-green-700 font-extrabold text-center mb-3">
+                    {subjectItem.subject}
+                  </h3>
 
-                          const quizzes = [...(chapterItem.quizzes || [])];
-                          const total = quizzes.length;
-                          const completed = countCompletedIn(quizzes);
-                          const pct = total ? Math.round((completed / total) * 100) : 0;
+                  {/* Chapters as equal-height cards in normal grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                    {sortedChapters.map((chapterItem, chapterFlatIdx) => {
+                      const tint = chapterCardTints[tintIdx % chapterCardTints.length];
+                      tintIdx += 1;
 
-                          const topics = getTopics(subjectItem.subject, chapterItem.chapter);
+                      const quizzes = [...(chapterItem.quizzes || [])];
+                      const total = quizzes.length;              // ✅ correct count
+                      const completed = countCompletedIn(quizzes);
+                      const pct = total ? Math.round((completed / total) * 100) : 0;
 
-                          return (
-                            <article
-                              key={`chapter-${colIdx}-${chapterIndex}`}
-                              className={`rounded-2xl shadow border border-gray-200 ${tint} p-5 min-h-[180px] flex flex-col`}
+                      const topics = getTopics(subjectItem.subject, chapterItem.chapter);
+                      const cardKey = `${gradeIndex}-${subjectIndex}-${chapterFlatIdx}`;
+                      const isOpen = openCardKey === cardKey;
+
+                      return (
+                        <article
+                          key={`chapter-${cardKey}`}
+                          className={`rounded-2xl shadow border border-gray-200 ${tint} p-5 min-h-[190px] flex flex-col`}
+                        >
+                          {/* Chapter title */}
+                          <h4 className="text-green-800 font-bold mb-1">
+                            {chapterItem.chapter}.
+                          </h4>
+
+                          {/* topics (optional/manual) */}
+                          <p className="text-sm text-gray-700 mb-1">
+                            {topics || <span className="opacity-60">Topics: —</span>}
+                          </p>
+
+                          {/* meta – separate lines */}
+                          <p className="text-sm text-gray-700">Quizzes: <b>{total}</b></p>
+                          <p className="text-sm text-gray-700 mb-2">Completed: <b>{completed}</b></p>
+
+                          {/* progress bar */}
+                          <div className="h-2 bg-white/60 rounded mb-3 overflow-hidden">
+                            <div className="h-2 bg-green-500" style={{ width: `${pct}%` }} />
+                          </div>
+
+                          {/* toggle quizzes inside THIS card */}
+                          <div className="mt-auto">
+                            <button
+                              onClick={() => {
+                                const payload = {
+                                  gradeIndex,
+                                  subjectIndex,
+                                  chapterIndex: chapterFlatIdx,
+                                  subjectName: subjectItem.subject,
+                                  chapterTitle: chapterItem.chapter,
+                                  quizzes,
+                                };
+                                setOpenCardKey(isOpen ? null : cardKey);  // new UX
+                                openChapterDetail(payload);               // keep legacy state in sync
+                              }}
+                              className="text-sm px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
                             >
-                              {/* Chapter title */}
-                              <h4 className="text-green-800 font-bold mb-1">
-                                {chapterItem.chapter}.
-                              </h4>
+                              {isOpen ? "Hide quizzes" : "View quizzes"}
+                            </button>
+                          </div>
 
-                              {/* topics (optional) */}
-                              {topics && (
-                                <p className="text-sm text-gray-600 mb-2">
-                                  {topics}
-                                </p>
-                              )}
-
-                              {/* meta */}
-                              <div className="text-sm text-gray-700 mb-3">
-                                <span className="mr-4">Quizzes: <b>{total}</b></span>
-                                <span>Completed: <b>{completed}</b></span>
-                              </div>
-
-                              {/* progress bar */}
-                              <div className="h-2 bg-white/60 rounded mb-4 overflow-hidden">
-                                <div
-                                  className="h-2 bg-green-500"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-
-                              {/* fixed footer with button */}
-                              <div className="mt-auto">
-                                <button
-                                  onClick={() =>
-                                    openChapterDetail({
-                                      gradeIndex,
-                                      subjectIndex,
-                                      chapterIndex: chapterIndex, // index within this column
-                                      subjectName: subjectItem.subject,
-                                      chapterTitle: chapterItem.chapter,
-                                      quizzes: quizzes,
+                          {/* quizzes inline, NO bullets */}
+                          {isOpen && (
+                            <div className="mt-3 rounded-xl border border-green-200 bg-white/70 p-3">
+                              {quizzes.length ? (
+                                <div className="grid grid-cols-1 gap-1">
+                                  {[...quizzes]
+                                    .sort((a, b) => {
+                                      const getNum = t => parseInt((t || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+                                      const A = getNum(a.title), B = getNum(b.title);
+                                      if (Number.isFinite(A) && Number.isFinite(B) && A !== B) return A - B;
+                                      return (a.title || '').localeCompare(b.title || '');
                                     })
-                                  }
-                                  className="text-sm px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
-                                >
-                                  View quizzes
-                                </button>
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    ));
-                  })()}
-                </div>
-
-                {/* Inline detail drawer (appears once per subject, beneath the grid) */}
-                {openDetail && openDetail.subjectIndex === subjectIndex && (
-                  <div className="mt-6 rounded-2xl border border-green-200 bg-white shadow p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <div className="text-xs uppercase tracking-wide text-green-700">
-                          {drawer?.subjectName}
-                        </div>
-                        <h4 className="text-lg font-extrabold text-green-900">
-                          {drawer?.chapterTitle}
-                        </h4>
-                      </div>
-                      <button
-                        onClick={closeChapterDetail}
-                        className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                      >
-                        Close
-                      </button>
-                    </div>
-
-                    {drawer?.sorted?.length ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {drawer.sorted.map((quiz) => (
-                          <Link
-                            key={quiz.id}
-                            to={`/student/attempt-quiz/${quiz.id}`}
-                            className="text-green-900 hover:text-green-700 hover:underline inline-flex items-start gap-2"
-                          >
-                            <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-green-600" />
-                            <span>{quiz.title}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-600">No quizzes available.</div>
-                    )}
+                                    .map((q) => (
+                                      <Link
+                                        key={q.id}
+                                        to={`/student/attempt-quiz/${q.id}`}
+                                        className="inline-block text-green-900 hover:text-green-700 hover:underline"
+                                      >
+                                        {q.title}
+                                      </Link>
+                                    ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-gray-600">No quizzes available.</div>
+                              )}
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Legacy subject-level drawer removed from UI (kept code above). */}
+                  {false && openDetail && openDetail.subjectIndex === subjectIndex && (
+                    <div className="mt-6 rounded-2xl border border-green-200 bg-white shadow p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-green-700">
+                            {drawer?.subjectName}
+                          </div>
+                          <h4 className="text-lg font-extrabold text-green-900">
+                            {drawer?.chapterTitle}
+                          </h4>
+                        </div>
+                        <button
+                          onClick={closeChapterDetail}
+                          className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
