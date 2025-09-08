@@ -108,14 +108,14 @@ const LandingPage = () => {
 
   /* Chapter card tints — gentle variety */
   const chapterCardTints = [
-    "bg-gray-50",   "bg-gray-100",
-    "bg-slate-50",  "bg-slate-100",
-    "bg-stone-50",  "bg-stone-100",
-    "bg-zinc-50",   "bg-zinc-100",
-    "bg-rose-50",   "bg-rose-100",
-    "bg-amber-50",  "bg-amber-100",
-    "bg-sky-50",    "bg-sky-100",
-    "bg-emerald-50","bg-emerald-100",
+    "bg-gray-100",
+    "bg-slate-100",
+    "bg-stone-100",
+    "bg-zinc-100",
+    "bg-rose-100",
+    "bg-amber-100",
+    "bg-sky-100",
+    "bg-emerald-100",
   ];
 
   const handleLogin = async () => {
