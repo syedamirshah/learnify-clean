@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from '../../utils/axiosInstance';
 import { Link, useNavigate } from 'react-router-dom';
+
+/** Optional: put short topic blurbs here. Key is `${subject}::${chapterTitle}` */
+const CHAPTER_TOPICS = {
+  // "Mathematics::Chapter 1 - Whole Numbers.": "Counting, place value, comparing",
+  // "Mathematics::Chapter 2 - Number Operations.": "Add/subtract within 100",
+};
 
 const LandingPage = () => {
   const [username, setUsername] = useState('');
@@ -10,16 +16,24 @@ const LandingPage = () => {
   const [role, setRole] = useState(null);
   const [userFullName, setFullName] = useState('');
   const [quizData, setQuizData] = useState([]);
+
+  // optional: completed quiz ids for the logged-in student
+  const [completedIds, setCompletedIds] = useState(new Set());
+
+  // inline detail drawer state
+  const [openDetail, setOpenDetail] = useState(null);
+  // { gradeIndex, subjectIndex, chapterIndex, subjectName, chapterTitle, quizzes: [] }
+
   const navigate = useNavigate();
 
-  // Force full-page light-green background everywhere
+  /* Force full-page light-green background (no white gutters) */
   useEffect(() => {
     const prevBG = document.body.style.backgroundColor;
     document.body.style.backgroundColor = '#f6fff6';
     return () => { document.body.style.backgroundColor = prevBG; };
   }, []);
 
-  // Load role and name
+  /* Load role and name */
   useEffect(() => {
     const storedRole = localStorage.getItem('user_role');
     const storedName = localStorage.getItem('user_full_name');
@@ -27,17 +41,17 @@ const LandingPage = () => {
     setFullName(storedName);
   }, []);
 
-  // Expired user redirect
+  /* Expired user redirect */
   useEffect(() => {
     const status = localStorage.getItem('account_status');
-    const role = localStorage.getItem('user_role');
-    if ((role === 'student' || role === 'teacher') && status === 'expired') {
+    const roleLS = localStorage.getItem('user_role');
+    if ((roleLS === 'student' || roleLS === 'teacher') && status === 'expired') {
       alert("Your subscription has expired. Redirecting to renewal page...");
       navigate('/account/renew-subscription');
     }
   }, [navigate]);
 
-  // Fetch quiz data from backend and log it
+  /* Fetch quiz data for landing */
   useEffect(() => {
     import('axios').then(({ default: axios }) => {
       axios.get(`${import.meta.env.VITE_API_BASE_URL}landing/quizzes/`)
@@ -49,58 +63,22 @@ const LandingPage = () => {
     });
   }, []);
 
-  const handleLogin = async () => {
-    try {
-      const res = await axiosInstance.post('token/', { username, password });
+  /* Optionally fetch completed quiz ids for the logged-in student (safe if endpoint missing) */
+  useEffect(() => {
+    if (!role) return;
+    // Try a likely endpoint. If your backend differs, update this path.
+    axiosInstance.get('student/completed-quiz-ids/')
+      .then(res => {
+        const ids = Array.isArray(res.data) ? res.data : (res.data?.ids || []);
+        setCompletedIds(new Set(ids.map(String)));
+      })
+      .catch(() => {
+        // Silently ignore if endpoint not present; UI will just show 0 completed.
+        setCompletedIds(new Set());
+      });
+  }, [role]);
 
-      localStorage.setItem('access_token', res.data.access);
-      localStorage.setItem('refresh_token', res.data.refresh);
-      localStorage.setItem('account_status', res.data.account_status);
-      localStorage.setItem('role', res.data.role);
-
-      const me = await axiosInstance.get('user/me/');
-      const role = me.data.role;
-      const fullName = me.data.full_name || me.data.username;
-      const status = me.data.account_status;
-
-      if (role === 'admin' || role === 'manager') {
-        alert("Admins and Managers must login from the backend.");
-        return;
-      }
-
-      localStorage.setItem('user_role', role);
-      localStorage.setItem('user_full_name', fullName);
-      localStorage.setItem('account_status', status);
-      setRole(role);
-      setFullName(fullName);
-
-      if ((role === 'student' || role === 'teacher') && status === 'expired') {
-        navigate('/account/renew-subscription');
-      } else {
-        navigate('/');
-      }
-    } catch (err) {
-      if (err.response?.data?.detail) {
-        alert("Login failed: " + err.response.data.detail);
-      } else {
-        alert("Login failed: Server error");
-      }
-      console.error("Login error:", err);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('user_full_name');
-    localStorage.removeItem('account_status');
-    setRole(null);
-    setFullName('');
-    window.location.href = '/';
-  };
-
-  // ====== existing helpers (unchanged) ======
+  /* ====== existing helpers (unchanged) ====== */
   const chapterWeight = (ch) =>
     1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
 
@@ -128,17 +106,93 @@ const LandingPage = () => {
     return out;
   };
 
-  // Soft neutral tints we’ll cycle through for chapter cards
+  /* Chapter card tints — gentle variety */
   const chapterCardTints = [
-    "bg-gray-100",   // neutral
-    "bg-green-100",  // very light green
-    "bg-blue-100",   // soft blue
-    "bg-yellow-100", // pale yellow
-    "bg-pink-100",   // soft pink
-    "bg-purple-100", // lavender
-    "bg-teal-100",   // mint
-    "bg-orange-100", // peach
+    "bg-gray-50",   "bg-gray-100",
+    "bg-slate-50",  "bg-slate-100",
+    "bg-stone-50",  "bg-stone-100",
+    "bg-zinc-50",   "bg-zinc-100",
+    "bg-rose-50",   "bg-rose-100",
+    "bg-amber-50",  "bg-amber-100",
+    "bg-sky-50",    "bg-sky-100",
+    "bg-emerald-50","bg-emerald-100",
   ];
+
+  const handleLogin = async () => {
+    try {
+      const res = await axiosInstance.post('token/', { username, password });
+
+      localStorage.setItem('access_token', res.data.access);
+      localStorage.setItem('refresh_token', res.data.refresh);
+      localStorage.setItem('account_status', res.data.account_status);
+      localStorage.setItem('role', res.data.role);
+
+      const me = await axiosInstance.get('user/me/');
+      const roleMe = me.data.role;
+      const fullName = me.data.full_name || me.data.username;
+      const status = me.data.account_status;
+
+      if (roleMe === 'admin' || roleMe === 'manager') {
+        alert("Admins and Managers must login from the backend.");
+        return;
+      }
+
+      localStorage.setItem('user_role', roleMe);
+      localStorage.setItem('user_full_name', fullName);
+      localStorage.setItem('account_status', status);
+      setRole(roleMe);
+      setFullName(fullName);
+
+      if ((roleMe === 'student' || roleMe === 'teacher') && status === 'expired') {
+        navigate('/account/renew-subscription');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        alert("Login failed: " + err.response.data.detail);
+      } else {
+        alert("Login failed: Server error");
+      }
+      console.error("Login error:", err);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_full_name');
+    localStorage.removeItem('account_status');
+    setRole(null);
+    setFullName('');
+    window.location.href = '/';
+  };
+
+  /* Helpers for chapter meta */
+  const chapterKey = (subject, chapterTitle) => `${subject}::${chapterTitle}`;
+  const getTopics = (subject, chapterTitle) =>
+    CHAPTER_TOPICS[chapterKey(subject, chapterTitle)] || "";
+
+  const countCompletedIn = (quizArr) =>
+    quizArr?.reduce((acc, q) => acc + (completedIds.has(String(q.id)) ? 1 : 0), 0);
+
+  /* Open/close inline detail drawer */
+  const openChapterDetail = (payload) => setOpenDetail(payload);
+  const closeChapterDetail = () => setOpenDetail(null);
+
+  /* Keep drawer content stable */
+  const drawer = useMemo(() => {
+    if (!openDetail) return null;
+    const { subjectName, chapterTitle, quizzes } = openDetail;
+    const sorted = [...(quizzes || [])].sort((a, b) => {
+      const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+      const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
+      if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
+      return (a.title || '').localeCompare(b.title || '');
+    });
+    return { subjectName, chapterTitle, sorted };
+  }, [openDetail]);
 
   return (
     <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
@@ -260,62 +314,85 @@ const LandingPage = () => {
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
           <div key={`grade-${gradeIndex}`} className="mb-12">
-            {/* (i) tighter gap above subjects */}
+            {/* tighter gap above subjects */}
             <h2 className="text-2xl font-bold text-green-800 text-center mb-3">
               {gradeItem.grade}
             </h2>
 
             {gradeItem.subjects.map((subjectItem, subjectIndex) => (
-              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-8">
-                {/* subject label only */}
+              <div key={`subject-${gradeIndex}-${subjectIndex}`} className="mb-10">
+                {/* Subject heading */}
                 <h3 className="text-xl text-green-700 font-extrabold text-center mb-3">
                   {subjectItem.subject}
                 </h3>
 
-                {/* Each CHAPTER is a card; balanced into 3 columns */}
+                {/* Chapters as equal-height cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                   {(() => {
-                    // local counter to cycle colors across cards
-                    let colorCounter = 0;
+                    // local counter to cycle colors across cards for this subject
+                    let tintIdx = 0;
                     return splitChaptersBalanced(subjectItem.chapters, 3).map((column, colIdx) => (
                       <div key={`col-${subjectIndex}-${colIdx}`} className="flex flex-col gap-6 h-full">
                         {column.map((chapterItem, chapterIndex) => {
-                          const tint = chapterCardTints[colorCounter % chapterCardTints.length];
-                          colorCounter += 1;
+                          const tint = chapterCardTints[tintIdx % chapterCardTints.length];
+                          tintIdx += 1;
+
+                          const quizzes = [...(chapterItem.quizzes || [])];
+                          const total = quizzes.length;
+                          const completed = countCompletedIn(quizzes);
+                          const pct = total ? Math.round((completed / total) * 100) : 0;
+
+                          const topics = getTopics(subjectItem.subject, chapterItem.chapter);
+
                           return (
                             <article
                               key={`chapter-${colIdx}-${chapterIndex}`}
-                              className={`rounded-2xl shadow border border-gray-200 ${tint} p-5`}
+                              className={`rounded-2xl shadow border border-gray-200 ${tint} p-5 min-h-[180px] flex flex-col`}
                             >
-                              {/* (v) removed sticker/emoji */}
-
                               {/* Chapter title */}
-                              <div className="mb-2">
-                                <span className="text-green-800 font-bold">
-                                  {chapterItem.chapter}.
-                                </span>
+                              <h4 className="text-green-800 font-bold mb-1">
+                                {chapterItem.chapter}.
+                              </h4>
+
+                              {/* topics (optional) */}
+                              {topics && (
+                                <p className="text-sm text-gray-600 mb-2">
+                                  {topics}
+                                </p>
+                              )}
+
+                              {/* meta */}
+                              <div className="text-sm text-gray-700 mb-3">
+                                <span className="mr-4">Quizzes: <b>{total}</b></span>
+                                <span>Completed: <b>{completed}</b></span>
                               </div>
 
-                              {/* (iii) no bullets; (iv) left aligned */}
-                              <ul className="list-none pl-0 ml-0 space-y-1 text-left">
-                                {[...chapterItem.quizzes]
-                                  .sort((a, b) => {
-                                    const numA = parseInt((a.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                    const numB = parseInt((b.title || '').trim().match(/^\d+/)?.[0] ?? '999999', 10);
-                                    if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
-                                    return (a.title || '').localeCompare(b.title || '');
-                                  })
-                                  .map((quiz) => (
-                                    <li key={`quiz-${quiz.id}`}>
-                                      <Link
-                                        to={`/student/attempt-quiz/${quiz.id}`}
-                                        className="inline-block text-green-900 hover:text-green-700 hover:underline"
-                                      >
-                                        {quiz.title}
-                                      </Link>
-                                    </li>
-                                  ))}
-                              </ul>
+                              {/* progress bar */}
+                              <div className="h-2 bg-white/60 rounded mb-4 overflow-hidden">
+                                <div
+                                  className="h-2 bg-green-500"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+
+                              {/* fixed footer with button */}
+                              <div className="mt-auto">
+                                <button
+                                  onClick={() =>
+                                    openChapterDetail({
+                                      gradeIndex,
+                                      subjectIndex,
+                                      chapterIndex: chapterIndex, // index within this column
+                                      subjectName: subjectItem.subject,
+                                      chapterTitle: chapterItem.chapter,
+                                      quizzes: quizzes,
+                                    })
+                                  }
+                                  className="text-sm px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+                                >
+                                  View quizzes
+                                </button>
+                              </div>
                             </article>
                           );
                         })}
@@ -323,6 +400,45 @@ const LandingPage = () => {
                     ));
                   })()}
                 </div>
+
+                {/* Inline detail drawer (appears once per subject, beneath the grid) */}
+                {openDetail && openDetail.subjectIndex === subjectIndex && (
+                  <div className="mt-6 rounded-2xl border border-green-200 bg-white shadow p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-green-700">
+                          {drawer?.subjectName}
+                        </div>
+                        <h4 className="text-lg font-extrabold text-green-900">
+                          {drawer?.chapterTitle}
+                        </h4>
+                      </div>
+                      <button
+                        onClick={closeChapterDetail}
+                        className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {drawer?.sorted?.length ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {drawer.sorted.map((quiz) => (
+                          <Link
+                            key={quiz.id}
+                            to={`/student/attempt-quiz/${quiz.id}`}
+                            className="text-green-900 hover:text-green-700 hover:underline inline-flex items-start gap-2"
+                          >
+                            <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-green-600" />
+                            <span>{quiz.title}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-600">No quizzes available.</div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
