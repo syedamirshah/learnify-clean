@@ -5,7 +5,7 @@ from django.conf import settings
 import os
 import re
 from bs4 import BeautifulSoup
-
+from typing import Optional  # <-- added
 
 # -----------------------------------------------------------------------------
 # Configurable origins (via env)
@@ -15,7 +15,6 @@ PUBLIC_BACKEND_ORIGIN = os.getenv("PUBLIC_BACKEND_ORIGIN", "").rstrip("/")
 # Where users should log in (your frontend domain)
 PUBLIC_FRONTEND_ORIGIN = os.getenv("PUBLIC_FRONTEND_ORIGIN", "https://learnifypakistan.com").rstrip("/")
 
-
 # -----------------------------------------------------------------------------
 # Existing helpers (kept intact)
 # -----------------------------------------------------------------------------
@@ -24,7 +23,6 @@ def normalize_text(value):
     Strip HTML, collapse spaces, lowercase.
     """
     return re.sub(r'\s+', ' ', BeautifulSoup(str(value), 'html.parser').get_text()).strip().lower()
-
 
 def send_account_notification_email(user, action, plain_password=None):
     """
@@ -73,7 +71,6 @@ def send_account_notification_email(user, action, plain_password=None):
             fail_silently=False,
         )
 
-
 # -----------------------------------------------------------------------------
 # NEW: HTML media URL normalization
 # -----------------------------------------------------------------------------
@@ -88,7 +85,6 @@ _SRC_RE = re.compile(
     ''',
     re.VERBOSE | re.IGNORECASE
 )
-
 
 def _abs_media(url: str) -> str:
     """
@@ -105,8 +101,7 @@ def _abs_media(url: str) -> str:
     # Fallback: return the path (useful in dev if env not set)
     return path
 
-
-def fix_media_src(html: str | None) -> str | None:
+def fix_media_src(html: Optional[str]) -> Optional[str]:
     """
     Rewrite any <img src="..."> that uses localhost/127.0.0.1 or a bare /media/ path
     so that it always points to the public backend origin.
@@ -120,8 +115,7 @@ def fix_media_src(html: str | None) -> str | None:
 
     return _SRC_RE.sub(_repl, html)
 
-
-def sanitize_html_for_save(html: str | None) -> str | None:
+def sanitize_html_for_save(html: Optional[str]) -> Optional[str]:
     """
     Convenience: normalize media src + trim obvious whitespace noise.
     (Does not strip markup—use normalize_text if you want plain text.)
