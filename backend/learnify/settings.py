@@ -3,10 +3,16 @@ import os
 from datetime import timedelta
 import dj_database_url
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# --- NEW: load .env early (graceful if python-dotenv isn't installed) ---
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv(BASE_DIR / ".env")
+except Exception:
+    # It's fine if dotenv isn't installed and env vars come from the host
+    pass
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -45,6 +51,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'cloudinary',
     'cloudinary_storage',
+    'payments',  # ✅ NEW: payments app
 ]
 
 MIDDLEWARE = [
@@ -83,13 +90,18 @@ WSGI_APPLICATION = 'learnify.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Use sqlite locally by default; enable SSL only if DATABASE_URL is Postgres
+db_default = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+ssl_flag = DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
+
 DATABASES = {
     "default": dj_database_url.config(
         env="DATABASE_URL",
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=db_default,
         conn_max_age=600,
-        ssl_require=True,          # ← add this
-
+        ssl_require=ssl_flag,
     )
 }
 
@@ -211,7 +223,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://learnify-frontend-7y4n.onrender.com",
     "https://www.learnifypakistan.com",
-    "https://learnifypakistan.com",   # ← added non‑www
+    "https://learnifypakistan.com",   # ← added non-www
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -250,7 +262,7 @@ LOGOUT_REDIRECT_URL = '/login/'
 CSRF_TRUSTED_ORIGINS = [
     "https://api.learnifypakistan.com",
     "https://www.learnifypakistan.com",
-    "https://learnifypakistan.com",   # ← added non‑www
+    "https://learnifypakistan.com",   # ← added non-www
     "https://learnify-backend-zlf7.onrender.com",
 ]
 
@@ -260,10 +272,74 @@ CSRF_COOKIE_DOMAIN = ".learnifypakistan.com"   # parent domain
 CSRF_COOKIE_SECURE = True                      # send only over HTTPS
 CSRF_COOKIE_SAMESITE = "None"     # ← add this
 
+if DEBUG:
+    # Local dev: simple, insecure cookies so you can log in
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_DOMAIN = None
 
-SESSION_COOKIE_DOMAIN = ".learnifypakistan.com"
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = "None"  # ← add this
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_DOMAIN = None
+else:
+    # Production: secure cross-domain cookies
+    CSRF_COOKIE_NAME = "csrftoken"
+    CSRF_COOKIE_DOMAIN = ".learnifypakistan.com"
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "None"
+
+    SESSION_COOKIE_DOMAIN = ".learnifypakistan.com"
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = "None"
 
 # Behind Render's proxy: tell Django requests are HTTPS so 'Secure' cookies are sent
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# ---------------------------
+# NEW: Payments configuration
+# ---------------------------
+PAYMENTS = {
+    "DEFAULT_PROVIDER": os.getenv("PAYMENTS_DEFAULT_PROVIDER", "easypaisa"),  # or "jazzcash"
+    "DEFAULT_CURRENCY": os.getenv("PAYMENTS_DEFAULT_CURRENCY", "PKR"),
+    "EASYPaisa": {
+        "MERCHANT_ID": os.getenv("EASYPaisa_MERCHANT_ID", ""),
+        "STORE_ID": os.getenv("EASYPaisa_STORE_ID", ""),
+        "HASH_KEY": os.getenv("EASYPaisa_HASH_KEY", ""),
+        "RETURN_URL": os.getenv("EASYPaisa_RETURN_URL", ""),
+        "BASE_URL": os.getenv("EASYPaisa_BASE_URL", ""),
+    },
+    "JAZZCASH": {
+        "MERCHANT_ID": os.getenv("JAZZCASH_MERCHANT_ID", ""),
+        "PASSWORD": os.getenv("JAZZCASH_PASSWORD", ""),
+        "INTEGRITY_SALT": os.getenv("JAZZCASH_INTEGRITY_SALT", ""),
+        "RETURN_URL": os.getenv("JAZZCASH_RETURN_URL", ""),
+        "BASE_URL": os.getenv("JAZZCASH_BASE_URL", ""),
+    },
+}
+
+# ---------------------------
+# NEW: Mailjet (optional now; useful later)
+# ---------------------------
+MAILJET = {
+    "API_KEY": os.getenv("MAILJET_API_KEY", ""),
+    "API_SECRET": os.getenv("MAILJET_API_SECRET", ""),
+    "SENDER_EMAIL": os.getenv("MAILJET_SENDER_EMAIL", "no-reply@learnifypakistan.com"),
+    "SENDER_NAME": os.getenv("MAILJET_SENDER_NAME", "Learnify Pakistan"),
+}
+
+# ---------------------------
+# (Optional) Simple logging for payments
+# ---------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "payments": {   # use via: logging.getLogger("payments")
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}

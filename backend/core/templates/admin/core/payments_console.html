@@ -1,0 +1,83 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+{% block title %}Payments Console{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 20px;">💳 <b>Payments Console</b></h1>
+
+{# ---- Range filter chips ---- #}
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;">
+  {% for rk,label in range_presets.items %}
+    <a
+      href="?range={{ rk }}"
+      class="chip {% if range_key == rk %}active{% endif %}"
+      >{{ label }}</a>
+  {% endfor %}
+</div>
+
+{# ---- Stat tiles ---- #}
+<div style="display:flex; gap:12px; flex-wrap:wrap; margin:16px 0;">
+  <div class="stat">Total: <b>{{ stats.total }}</b></div>
+  <div class="stat">Success: <b>{{ stats.success }}</b></div>
+  <div class="stat">Failed: <b>{{ stats.failed }}</b></div>
+  <div class="stat">Pending now: <b>{{ stats.pending }}</b></div>
+  <div class="stat">Amount (PKR): <b>{{ stats.amount_sum }}</b></div>
+</div>
+
+<table class="list">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>User</th>
+      <th>Plan</th>
+      <th>Months</th>
+      <th>Amount</th>
+      <th>Provider</th>
+      <th>Status</th>
+      <th>Started</th>
+      <th>Completed</th>
+      <th>Admin</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in rows %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.user.username }}</td>
+        <td>{{ p.plan }}</td>
+        <td>{{ p.months }}</td>
+        <td>{{ p.amount }}</td>
+        <td>{{ p.provider }}</td>
+        <td>{{ p.status }}</td>
+        <td>{{ p.initiated_at|date:"Y-m-d H:i" }}</td>
+        <td>{% if p.completed_at %}{{ p.completed_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+        <td>
+          <a class="small-btn" href="{% url 'admin:payments_payment_change' p.id %}">Open</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="10">No payments yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+  .chip{
+    display:inline-block; padding:6px 10px; border-radius:999px;
+    border:1px solid #dbe3ff; background:#f5f8ff; text-decoration:none; color:#1f2937;
+    font-weight:600; font-size:13px;
+  }
+  .chip.active{ background:#3156ff12; border-color:#9ab0ff; }
+  .stat{
+    background:#eef3ff; padding:10px 12px; border-radius:8px; font-weight:600;
+    border:1px solid #dbe3ff;
+  }
+  table.list{width:100%; border-collapse:collapse; margin-top:10px}
+  table.list th, table.list td{border-bottom:1px solid #e5e7eb; padding:8px; text-align:left}
+  .small-btn{
+    display:inline-block; padding:6px 10px; border-radius:6px; background:#e2e6ec;
+    text-decoration:none; color:#2a2a2a; font-weight:600; font-size:13px;
+  }
+  .small-btn:hover{ background:#afc5ea; }
+</style>
+{% endblock %}
