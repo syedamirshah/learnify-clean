@@ -1,0 +1,19 @@
+{% extends "admin/delete_confirmation.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <p>Are you sure you want to delete the quiz "<strong>{{ object }}</strong>"?</p>
+
+  <p>All related data (like assigned question banks and quiz attempts) will be removed.</p>
+
+  <form method="post" action="?next=/admin/core/list-quizzes/">{% csrf_token %}
+    <div>
+      <input type="hidden" name="post" value="yes" />
+      <input type="submit" value="{% trans 'Yes, I’m sure' %}" class="deletelink" />
+      <a href="/admin/core/list-quizzes/" class="button cancel-button">
+        {% trans "Cancel" %}
+      </a>
+    </div>
+  </form>
+{% endblock %}

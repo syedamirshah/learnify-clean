@@ -1,0 +1,115 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block title %}🏅 Roll of Honor{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-bold mb-4">🏅 Roll of Honor</h1>
+
+<div id="honor-type-tabs" class="flex gap-4 mb-6">
+  <button onclick="loadHonor('shining-stars')" class="tab-button active">🌟 Shining Stars (30 Days)</button>
+  <button onclick="loadHonor('national-heroes')" class="tab-button">🦸 National Heroes (90 Days)</button>
+</div>
+
+<div id="honor-roll-container">
+  <p>Loading...</p>
+</div>
+
+<script>
+  async function loadHonor(type) {
+    const container = document.getElementById("honor-roll-container");
+    container.innerHTML = "<p>Loading...</p>";
+
+    document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+    document.querySelector(`button[onclick="loadHonor('${type}')"]`).classList.add("active");
+
+    try {
+      const res = await fetch(`/api/honors/${type}/`);
+      const data = await res.json();
+
+      if (!data.length) {
+        container.innerHTML = "<p class='text-gray-600'>No honor roll data available.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+
+      data.forEach(group => {
+        const gradeSection = document.createElement("div");
+        gradeSection.className = "mb-6";
+
+        const gradeTitle = document.createElement("h2");
+        gradeTitle.className = "text-lg font-semibold mb-2";
+        gradeTitle.innerText = `Grade: ${group.grade}`;
+        gradeSection.appendChild(gradeTitle);
+
+        const table = document.createElement("table");
+        table.className = "w-full border-collapse text-sm border";
+
+        const thead = `
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="border p-2">Rank</th>
+              <th class="border p-2">Name</th>
+              <th class="border p-2">Username</th>
+              <th class="border p-2">School</th>
+              <th class="border p-2">City</th>
+              <th class="border p-2">Province</th>
+              <th class="border p-2">Quizzes Attempted</th>
+              <th class="border p-2">Average Score</th>
+              <th class="border p-2">Total Marks</th>
+            </tr>
+          </thead>
+        `;
+
+        const tbody = document.createElement("tbody");
+
+        group.top_students.forEach((student, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td class="border p-2 text-center">${index + 1}</td>
+            <td class="border p-2">${student.full_name}</td>
+            <td class="border p-2">${student.username}</td>
+            <td class="border p-2">${student.school}</td>
+            <td class="border p-2">${student.city}</td>
+            <td class="border p-2">${student.province}</td>
+            <td class="border p-2 text-center">${student.quizzes_attempted ?? '-'}</td>
+            <td class="border p-2 text-center">${student.average_score !== undefined && student.average_score !== null ? student.average_score + '%' : '-'}</td>
+            <td class="border p-2 text-center font-bold">${student.total_marks}</td>
+        `;
+        tbody.appendChild(tr);
+        });
+
+        table.innerHTML = thead;
+        table.appendChild(tbody);
+        gradeSection.appendChild(table);
+        container.appendChild(gradeSection);
+      });
+
+    } catch (error) {
+      container.innerHTML = `<p class="text-red-500">Failed to load honor roll.</p>`;
+      console.error(error);
+    }
+  }
+
+  // Load shining stars by default
+  loadHonor('shining-stars');
+</script>
+
+<style>
+  .tab-button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: white;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .tab-button.active {
+    background-color: #1d4ed8;
+    color: white;
+    border-color: #1d4ed8;
+  }
+</style>
+
+{% endblock %}

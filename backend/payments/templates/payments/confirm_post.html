@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Confirming with Easypay…</title>
+</head>
+<body onload="document.forms[0].submit()">
+  <p>Confirming payment… If nothing happens, click the button.</p>
+  <form method="post" action="{{ endpoint }}">
+    {% for k, v in fields.items %}
+      <input type="hidden" name="{{ k }}" value="{{ v|escape }}">
+    {% endfor %}
+    <button type="submit">Continue</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,112 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+
+<!-- jQuery (already loaded in most admin templates, but included here for safety) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    .loading-msg {
+        font-style: italic;
+        color: #888;
+        margin-top: 4px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const gradeSelect = document.querySelector('#id_grade');
+    const subjectSelect = document.querySelector('#id_subject');
+    const chapterSelect = document.querySelector('#id_chapter');
+
+    const subjectLabel = subjectSelect.closest('div').querySelector('label') || {};
+    const chapterLabel = chapterSelect.closest('div').querySelector('label') || {};
+
+    function showLoading(target, message = "Loading...") {
+        const msg = document.createElement('div');
+        msg.className = "loading-msg";
+        msg.innerText = message;
+        target.parentElement.appendChild(msg);
+    }
+
+    function clearLoading(target) {
+        const msg = target.parentElement.querySelector('.loading-msg');
+        if (msg) msg.remove();
+    }
+
+    function fetchSubjects(gradeId) {
+        showLoading(subjectSelect, "Fetching subjects...");
+        fetch(`/admin/api/subjects/?grade_id=${gradeId}`)
+            .then(response => response.json())
+            .then(data => {
+                subjectSelect.innerHTML = '';
+                chapterSelect.innerHTML = '';
+                clearLoading(subjectSelect);
+
+                if (data.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.text = "No subjects available";
+                    subjectSelect.add(opt);
+                    return;
+                }
+
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    subjectSelect.appendChild(opt);
+                });
+
+                // Auto-fetch chapters for first subject
+                fetchChapters(subjectSelect.value);
+            })
+            .catch(error => {
+                clearLoading(subjectSelect);
+                console.error("Error fetching subjects:", error);
+            });
+    }
+
+    function fetchChapters(subjectId) {
+        showLoading(chapterSelect, "Fetching chapters...");
+        fetch(`/admin/api/chapters/?subject_id=${subjectId}`)
+            .then(response => response.json())
+            .then(data => {
+                chapterSelect.innerHTML = '';
+                clearLoading(chapterSelect);
+
+                if (data.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.text = "No chapters available";
+                    chapterSelect.add(opt);
+                    return;
+                }
+
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    chapterSelect.appendChild(opt);
+                });
+            })
+            .catch(error => {
+                clearLoading(chapterSelect);
+                console.error("Error fetching chapters:", error);
+            });
+    }
+
+    if (gradeSelect) {
+        gradeSelect.addEventListener('change', function () {
+            if (this.value) fetchSubjects(this.value);
+        });
+    }
+
+    if (subjectSelect) {
+        subjectSelect.addEventListener('change', function () {
+            if (this.value) fetchChapters(this.value);
+        });
+    }
+});
+</script>
+{% endblock %}

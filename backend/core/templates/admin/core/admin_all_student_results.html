@@ -1,0 +1,57 @@
+{% extends "admin/core/base.html" %}
+{% block title %}Results Overview{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 20px;">📊 All Students – Results Overview</h1>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+  <thead>
+    <tr style="background-color: #f0f0f0;">
+      <th style="border: 1px solid #ccc; padding: 6px;">S.No</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Full Name</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Username</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Grade</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">City</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Province</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Quizzes Attempted</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Total Marks</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Avg. Score</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for student in students %}
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ forloop.counter }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.full_name }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.username }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.grade }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.city }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.province }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.total_attempts }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.total_marks }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ student.average_score }}%</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">
+        <a href="{% url 'admin_student_quiz_history' student.id %}" class="btn btn-sm btn-primary">View Results</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="10" style="text-align: center; padding: 10px;">No students found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+  .btn {
+    background-color: #007bff;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .btn:hover {
+    background-color: #0056b3;
+  }
+</style>
+{% endblock %}

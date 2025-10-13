@@ -1,0 +1,169 @@
+
+{% extends "admin/core/base.html" %}
+{% block content %}
+<h2 style="margin-bottom: 20px;">Manage Subscriptions</h2>
+
+<!-- FILTERS -->
+<form method="get" style="margin-bottom: 20px;" class="flex flex-wrap gap-4 items-center">
+  <label for="renewal" class="flex items-center gap-2">
+    Renewal Request:
+    <select name="renewal" class="border px-2 py-1 rounded">
+      <option value="">All</option>
+      <option value="yes" {% if request.GET.renewal == "yes" %}selected{% endif %}>Yes</option>
+      <option value="no" {% if request.GET.renewal == "no" %}selected{% endif %}>No</option>
+    </select>
+  </label>
+
+  <label for="status" class="flex items-center gap-2">
+    Status:
+    <select name="status" class="border px-2 py-1 rounded">
+      <option value="">All</option>
+      <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Active</option>
+      <option value="expired" {% if request.GET.status == "expired" %}selected{% endif %}>Expired</option>
+      <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive</option>
+    </select>
+  </label>
+
+  <label for="activation" class="flex items-center gap-2">
+    Eligible for Activation:
+    <select name="activation" class="border px-2 py-1 rounded">
+      <option value="">All</option>
+      <option value="yes" {% if request.GET.activation == "yes" %}selected{% endif %}>Yes</option>
+    </select>
+  </label>
+
+  <label for="paginate_by" class="flex items-center gap-2">
+    Show:
+    <select name="paginate_by" class="border px-2 py-1 rounded">
+      <option value="50" {% if request.GET.paginate_by == "50" %}selected{% endif %}>50</option>
+      <option value="100" {% if request.GET.paginate_by == "100" %}selected{% endif %}>100</option>
+      <option value="all" {% if request.GET.paginate_by == "all" %}selected{% endif %}>All</option>
+    </select>
+  </label>
+
+  <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Apply</button>
+</form>
+
+<!-- SUBSCRIPTION TABLE -->
+<table style="border-collapse: collapse; width: 100%; font-size: 14px; border: 1px solid #ccc;">
+  <thead>
+    <tr style="background-color: #f0f0f0; border: 1px solid #ccc;">
+      <th style="border: 1px solid #ccc; padding: 8px;">Role</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Username</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Subscription Plan</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Fee Receipt</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Renewal Request</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Activate</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Extend</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Expiry Date</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Disable</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ user.role }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ user.username }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ user.subscription_plan }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.fee_receipt %}
+          <a href="{{ user.fee_receipt.url }}" target="_blank">View</a>
+        {% else %}
+          No receipt
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.renewal_requested %}
+          {{ user.subscription_plan|title }}
+        {% else %}
+          N/A
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.account_status == 'inactive' %}
+        <form method="post" action="{% url 'manage_subscriptions' %}">
+          {% csrf_token %}
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+          <input type="hidden" name="action" value="activate">
+          <select name="duration">
+            <option value="month">1 Month</option>
+            <option value="year">1 Year</option>
+          </select>
+          <button type="submit">Activate</button>
+        </form>
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        <form method="post" action="{% url 'manage_subscriptions' %}">
+          {% csrf_token %}
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+          <input type="hidden" name="action" value="extend">
+          <select name="duration">
+            <option value="month">1 Month</option>
+            <option value="year">1 Year</option>
+          </select>
+          <button type="submit" style="color: green;">Extend</button>
+        </form>
+      </td>
+
+      <!-- ✅ NEW COLUMN: Expiry Date -->
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.subscription_expiry %}
+          {{ user.subscription_expiry }}
+        {% else %}
+          N/A
+        {% endif %}
+      </td>
+
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.account_status == 'active' %}
+        <form method="post" action="{% url 'manage_subscriptions' %}">
+          {% csrf_token %}
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+          <input type="hidden" name="action" value="disable">
+          <button type="submit" style="color: darkred;">Disable</button>
+        </form>
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if user.account_status == 'active' %}
+          Active ({{ user.subscription_plan|title }})
+        {% elif user.account_status == 'expired' %}
+          Expired
+        {% else %}
+          Inactive
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+<!-- PAGINATION CONTROLS -->
+{% if users.has_other_pages %}
+  <div style="margin-top: 30px; text-align: center;" class="flex flex-col items-center gap-2">
+    
+    <div class="space-x-4">
+      {% if users.has_previous %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ users.previous_page_number }}"
+           class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">
+          ⬅️ Previous
+        </a>
+      {% endif %}
+
+      <span class="inline-block px-4 py-2 font-semibold text-gray-700">
+        Page {{ users.number }} of {{ users.paginator.num_pages }}
+      </span>
+
+      {% if users.has_next %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ users.next_page_number }}"
+           class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">
+          Next ➡️
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+{% endif %}
+
+{% endblock %}

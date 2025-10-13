@@ -1,0 +1,136 @@
+{% extends "admin/core/base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom: 16px;">📝 List of All Quizzes</h1>
+
+<form method="get" style="margin-bottom: 16px;">
+  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <div>
+      <label for="grade"><strong>Filter by Grade:</strong></label><br>
+      <select name="grade" id="grade">
+        <option value="">All Grades</option>
+        {% for grade in grades %}
+          <option value="{{ grade.name }}" {% if request.GET.grade == grade.name %}selected{% endif %}>{{ grade.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="subject"><strong>Filter by Subject:</strong></label><br>
+      <select name="subject" id="subject">
+        <option value="">All Subjects</option>
+        {% for subject in subjects %}
+          <option value="{{ subject.name }}" {% if request.GET.subject == subject.name %}selected{% endif %}>{{ subject.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit" style="margin-top: 18px;">Apply Filters</button>
+    </div>
+  </div>
+</form>
+
+<table class="quiz-table">
+  <!-- fixed layout + exact column widths (Actions widened) -->
+  <colgroup>
+    <col style="width:22%">
+    <col style="width:8%">
+    <col style="width:12%">
+    <col style="width:16%">
+    <col style="width:6%">
+    <col style="width:18%">
+    <col style="width:6%">
+    <col style="width:12%">  {# Actions #}
+  </colgroup>
+
+  <thead>
+    <tr>
+      {% for col, label in headers %}
+        <th>
+          <a href="?sort={{ col }}&dir={% if current_sort == col and current_dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.grade %}&grade={{ request.GET.grade }}{% endif %}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}">
+            {{ label }}
+            {% if current_sort == col %}{% if current_dir == 'desc' %} 🔽 {% else %} 🔼 {% endif %}{% endif %}
+          </a>
+        </th>
+      {% endfor %}
+      <th>Marks</th>
+      <th>Question Banks</th>
+      <th>Questions</th>
+      <th style="text-align:center;">Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for quiz in quiz_data %}
+      <tr>
+        <td class="ellipsis" title="{{ quiz.title }}">{{ quiz.title }}</td>
+        <td class="nowrap">{{ quiz.grade }}</td>
+        <td class="nowrap">{{ quiz.subject }}</td>
+        <td class="ellipsis" title="{{ quiz.chapter }}">{{ quiz.chapter }}</td>
+        <td class="nowrap">{{ quiz.marks_per_question }}</td>
+
+        {% with bank_list=quiz.question_banks|join:", " %}
+          <td class="ellipsis" title="{{ bank_list }}">{{ bank_list }}</td>
+        {% endwith %}
+
+        <td class="nowrap">{{ quiz.total_questions }}</td>
+
+        <td class="actions">
+          <a class="button btn-edit" href="{% url 'admin:core_quiz_change' quiz.id %}?next={% url 'quiz-question-assignments' %}?quiz_id={{ quiz.id }}">Edit</a>
+          <a class="button btn-delete" href="{% url 'admin:core_quiz_delete' quiz.id %}?next={% url 'quiz-question-assignments' %}?quiz_id={{ quiz.id }}">Delete</a>
+          <a class="button btn-format" href="{% url 'quiz-format' quiz.id %}">Format</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8" style="text-align:center; padding: 10px;">No quizzes found for selected filters.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+  .quiz-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    table-layout: fixed;
+    font-size: 12px;
+  }
+  .quiz-table th, .quiz-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    vertical-align: middle;
+  }
+  .quiz-table thead tr { background-color: #f0f0f0; }
+  .quiz-table th a { text-decoration: none; color: #333; font-weight: 600; }
+  .quiz-table th a:hover { text-decoration: underline; }
+
+  .nowrap { white-space: nowrap; }
+  .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* keep actions on ONE line */
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;       /* do not wrap */
+    white-space: nowrap;     /* keep text/buttons in one line */
+  }
+  .button {
+    display: inline-block;
+    padding: 3px 6px;        /* tighter buttons */
+    line-height: 1.2;
+    font-size: 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+  }
+  .btn-edit    { background-color: #007bff; }
+  .btn-delete  { background-color: #dc3545; }
+  .btn-format  { background-color: #6c757d; }
+  .btn-attempt { background-color: #28a745; }
+  .button:hover { opacity: 0.9; }
+</style>
+
+{% endblock %}

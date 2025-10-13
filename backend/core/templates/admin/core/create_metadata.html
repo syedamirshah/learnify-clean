@@ -1,0 +1,46 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block content %}
+  <h2 style="margin-bottom: 15px;">🧱 Create Metadata (Grades, Subjects, Chapters)</h2>
+
+  <div style="display: flex; gap: 50px;">
+
+    <div>
+      <h3>📘 Grades</h3>
+      <ul>
+        {% for grade in grades %}
+          <li>{{ grade.name }}</li>
+        {% empty %}
+          <li>No grades available.</li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'admin:core_grade_add' %}" class="button">➕ Add Grade</a>
+    </div>
+
+    <div>
+      <h3>📚 Subjects</h3>
+      <ul>
+        {% for subject in subjects %}
+          <li>{{ subject.name }} ({{ subject.grade.name }})</li>
+        {% empty %}
+          <li>No subjects available.</li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'admin:core_subject_add' %}" class="button">➕ Add Subject</a>
+    </div>
+
+    <div>
+      <h3>📖 Chapters</h3>
+      <ul>
+        {% for chapter in chapters %}
+          <li>{{ chapter.name }} ({{ chapter.subject.name }})</li>
+        {% empty %}
+          <li>No chapters available.</li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'admin:core_chapter_add' %}" class="button">➕ Add Chapter</a>
+    </div>
+
+  </div>
+{% endblock %}

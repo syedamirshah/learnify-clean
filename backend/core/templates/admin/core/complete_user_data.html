@@ -1,0 +1,203 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+{% block title %}Complete User Data{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+  <ul style="margin-bottom: 20px; color: green;">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<h1 style="margin-bottom: 16px;">Complete User Data Table</h1>
+
+<!-- Filter Section -->
+<form method="get" style="margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: end;">
+    <div>
+      <label for="role"><strong>Filter by Role:</strong></label><br>
+      <select name="role" id="role">
+        <option value="">All</option>
+        {% for r in roles %}
+          {% if r|lower != "all" %}
+            <option value="{{ r }}" {% if request.GET.role == r %}selected{% endif %}>{{ r|title }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="province"><strong>Province:</strong></label><br>
+      <select name="province" id="province">
+        <option value="">All</option>
+        {% for prov in provinces %}
+          {% if prov|lower != "all" %}
+            <option value="{{ prov }}" {% if request.GET.province == prov %}selected{% endif %}>{{ prov }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="schooling_status"><strong>Schooling Status:</strong></label><br>
+      <select name="schooling_status" id="schooling_status">
+        <option value="">All</option>
+        {% for status in schooling_statuses %}
+          {% if status|lower != "all" %}
+            <option value="{{ status }}" {% if request.GET.schooling_status == status %}selected{% endif %}>{{ status }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="per_page"><strong>Show:</strong></label><br>
+      <select name="per_page" id="per_page" onchange="this.form.submit()">
+        <option value="20" {% if per_page == "20" %}selected{% endif %}>20</option>
+        <option value="50" {% if per_page == "50" %}selected{% endif %}>50</option>
+        <option value="100" {% if per_page == "100" %}selected{% endif %}>100</option>
+        <option value="all" {% if per_page == "all" %}selected{% endif %}>All</option>
+      </select>
+    </div>
+
+    <div>
+      <button type="submit" style="padding: 6px 14px; margin-top: 4px;">Apply Filters</button>
+    </div>
+  </div>
+</form>
+
+<!-- Toggle Button -->
+{% if users %}
+<form method="post" action="{% url 'admin_bulk_delete_users' %}">
+  {% csrf_token %}
+  <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+    <button onclick="toggleDetails()" type="button" style="padding: 6px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px;">
+      Show More Info
+    </button>
+    <button type="submit" style="background: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 4px;" onclick="return confirm('Are you sure you want to delete the selected users?');">
+      Delete Selected Users
+    </button>
+  </div>
+{% endif %}
+
+<!-- User Table -->
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+  <thead>
+    <tr style="background-color: #f0f0f0;">
+      <th style="border: 1px solid #ccc; padding: 6px;">
+        <input type="checkbox" onclick="toggleAll(this)">
+      </th>
+      <th style="border: 1px solid #ccc; padding: 6px;">S.No</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Username</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Role</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Subscription Plan</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Status</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Expiry Date</th>
+      <th style="border: 1px solid #ccc; padding: 6px;">Actions</th>
+
+      <!-- Hidden Columns -->
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Full Name</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Email</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Gender</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Language</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Schooling</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Grade</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">School</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">City</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Province</th>
+      <th class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">Profile Pic</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">
+        {% if user.role != 'admin' %}
+          <input type="checkbox" name="selected_users" value="{{ user.id }}">
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ forloop.counter }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ user.username }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ user.role }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ user.subscription_plan }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">
+        {% if user.subscription_expiry and user.subscription_expiry < today %}
+          <span style="color: red; font-weight: bold;">Expired</span>
+        {% else %}
+          {{ user.account_status }}
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 6px;">{{ user.subscription_expiry }}</td>
+      <td style="border: 1px solid #ccc; padding: 6px;">
+        <a href="{% url 'admin:core_user_change' user.id %}">Edit</a> |
+        <a href="{% url 'admin:core_user_delete' user.id %}">Delete</a>
+        {% if user.role == 'student' %}
+          | <a href="{% url 'admin_student_quiz_history' user.id %}">Quiz History</a>
+        {% endif %}
+      </td>
+
+      <!-- Hidden Details -->
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.full_name }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.email }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.gender }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.language_used_at_home }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.schooling_status }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.grade }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.school_name }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.city }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">{{ user.province }}</td>
+      <td class="optional-col" style="display:none; border: 1px solid #ccc; padding: 6px;">
+        {% if user.profile_picture %}
+          <a href="{{ user.profile_picture.url }}" target="_blank">View</a>
+        {% else %}
+          N/A
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="20" style="text-align: center;">No users found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if users %}
+</form>
+{% endif %}
+
+<!-- Pagination -->
+{% if users.has_other_pages %}
+  <div style="margin-top: 20px;">
+    <span>Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+    <div style="margin-top: 8px;">
+      {% if users.has_previous %}
+        <a href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ users.previous_page_number }}">Previous</a>
+      {% endif %}
+      {% if users.has_next %}
+        &nbsp;|&nbsp;
+        <a href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ users.next_page_number }}">Next</a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<script>
+function toggleDetails() {
+  const elements = document.querySelectorAll('.optional-col');
+  elements.forEach(col => {
+    col.style.display = (col.style.display === 'none' || col.style.display === '') ? 'table-cell' : 'none';
+  });
+}
+
+function toggleAll(source) {
+  const checkboxes = document.getElementsByName('selected_users');
+  for (let i = 0; i < checkboxes.length; i++) {
+    if (!checkboxes[i].disabled) checkboxes[i].checked = source.checked;
+  }
+}
+</script>
+{% endblock %}

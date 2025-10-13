@@ -1,0 +1,72 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="upload-container">
+    <h1 class="upload-title">📤  <strong>{{ bank.title }}</strong></h1>
+
+    <form method="post" enctype="multipart/form-data" class="upload-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="file">📄 Upload SCQ Excel File:</label>
+        {{ form.file }}
+      </div>
+
+      <button type="submit" class="upload-button">⬆️ Upload</button>
+    </form>
+  </div>
+
+  <style>
+    .upload-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .upload-title {
+      text-align: center;
+      font-size: 1.6rem;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      display: block;
+      color: #333;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      background-color: white;
+    }
+
+    .upload-button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+
+    .upload-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+{% endblock %}

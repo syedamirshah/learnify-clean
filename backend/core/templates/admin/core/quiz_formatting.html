@@ -1,0 +1,35 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block content %}
+  <div style="max-width: 600px; margin: 0 auto;">
+    <h2 style="margin-bottom: 24px;">
+      🛠 <strong>Format Quiz:</strong> <span style="color: #2c3e50;">{{ quiz.title }}</span>
+    </h2>
+
+    <form method="post" style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+      {% csrf_token %}
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        {% for field in form %}
+          <div style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; margin-bottom: 6px;" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <small style="color: #666;">{{ field.help_text }}</small>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top: 24px;">
+        <button type="submit" class="button default" style="padding: 8px 16px;">
+          💾 Save Formatting
+        </button>
+      </div>
+    </form>
+
+    <div style="margin-top: 16px;">
+      <a href="{% url 'admin-list-quizzes' %}">← Back to Quiz List</a>
+    </div>
+  </div>
+{% endblock %}

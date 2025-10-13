@@ -1,0 +1,52 @@
+<!-- templates/admin/core/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Admin Dashboard{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+  <!-- 🔷 Top Navigation Bar -->
+  <div class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      
+      <!-- Left: Title -->
+      <div class="text-xl font-semibold text-blue-600">📊 Admin Dashboard</div>
+
+      <!-- Center: Navigation -->
+      <nav class="flex gap-4 text-sm font-medium text-gray-700">
+        <a href="/admin/" class="nav-link">🏠 Home</a>
+        <a href="/admin/dashboard/users/" class="nav-link">🧑‍💼 User Management</a>
+
+        {% if not request.user.role == "manager" %}
+          <a href="/admin/dashboard/question-bank/" class="nav-link">📦 Question Bank</a>
+          <a href="/admin/dashboard/quizzes/" class="nav-link">📝 Quizzes</a>
+          <a href="/admin/backups/" class="nav-link">🗂 Backup & Restore</a>
+        {% endif %}
+
+        <a href="/honor-roll" class="nav-link">🌐 Public Honor Roll</a>
+        <a href="/admin/stats-dashboard/" class="nav-link">📈 Platform Stats</a>
+      </nav>
+
+      <!-- Right: Auth links -->
+      <div class="flex items-center gap-4 text-sm font-medium text-gray-700">
+        {% if request.user.is_authenticated %}
+          <span class="text-gray-600">Hi, {{ request.user.username }}</span>
+          <a href="{% url 'logout' %}" class="hover:underline text-blue-600">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="hover:underline text-blue-600">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔸 Main Content Area -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+</body>
+</html>

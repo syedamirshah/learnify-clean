@@ -1,0 +1,79 @@
+{% extends "admin/core/base.html" %}
+{% block content %}
+
+<div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md font-[calibri]">
+
+  <!-- Heading -->
+  <h2 class="text-2xl font-semibold text-gray-800 mb-2">📦 Backup & Restore</h2>
+  <p class="text-sm text-gray-600 mb-6">
+    Create a backup of your database (quizzes, questions, users, etc.) and restore from a JSON file when needed.
+    Images are hosted on <strong>Cloudinary</strong>, so you don’t need a separate media backup.
+  </p>
+
+  <!-- Actions -->
+  <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+
+    <!-- Create Data Backup (POST => immediate download) -->
+    <form method="post" class="inline-block">
+      {% csrf_token %}
+      <button type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded transition shadow-sm">
+        📄 Create &amp; Download Data (JSON)
+      </button>
+    </form>
+
+    <!-- Upload & Restore DATA (JSON) -->
+    <form action="{% url 'upload_restore_backup' %}" method="post" enctype="multipart/form-data"
+          class="inline-flex items-center gap-3">
+      {% csrf_token %}
+      <label class="text-sm text-gray-700 whitespace-nowrap">Restore data (.json):</label>
+      <input type="file" name="backup_file" accept=".json"
+             class="border px-3 py-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <button type="submit"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm shadow-sm">
+        ⤴ Restore Data
+      </button>
+    </form>
+  </div>
+
+  <!-- Notes -->
+  <div class="bg-gray-50 border border-gray-200 rounded p-4 text-sm text-gray-800 mb-8">
+    <p class="font-semibold">Notes</p>
+    <ul class="list-disc ml-5 mt-2 space-y-1">
+      <li><strong>Data (JSON)</strong> includes all records and references to Cloudinary image URLs.</li>
+      <li><strong>Media</strong> is not included because files are served from Cloudinary. As long as the referenced
+          Cloudinary assets exist, restored quizzes will display their images automatically.</li>
+    </ul>
+  </div>
+
+  <!-- Legacy server-side backups list (JSON files saved previously on server) -->
+  <div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-3">Old server-side data backups</h3>
+    {% if backup_files %}
+      <ul class="space-y-4">
+        {% for file in backup_files %}
+          <li class="border border-gray-200 p-4 rounded-md flex justify-between items-center">
+            <span class="text-sm font-mono text-gray-700">{{ file }}</span>
+            <div class="space-x-2">
+              <a href="{% url 'download_backup' file %}"
+                 class="text-blue-600 hover:underline text-sm">⬇ Download</a>
+              <form action="{% url 'restore_backup' file %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        onclick="return confirm('Restore this backup? Current data will be overwritten.')"
+                        class="text-green-600 hover:underline text-sm">
+                  ♻ Restore
+                </button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-500 text-sm italic">No server-side JSON backups found.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}

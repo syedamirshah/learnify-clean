@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✅ Global reset to eliminate unwanted spacing */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+}
+
+/* ✅ Grid layout for chapters: neat 3 equal columns on desktop,
+   bottoms align because all three live in the same grid row */
+.catalog {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr)); /* 1 col on mobile */
+  gap: 1.5rem 2rem; /* row-gap, col-gap */
+}
+
+@media (min-width: 768px) {
+  .catalog {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 cols on md+ */
+  }
+}
+
+/* No need for column-span/break-inside with grid */

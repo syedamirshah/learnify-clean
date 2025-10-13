@@ -1,0 +1,75 @@
+{% extends "admin/core/base.html" %}
+{% load static %}
+
+{% block content %}
+  <h2 style="margin-bottom: 20px;">Questions in: {{ bank.title }}</h2>
+
+  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+    <thead style="background-color: #f8f8f8;">
+      <tr>
+        <th style="border: 1px solid #ccc; padding: 10px;">QUESTION TEXT</th>
+        <th style="border: 1px solid #ccc; padding: 10px;">QUESTION TYPE</th>
+        <th style="border: 1px solid #ccc; padding: 10px;">OPTIONS</th>
+        <th style="border: 1px solid #ccc; padding: 10px;">CORRECT ANSWER(S)</th>
+        <th style="border: 1px solid #ccc; padding: 10px;">ACTIONS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for q in questions %}
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ q.question_text|safe }}</td>
+          <td style="border: 1px solid #ccc; padding: 8px;">{{ question_type }}</td>
+    
+          <td style="border: 1px solid #ccc; padding: 8px;">
+            {% if question_type == 'SCQ' or question_type == 'MCQ' %}
+              {{ q.option_a }}, {{ q.option_b }}, {{ q.option_c }}, {{ q.option_d }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+    
+          <td style="border: 1px solid #ccc; padding: 8px;">
+            {% if question_type == 'SCQ' %}
+              {{ q.correct_answer }}
+            {% elif question_type == 'MCQ' %}
+              {{ q.correct_answers }}
+            {% elif question_type == 'FIB' %}
+              {% if q.correct_answers.items %}
+                {% for key, val in q.correct_answers.items %}
+                  {{ key }}: {{ val }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              {% else %}
+                {{ q.correct_answers|join:", " }}
+              {% endif %}
+            {% endif %}
+          </td>
+    
+          <td style="border: 1px solid #ccc; padding: 8px;">
+            {% if question_type == 'SCQ' %}
+              <a href="{% url 'admin:core_scqquestion_change' q.id %}?from_preview=1&bank_id={{ bank.id }}">Edit</a> |
+              <a href="{% url 'delete_question' 'SCQ' q.question_id bank.id %}">Delete</a> |
+              <a href="{% url 'duplicate_question' 'SCQ' q.id %}?redirect_to={{ request.path }}">Duplicate</a>
+    
+            {% elif question_type == 'MCQ' %}
+              <a href="{% url 'admin:core_mcqquestion_change' q.id %}?from_preview=1&bank_id={{ bank.id }}">Edit</a> |
+              <a href="{% url 'delete_question' 'MCQ' q.question_id bank.id %}">Delete</a> |
+              <a href="{% url 'duplicate_question' 'MCQ' q.id %}?redirect_to={{ request.path }}">Duplicate</a>
+    
+            {% elif question_type == 'FIB' %}
+              <a href="{% url 'admin:core_fibquestion_change' q.id %}?from_preview=1&bank_id={{ bank.id }}">Edit</a> |
+              <a href="{% url 'delete_question' 'FIB' q.question_id bank.id %}">Delete</a> |
+              <a href="{% url 'duplicate_question' 'FIB' q.id %}?redirect_to={{ request.path }}">Duplicate</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5" style="text-align: center; border: 1px solid #ccc; padding: 10px;">No questions found for this question bank.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <br>
+  <a href="/admin/dashboard/question-bank/" class="button-link">Back to Question Bank Dashboard</a>
+{% endblock %}
