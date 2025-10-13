@@ -31,6 +31,9 @@ urlpatterns = [
     # Mount the app routes at root
     path('', include('core.urls')),
 
+    # --- Custom admin page must be ABOVE the admin.site.urls include ---
+    path('admin/payments/', pay_views.admin_payments_dashboard, name='payments_admin'),
+
     # Admin
     path('admin/', admin.site.urls),
     path('admin/core/user/bulk_upload/', bulk_upload_students, name='bulk_upload_students'),
@@ -59,8 +62,6 @@ urlpatterns = [
     path('api/csrf/', csrf_view, name='csrf'),   # GET once to set csrftoken cookie
 
     path('api/payments/', include('payments.urls')),
-
-    path('admin/payments/', pay_views.admin_payments_dashboard, name='payments_admin'),
 ]
 
 # Always serve MEDIA on this service so CKEditor images work (even with DEBUG=False)
