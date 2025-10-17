@@ -240,8 +240,22 @@ const LandingPage = () => {
         )}
 
         {!role && (
-          <div>
-            <Link to="/signup" className="text-white hover:underline">Sign up</Link>
+          <div className="relative group py-2">
+            <button className="text-white hover:underline font-normal">Sign up</button>
+            <div className="absolute right-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
+              {/* Create account (existing SPA route) */}
+              <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
+                Create Account
+              </Link>
+
+              {/* Make payment (server-rendered flow) */}
+              <a
+                href={`${import.meta.env.VITE_API_BASE_URL}payments/choose/`}
+                className="px-4 py-2 hover:bg-gray-100"
+              >
+                Make Payment
+              </a>
+            </div>
           </div>
         )}
       </nav>

@@ -24,6 +24,12 @@ from .utils import aes_ecb_pkcs5_base64
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
+from django.core.paginator import Paginator
+
+from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
+from .utils import aes_ecb_pkcs5_base64, sign_uid, unsign_uid   # add sign/unsign
 
 
 
@@ -86,7 +92,7 @@ def initiate(request: HttpRequest) -> JsonResponse:
 # --------------------------------------------------------------------------------------
 # 2) Start Easypay flow: auto-POST form to Index.jsf
 # --------------------------------------------------------------------------------------
-@login_required
+# REMOVE the @login_required here (we'll authorize via login OR token)
 def easypay_start(request: HttpRequest, pk) -> HttpResponse:
     # Validate config every time we start a flow
     try:
@@ -94,7 +100,21 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
     except RuntimeError as e:
         return HttpResponseBadRequest(str(e))
 
-    p = get_object_or_404(Payment, pk=pk, user=request.user)
+    # Load payment without tying it to the current user yet
+    p = get_object_or_404(Payment, pk=pk)
+
+    # Authorize: allow if (a) the owner is logged in OR (b) a valid token matches this user
+    allowed = False
+    if request.user.is_authenticated and p.user_id == request.user.id:
+        allowed = True
+    else:
+        token = request.GET.get("token") or ""
+        username = unsign_uid(token, max_age_seconds=86400) if token else None
+        if username and username == getattr(p.user, "username", None):
+            allowed = True
+
+    if not allowed:
+        return HttpResponseBadRequest("Not allowed.")
 
     # OrderRefNum: digits-only and <= 20 chars (gateways can be strict)
     digits_ref = timezone.now().strftime("%y%m%d%H%M%S") + f"{random.randint(10**5, 10**6-1)}"
@@ -163,10 +183,33 @@ def easypay_token_handler(request: HttpRequest) -> HttpResponse:
 # --------------------------------------------------------------------------------------
 @csrf_exempt
 def easypay_status_handler(request: HttpRequest) -> HttpResponse:
-    status_val = (request.GET.get("status") or "").strip().lower()  # 'success'/'failed'/etc.
-    desc = (request.GET.get("desc") or "").strip()
-    order_ref = (request.GET.get("orderRefNumber") or "").strip()
-    provider_txn_id = (request.GET.get("transactionId") or "").strip()
+    """
+    Final status handler called by Easypay (browser redirect).
+    Updates Payment and then:
+      - If FRONTEND_RETURN_URL is set: redirect user there with
+        ?pid=&status=&orderRef=&txn=&desc=
+      - Else: return a simple 'OK'
+    """
+    # Accept both GET and POST (Easypay can vary)
+    params = request.GET if request.method == "GET" else request.POST
+
+    # Normalize inputs (be lenient with gateway variations)
+    raw_status = (params.get("status") or "").strip()
+    status_val = raw_status.lower()
+    desc = (params.get("desc") or "").strip()
+
+    order_ref = (
+        (params.get("orderRefNumber") or "").strip()
+        or (params.get("orderRefNum") or "").strip()
+        or (params.get("orderRef") or "").strip()
+        or (params.get("merchant_order_id") or "").strip()
+    )
+
+    provider_txn_id = (
+        (params.get("transactionId") or "").strip()
+        or (params.get("txn_id") or "").strip()
+        or (params.get("trans_id") or "").strip()
+    )
 
     p = None
     if order_ref:
@@ -176,19 +219,81 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
             p = None
 
     if p:
-        # Keep raw data for audit
-        p.webhook_payload = {**(p.webhook_payload or {}), "status_handler": request.GET.dict()}
-        p.provider_txn_id = provider_txn_id or p.provider_txn_id
+        # keep raw data for audit trail (append, don't overwrite)
+        new_payload = params.dict() if hasattr(params, "dict") else dict(params)
+        p.webhook_payload = {**(p.webhook_payload or {}), "status_handler": new_payload}
 
-        # Interpret success (be lenient with variants)
+        if provider_txn_id:
+            p.provider_txn_id = provider_txn_id
+
+        # Interpret success/failure (desc == '0000' or status 'success/paid/approved')
         if status_val in {"success", "paid", "approved"} or desc == "0000":
             p.mark_success(provider_txn_id=p.provider_txn_id)
+
+            # ✨ Activate or extend subscription based on what we stashed at creation time
+            try:
+                import datetime as _dt
+                meta = p.request_payload or {}
+                months = int(meta.get("selected_months") or 1)
+
+                user = p.user
+                today = timezone.now().date()
+                current_expiry = getattr(user, "subscription_expiry", None)
+                start = current_expiry if (current_expiry and current_expiry > today) else today
+                new_expiry = start + _dt.timedelta(days=30 * months)
+
+                # Optional plan label (if present)
+                plan = (meta.get("selected_plan") or "").lower()
+                if hasattr(user, "subscription_plan") and plan:
+                    user.subscription_plan = plan
+
+                if hasattr(user, "subscription_expiry"):
+                    user.subscription_expiry = new_expiry
+
+                # Ensure activation flags
+                if hasattr(user, "account_status"):
+                    user.account_status = "active"
+                user.is_active = True
+
+                # Clear renewal flags if they exist on your model
+                if hasattr(user, "renewal_requested"):
+                    user.renewal_requested = False
+                if hasattr(user, "renewal_plan_requested"):
+                    user.renewal_plan_requested = None
+
+                user.save()
+            except Exception:
+                # Don't break the redirect on a subscription write error;
+                # payment record is already marked success.
+                p.save()
+
+            outcome = "success"
+
         elif status_val in {"failed", "declined", "rejected"}:
             p.mark_failed()
+            outcome = "failed"
         else:
+            # unknown / pending-ish — keep what we have
             p.save()
+            outcome = status_val or "unknown"
+    else:
+        outcome = "unknown"
+
+    # Friendly redirect to your frontend if configured
+    return_to = getattr(settings, "FRONTEND_RETURN_URL", None)
+    if return_to:
+        from urllib.parse import urlencode
+        q = urlencode({
+            "pid": str(p.id) if p else "",
+            "status": outcome,
+            "orderRef": order_ref,
+            "txn": provider_txn_id,
+            "desc": desc,
+        })
+        return HttpResponseRedirect(f"{return_to}?{q}")
 
     return HttpResponse("OK")
+
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
@@ -213,3 +318,103 @@ def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
 
     recent = Payment.objects.select_related("user").order_by("-initiated_at")[:20]
     return render(request, "payments/admin_dashboard.html", {"recent": recent})
+
+
+@login_required
+def my_payments(request: HttpRequest) -> JsonResponse:
+    """Return the signed-in user's recent payments (JSON)."""
+    limit = int(request.GET.get("limit") or 10)
+    qs = Payment.objects.filter(user=request.user).order_by("-initiated_at")
+    page = Paginator(qs, max(1, min(limit, 50))).page(1)
+    data = [
+        {
+            "id": str(p.id),
+            "amount": float(p.amount),
+            "status": p.status,
+            "orderRef": p.merchant_order_id,
+            "providerTxnId": p.provider_txn_id,
+            "initiatedAt": p.initiated_at.isoformat() if p.initiated_at else None,
+            "completedAt": p.completed_at.isoformat() if p.completed_at else None,
+        }
+        for p in page.object_list
+    ]
+    return JsonResponse({"results": data})
+
+@login_required
+def payment_detail(request: HttpRequest, pk) -> JsonResponse:
+    """Return JSON for a single payment owned by the user."""
+    p = get_object_or_404(Payment, pk=pk, user=request.user)
+    data = {
+        "id": str(p.id),
+        "amount": float(p.amount),
+        "status": p.status,
+        "orderRef": p.merchant_order_id,
+        "providerTxnId": p.provider_txn_id,
+        "initiatedAt": p.initiated_at.isoformat() if p.initiated_at else None,
+        "completedAt": p.completed_at.isoformat() if p.completed_at else None,
+        "desc": (p.webhook_payload or {}).get("status_handler", {}).get("desc"),
+    }
+    return JsonResponse(data)
+
+def choose_plan(request):
+    User = get_user_model()
+    ctx: dict[str, Any] = {"user_obj": None, "username_entered": "", "error": ""}
+
+    # If a token is present, resolve to a user
+    token = request.GET.get("token") or ""
+    if token:
+        username = unsign_uid(token, max_age_seconds=86400)  # 24h validity
+        if username:
+            try:
+                ctx["user_obj"] = User.objects.get(username=username)
+            except User.DoesNotExist:
+                ctx["error"] = "User not found."
+        else:
+            ctx["error"] = "Token invalid or expired. Please re-enter your User ID."
+
+    # If user is logged in, prefer that (no need to type User ID)
+    if request.user.is_authenticated and not ctx["user_obj"]:
+        ctx["user_obj"] = request.user
+
+    # Step-1 (no token): accept User ID and redirect with token
+    if request.method == "POST" and not token and not request.user.is_authenticated:
+        username_input = (request.POST.get("username") or "").strip()
+        if not username_input:
+            ctx["error"] = "Please enter your User ID."
+        else:
+            try:
+                user_obj = User.objects.get(username=username_input)
+                new_token = sign_uid(user_obj.username)
+                return redirect(f"{request.path}?token={new_token}")
+            except User.DoesNotExist:
+                ctx["error"] = "No user with that ID. Please double-check."
+        ctx["username_entered"] = username_input
+        return render(request, "payments/choose.html", ctx)
+
+    # Step-2: plan selected → create Payment with plan metadata, jump to Easypay
+    if request.method == "POST" and (token or request.user.is_authenticated):
+        plan = (request.POST.get("plan") or "monthly").lower()
+        # Define your plans here
+        price_map = {"monthly": 300.0, "quarterly": 800.0, "yearly": 3000.0}
+        months_map = {"monthly": 1, "quarterly": 3, "yearly": 12}
+
+        amount = price_map.get(plan, 300.0)
+        months = months_map.get(plan, 1)
+
+        if not ctx.get("user_obj"):
+            ctx["error"] = "Session expired. Please re-enter your User ID."
+            return render(request, "payments/choose.html", ctx)
+
+        p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
+        # ✨ stash plan/months for the status handler (no schema change needed)
+        meta = p.request_payload or {}
+        meta.update({"selected_plan": plan, "selected_months": months})
+        p.request_payload = meta
+        p.save(update_fields=["request_payload"])
+
+        # Pass token through for the non-logged flow
+        extra = f"?token={token}" if token else ""
+        return redirect(reverse("payments:easypay_start", args=[p.id]) + extra)
+
+    # GET
+    return render(request, "payments/choose.html", ctx)

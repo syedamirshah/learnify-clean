@@ -1,5 +1,9 @@
 import base64
 from Crypto.Cipher import AES
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+
+_signer = TimestampSigner(salt="payments-user-link")
 
 
 def _pkcs5_pad(data: bytes, block_size: int = 16) -> bytes:
@@ -21,3 +25,14 @@ def aes_ecb_pkcs5_base64(payload: str, key_16: str) -> str:
     cipher = AES.new(key, AES.MODE_ECB)
     enc = cipher.encrypt(padded)
     return base64.b64encode(enc).decode("ascii")
+
+def sign_uid(username: str) -> str:
+    """Return a short, signed token for this username (validates later)."""
+    return _signer.sign(username)
+
+def unsign_uid(token: str, max_age_seconds: int = 86400) -> str | None:
+    """Validate token and return username or None if invalid/expired."""
+    try:
+        return _signer.unsign(token, max_age=max_age_seconds)
+    except (BadSignature, SignatureExpired):
+        return None
