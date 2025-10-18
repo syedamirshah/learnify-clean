@@ -30,7 +30,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from .utils import aes_ecb_pkcs5_base64, sign_uid, unsign_uid   # add sign/unsign
-
+from datetime import timedelta
 
 
 # ---- Easypay config from settings (put values in your .env or settings.py) ----
@@ -232,21 +232,23 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
 
             # ✨ Activate or extend subscription based on what we stashed at creation time
             try:
-                import datetime as _dt
                 meta = p.request_payload or {}
-                months = int(meta.get("selected_months") or 1)
+                months = int(meta.get("selected_months") or 1)          # 1, 3, or 12
+                plan   = (meta.get("selected_plan") or "").lower()      # "monthly" | "quarterly" | "yearly"
 
                 user = p.user
                 today = timezone.now().date()
                 current_expiry = getattr(user, "subscription_expiry", None)
-                start = current_expiry if (current_expiry and current_expiry > today) else today
-                new_expiry = start + _dt.timedelta(days=30 * months)
 
-                # Optional plan label (if present)
-                plan = (meta.get("selected_plan") or "").lower()
+                # If user already has an active subscription, extend from that date; else start today
+                start = current_expiry if (current_expiry and current_expiry > today) else today
+                new_expiry = start + timedelta(days=30 * months)
+
+                # Optional: save plan label if your model has it
                 if hasattr(user, "subscription_plan") and plan:
                     user.subscription_plan = plan
 
+                # Set/extend expiry if present on your model
                 if hasattr(user, "subscription_expiry"):
                     user.subscription_expiry = new_expiry
 
@@ -255,7 +257,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
                     user.account_status = "active"
                 user.is_active = True
 
-                # Clear renewal flags if they exist on your model
+                # Clear renewal flags if your model uses them
                 if hasattr(user, "renewal_requested"):
                     user.renewal_requested = False
                 if hasattr(user, "renewal_plan_requested"):
@@ -263,8 +265,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
 
                 user.save()
             except Exception:
-                # Don't break the redirect on a subscription write error;
-                # payment record is already marked success.
+                # Don't crash the handler if user update fails; payment is already marked success
                 p.save()
 
             outcome = "success"
@@ -357,64 +358,72 @@ def payment_detail(request: HttpRequest, pk) -> JsonResponse:
     return JsonResponse(data)
 
 def choose_plan(request):
+    """
+    Payments entry:
+      - Step-1 (GET):  /api/payments/choose/?username=<user>  OR  /api/payments/choose/?token=<signed>
+                       Resolves/confirms the user and shows the plan selector.
+                       If neither is provided and the user is authenticated, we use request.user.
+
+      - Step-2 (POST): Submit selected plan -> create Payment -> redirect to Easypay start.
+    """
     User = get_user_model()
     ctx: dict[str, Any] = {"user_obj": None, "username_entered": "", "error": ""}
 
-    # If a token is present, resolve to a user
-    token = request.GET.get("token") or ""
+    # --- Step-1: resolve user by token (if provided) ---
+    token = (request.GET.get("token") or "").strip()
     if token:
         username = unsign_uid(token, max_age_seconds=86400)  # 24h validity
         if username:
             try:
                 ctx["user_obj"] = User.objects.get(username=username)
+                ctx["username_entered"] = username
             except User.DoesNotExist:
                 ctx["error"] = "User not found."
         else:
             ctx["error"] = "Token invalid or expired. Please re-enter your User ID."
 
-    # If user is logged in, prefer that (no need to type User ID)
-    if request.user.is_authenticated and not ctx["user_obj"]:
-        ctx["user_obj"] = request.user
-
-    # Step-1 (no token): accept User ID and redirect with token
-    if request.method == "POST" and not token and not request.user.is_authenticated:
-        username_input = (request.POST.get("username") or "").strip()
-        if not username_input:
-            ctx["error"] = "Please enter your User ID."
-        else:
+    # --- Alternative Step-1: resolve via GET ?username=... (safe, no CSRF) ---
+    if not ctx["user_obj"]:
+        username_qs = (request.GET.get("username") or "").strip()
+        if username_qs:
             try:
-                user_obj = User.objects.get(username=username_input)
-                new_token = sign_uid(user_obj.username)
-                return redirect(f"{request.path}?token={new_token}")
+                ctx["user_obj"] = User.objects.get(username=username_qs)
             except User.DoesNotExist:
                 ctx["error"] = "No user with that ID. Please double-check."
-        ctx["username_entered"] = username_input
-        return render(request, "payments/choose.html", ctx)
+            ctx["username_entered"] = username_qs
 
-    # Step-2: plan selected → create Payment with plan metadata, jump to Easypay
-    if request.method == "POST" and (token or request.user.is_authenticated):
+    # --- If logged in, prefer that user (no need to type User ID) ---
+    if request.user.is_authenticated and not ctx["user_obj"]:
+        ctx["user_obj"] = request.user
+        ctx["username_entered"] = getattr(request.user, "username", "")
+
+    # --- Step-2: plan selected -> POST -> create Payment and jump to Easypay ---
+    if request.method == "POST":
+        # Must have a resolved user at this point
+        if not ctx.get("user_obj"):
+            ctx["error"] = "Session expired or invalid user. Please enter your User ID again."
+            return render(request, "payments/choose.html", ctx)
+
         plan = (request.POST.get("plan") or "monthly").lower()
-        # Define your plans here
+
+        # Define your pricing here (kept from your version)
         price_map = {"monthly": 300.0, "quarterly": 800.0, "yearly": 3000.0}
         months_map = {"monthly": 1, "quarterly": 3, "yearly": 12}
 
         amount = price_map.get(plan, 300.0)
         months = months_map.get(plan, 1)
 
-        if not ctx.get("user_obj"):
-            ctx["error"] = "Session expired. Please re-enter your User ID."
-            return render(request, "payments/choose.html", ctx)
-
         p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
-        # ✨ stash plan/months for the status handler (no schema change needed)
+
+        # Stash plan/months for status handler (no schema change needed)
         meta = p.request_payload or {}
         meta.update({"selected_plan": plan, "selected_months": months})
         p.request_payload = meta
         p.save(update_fields=["request_payload"])
 
-        # Pass token through for the non-logged flow
+        # Preserve token if we came via token flow (not required for username GET)
         extra = f"?token={token}" if token else ""
         return redirect(reverse("payments:easypay_start", args=[p.id]) + extra)
 
-    # GET
+    # GET render (blank, or with confirmed user and/or error)
     return render(request, "payments/choose.html", ctx)

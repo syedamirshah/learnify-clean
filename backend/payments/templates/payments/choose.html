@@ -11,6 +11,8 @@
     input,select{padding:10px;border:1px solid #bbb;border-radius:6px;width:100%}
     .muted{color:#666;font-size:14px}
     .error{color:#b00020;margin-top:6px}
+    .link{color:#2563eb;text-decoration:none}
+    .link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
@@ -38,19 +40,37 @@
         <button type="submit">Proceed to Easypay</button>
       </form>
 
-      <p class="muted" style="margin-top:12px">You’ll be redirected to Easypay to complete the payment.</p>
+      <p class="muted" style="margin-top:12px">
+        You’ll be redirected to Easypay to complete the payment.
+      </p>
+
+      <p class="muted" style="margin-top:16px">
+        Not you?
+        <a class="link" href="?">enter a different User ID</a>
+      </p>
 
     {% else %}
       <p>Enter your <b>User ID</b> to continue.</p>
-      <form method="post">
-        {% csrf_token %}
+      <!-- Step-1 is GET so it works without CSRF and from other origins -->
+      <form method="get">
         <div class="row">
           <input type="text" name="username" placeholder="e.g. student2" value="{{ username_entered }}" required>
         </div>
         <button type="submit">Continue</button>
       </form>
-      <p class="muted" style="margin-top:12px">We’ll confirm your account and then show plan options.</p>
+      <p class="muted" style="margin-top:12px">
+        We’ll confirm your account and then show plan options.
+      </p>
     {% endif %}
   </div>
+
+  <!-- Ensure the CSRF cookie exists before the POST (harmless if already present) -->
+  <script>
+    (function () {
+      try {
+        fetch("/api/csrf/", { credentials: "include" }).catch(()=>{});
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

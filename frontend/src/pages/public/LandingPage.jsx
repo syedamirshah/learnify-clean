@@ -32,10 +32,10 @@ const LandingPage = () => {
     const status = localStorage.getItem('account_status');
     const role = localStorage.getItem('user_role');
     if ((role === 'student' || role === 'teacher') && status === 'expired') {
-      alert("Your subscription has expired. Redirecting to renewal page...");
-      navigate('/account/renew-subscription');
+      alert("Your subscription has expired. Redirecting to payment page...");
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
     }
-  }, [navigate]);
+  }, []);
 
   // Fetch quiz data from backend and log it
   useEffect(() => {
@@ -75,7 +75,7 @@ const LandingPage = () => {
       setFullName(fullName);
 
       if ((role === 'student' || role === 'teacher') && status === 'expired') {
-        navigate('/account/renew-subscription');
+        window.location.href = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
       } else {
         navigate('/');
       }
@@ -233,7 +233,12 @@ const LandingPage = () => {
           <div className="relative group py-2">
             <button className="text-white hover:underline font-normal">Account Settings</button>
             <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
-              <Link to="/account/renew-subscription" className="px-4 py-2 hover:bg-gray-100">Renew Subscription</Link>
+            <a
+                href={`${import.meta.env.VITE_API_BASE_URL}payments/choose/`}
+                className="px-4 py-2 hover:bg-gray-100"
+              >
+                Make Payment
+              </a>
               <Link to="/account/edit-profile" className="px-4 py-2 hover:bg-gray-100">Edit Profile</Link>
             </div>
           </div>

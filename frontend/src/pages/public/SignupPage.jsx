@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate, Link } from 'react-router-dom';
-import logo from '../../assets/logo.png'; // ‚úÖ adjust path if needed
+import logo from '../../assets/logo.png';
 
 const SignupPage = () => {
   const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
-
   const [grades, setGrades] = useState([]);
 
   useEffect(() => {
     axiosInstance.get('grades/')
-      .then((response) => {
-        setGrades(response.data);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch grades:", error);
-      });
+      .then((response) => setGrades(response.data))
+      .catch((error) => console.error("Failed to fetch grades:", error));
   }, []);
 
+  // Single form for both roles. We’ll conditionally render/append `grade`.
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -28,12 +24,10 @@ const SignupPage = () => {
     language_used_at_home: '',
     schooling_status: '',
     school_name: '',
-    grade: '',
+    grade: '',            // will be used only for students
     city: '',
     province: '',
-    subscription_plan: '',
-    profile_picture: null,
-    fee_receipt: null
+    profile_picture: null // fee_receipt/subscription_plan removed
   });
 
   const handleChange = (e) => {
@@ -49,38 +43,44 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Basic client-side rule: grade required for student, ignored for teacher
+    if (role === 'student' && !formData.grade) {
+      alert('Please select your Grade.');
+      return;
+    }
+
     const form = new FormData();
     form.append('role', role);
 
     for (const key in formData) {
-      if (formData[key] !== null && formData[key] !== undefined) {
-        if (key === 'grade') {
+      const val = formData[key];
+      if (val === null || val === undefined) continue;
+
+      if (key === 'grade') {
+        // Only send grade for students
+        if (role === 'student') {
           form.append('grade', typeof formData.grade === 'object' ? formData.grade.id : formData.grade);
-        } else {
-          form.append(key, formData[key]);
         }
+      } else {
+        form.append(key, val);
       }
     }
 
     try {
       await axiosInstance.post('register/', form, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      alert(
-        'Your account has been created successfully!\n\n' +
-        'Please wait 10 to 15 minutes while our team verifies your information and activates your account.\n' +
-        'You will receive an email once your account is approved.'
-      );
-      navigate('/');
+
+      // Immediately guide them to payment
+      alert('✅ Account created!\n\nNext step: please complete your fee payment.');
+      window.location.href =
+        `${import.meta.env.VITE_API_BASE_URL}payments/choose/?username=${encodeURIComponent(formData.username)}`;
     } catch (error) {
       console.error("❌ Registration failed:", error);
 
-      if (error.response && error.response.status === 403) {
+      if (error.response?.status === 403) {
         alert('Your account is not active yet. Please wait for activation.');
-      } else if (error.response && error.response.data) {
-        console.log("💡 Backend error details:", error.response.data);
+      } else if (error.response?.data) {
         alert("Registration failed:\n" + JSON.stringify(error.response.data, null, 2));
       } else {
         alert('Registration failed. Please check your details and try again.');
@@ -88,9 +88,10 @@ const SignupPage = () => {
     }
   };
 
+  // Teacher has a single “I am Teacher” schooling option; students see school types
   const schoolingOptions =
     role === 'teacher'
-    ? [{ label: 'I am Teacher', value: 'I am teacher' }]
+      ? [{ label: 'I am Teacher', value: 'I am teacher' }]
       : [
           { label: 'Public School', value: 'Public school' },
           { label: 'Private School', value: 'Private school' },
@@ -100,7 +101,7 @@ const SignupPage = () => {
 
   return (
     <div className="bg-green-50 min-h-screen">
-      {/* ‚úÖ Logo Top Left */}
+      {/* Logo Top Left */}
       <nav className="w-full px-6 py-4 bg-white shadow-sm">
         <Link to="/">
           <img
@@ -163,27 +164,33 @@ const SignupPage = () => {
               ))}
             </select>
 
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Grade</label>
-            <select
-              name="grade"
-              value={formData.grade && typeof formData.grade === 'object' ? formData.grade.id : ''}
-              onChange={(e) => {
-                const selectedId = parseInt(e.target.value);
-                const selectedGrade = grades.find((g) => g.id === selectedId);
-                setFormData((prev) => ({
-                  ...prev,
-                  grade: selectedGrade || '',
-                }));
-              }}
-              className="w-full max-w-sm border px-3 py-2 rounded text-sm"
-            >
-              <option value="">Select Grade</option>
-              {grades.map((grade) => (
-                <option key={grade.id} value={grade.id}>
-                  {grade.name}
-                </option>
-              ))}
-            </select>
+            {/* Grade — only for students */}
+            {role === 'student' && (
+              <>
+                <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Grade</label>
+                <select
+                  name="grade"
+                  value={formData.grade && typeof formData.grade === 'object' ? formData.grade.id : formData.grade}
+                  onChange={(e) => {
+                    const selectedId = parseInt(e.target.value, 10);
+                    const selectedGrade =
+                      Number.isFinite(selectedId) ? grades.find((g) => g.id === selectedId) : '';
+                    setFormData((prev) => ({
+                      ...prev,
+                      grade: selectedGrade || e.target.value, // keep id string if not mapped
+                    }));
+                  }}
+                  className="w-full max-w-sm border px-3 py-2 rounded text-sm"
+                >
+                  <option value="">Select Grade</option>
+                  {grades.map((grade) => (
+                    <option key={grade.id} value={grade.id}>
+                      {grade.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
             <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Province / Region</label>
             <select name="province" value={formData.province} onChange={handleChange}
@@ -191,12 +198,12 @@ const SignupPage = () => {
                 <option value="">Select Province</option>
                 <option value="Azad Kashmir">Azad Kashmir</option>
                 <option value="Balochistan">Balochistan</option>
-                <option value="Federal Territory">Federal Territory</option> {/* ‚úÖ NEW */}
+                <option value="Federal Territory">Federal Territory</option>
                 <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
                 <option value="Khyber-Pakhtunkhwa">Khyber-Pakhtunkhwa</option>
                 <option value="Punjab">Punjab</option>
                 <option value="Sindh">Sindh</option>
-                </select>
+            </select>
           </div>
 
           {/* Column 2 */}
@@ -247,30 +254,13 @@ const SignupPage = () => {
             <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">City</label>
             <input name="city" value={formData.city} onChange={handleChange}
               className="w-full max-w-sm border px-3 py-2 rounded text-sm" />
-
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Subscription Plan</label>
-            <select
-              name="subscription_plan"
-              value={formData.subscription_plan}
-              onChange={handleChange}
-              className="w-full max-w-sm border px-3 py-2 rounded text-sm"
-            >
-              <option value="">Select Plan</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
           </div>
 
-          {/* File Uploads */}
-          <div className="col-span-2 flex flex-col md:flex-row justify-between items-center gap-6 mt-4">
+          {/* File Uploads (Profile Picture only) */}
+          <div className="col-span-2 flex flex-col md:flex-row justify-center items-center gap-6 mt-4">
             <div className="w-full max-w-sm">
               <label className="block text-sm font-medium text-gray-700 mb-1">Upload Profile Picture</label>
               <input type="file" name="profile_picture" onChange={handleChange}
-                className="w-full text-sm" />
-            </div>
-            <div className="w-full max-w-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Upload Fee Receipt</label>
-              <input type="file" name="fee_receipt" onChange={handleChange}
                 className="w-full text-sm" />
             </div>
           </div>
