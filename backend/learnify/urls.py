@@ -61,7 +61,8 @@ urlpatterns = [
     path('api/', include('core.urls')),          # expose your app also under /api/
     path('api/csrf/', csrf_view, name='csrf'),   # GET once to set csrftoken cookie
 
-    path('api/payments/', include('payments.urls')),
+    # ⬇️ same include as before, now namespaced to avoid reverse-name collisions
+    path('api/payments/', include(('payments.urls', 'payments'), namespace='payments')),
 ]
 
 # Always serve MEDIA on this service so CKEditor images work (even with DEBUG=False)

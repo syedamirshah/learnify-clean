@@ -408,8 +408,15 @@ def choose_plan(request):
         return render(request, "payments/choose.html", ctx)
 
     # --- 4) Step-2: plan selected → create Payment and jump to Easypay
-    if request.method == "POST" and (token or request.user.is_authenticated):
-        plan = (request.POST.get("plan") or "monthly").lower()
+    # Accept both POST (normal) and GET (fallback when CSRF cookies can't be sent cross-site)
+    if (token or request.user.is_authenticated) and (
+        (request.method == "POST" and request.POST.get("plan"))
+        or (request.method == "GET" and request.GET.get("plan"))
+    ):
+        carrier = request.POST if request.method == "POST" else request.GET
+        plan = (carrier.get("plan") or "monthly").lower()
+
+        # Define your plans here
         price_map = {"monthly": 10.0, "yearly": 100.0}  # your current test values
         months_map = {"monthly": 1, "yearly": 12}
 
@@ -421,16 +428,14 @@ def choose_plan(request):
             return render(request, "payments/choose.html", ctx)
 
         p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
+        # Stash plan/months for status handler
         meta = p.request_payload or {}
         meta.update({"selected_plan": plan, "selected_months": months})
         p.request_payload = meta
         p.save(update_fields=["request_payload"])
 
-        # Ensure we *always* have a token for the start step when the user isn't logged in.
+        # Ensure we *always* have a token for start step when the user isn't logged in
         out_token = token or (sign_uid(ctx["user_obj"].username) if not request.user.is_authenticated else "")
         extra = f"?token={out_token}" if out_token else ""
 
         return redirect(reverse("payments:easypay_start", args=[p.id]) + extra)
-
-    # --- 5) GET render
-    return render(request, "payments/choose.html", ctx)
