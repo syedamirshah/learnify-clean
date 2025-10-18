@@ -359,72 +359,76 @@ def payment_detail(request: HttpRequest, pk) -> JsonResponse:
 
 @ensure_csrf_cookie
 def choose_plan(request):
-    """
-    Payments entry:
-      - Step-1 (GET):  /api/payments/choose/?username=<user>  OR  /api/payments/choose/?token=<signed>
-                       Resolves/confirms the user and shows the plan selector.
-                       If neither is provided and the user is authenticated, we use request.user.
-
-      - Step-2 (POST): Submit selected plan -> create Payment -> redirect to Easypay start.
-    """
     User = get_user_model()
     ctx: dict[str, Any] = {"user_obj": None, "username_entered": "", "error": ""}
 
-    # --- Step-1: resolve user by token (if provided) ---
-    token = (request.GET.get("token") or "").strip()
+    # --- 0) If username is provided without a token, resolve to user and
+    #         immediately re-load this page WITH a signed token.
+    token = request.GET.get("token") or ""
+    username_param = (request.GET.get("username") or "").strip()
+    if username_param and not token:
+        try:
+            u = User.objects.get(username=username_param)
+            new_token = sign_uid(u.username)
+            # keep only the token in the URL (avoids accidentally double-submitting username)
+            return redirect(f"{request.path}?token={new_token}")
+        except User.DoesNotExist:
+            ctx["error"] = "User not found. Please enter the correct User ID."
+
+    # --- 1) Token → resolve to user
     if token:
-        username = unsign_uid(token, max_age_seconds=86400)  # 24h validity
+        username = unsign_uid(token, max_age_seconds=86400)  # 24h
         if username:
             try:
                 ctx["user_obj"] = User.objects.get(username=username)
-                ctx["username_entered"] = username
             except User.DoesNotExist:
                 ctx["error"] = "User not found."
         else:
             ctx["error"] = "Token invalid or expired. Please re-enter your User ID."
 
-    # --- Alternative Step-1: resolve via GET ?username=... (safe, no CSRF) ---
-    if not ctx["user_obj"]:
-        username_qs = (request.GET.get("username") or "").strip()
-        if username_qs:
-            try:
-                ctx["user_obj"] = User.objects.get(username=username_qs)
-            except User.DoesNotExist:
-                ctx["error"] = "No user with that ID. Please double-check."
-            ctx["username_entered"] = username_qs
-
-    # --- If logged in, prefer that user (no need to type User ID) ---
+    # --- 2) If logged in, prefer that user (no need to type User ID)
     if request.user.is_authenticated and not ctx["user_obj"]:
         ctx["user_obj"] = request.user
-        ctx["username_entered"] = getattr(request.user, "username", "")
 
-    # --- Step-2: plan selected -> POST -> create Payment and jump to Easypay ---
-    if request.method == "POST":
-        # Must have a resolved user at this point
-        if not ctx.get("user_obj"):
-            ctx["error"] = "Session expired or invalid user. Please enter your User ID again."
-            return render(request, "payments/choose.html", ctx)
+    # --- 3) Step-1: manual entry of User ID (no token, not logged in)
+    if request.method == "POST" and not token and not request.user.is_authenticated:
+        username_input = (request.POST.get("username") or "").strip()
+        if not username_input:
+            ctx["error"] = "Please enter your User ID."
+        else:
+            try:
+                user_obj = User.objects.get(username=username_input)
+                new_token = sign_uid(user_obj.username)
+                return redirect(f"{request.path}?token={new_token}")
+            except User.DoesNotExist:
+                ctx["error"] = "No user with that ID. Please double-check."
+        ctx["username_entered"] = username_input
+        return render(request, "payments/choose.html", ctx)
 
+    # --- 4) Step-2: plan selected → create Payment and jump to Easypay
+    if request.method == "POST" and (token or request.user.is_authenticated):
         plan = (request.POST.get("plan") or "monthly").lower()
-
-        # Define your plans here (amounts in PKR)
-        price_map = {"monthly": 10.0, "yearly": 20.0}
+        price_map = {"monthly": 10.0, "yearly": 100.0}  # your current test values
         months_map = {"monthly": 1, "yearly": 12}
 
-        amount = price_map.get(plan, 300.0)
+        amount = price_map.get(plan, 10.0)
         months = months_map.get(plan, 1)
 
-        p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
+        if not ctx.get("user_obj"):
+            ctx["error"] = "Session expired. Please re-enter your User ID."
+            return render(request, "payments/choose.html", ctx)
 
-        # Stash plan/months for status handler (no schema change needed)
+        p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
         meta = p.request_payload or {}
         meta.update({"selected_plan": plan, "selected_months": months})
         p.request_payload = meta
         p.save(update_fields=["request_payload"])
 
-        # Preserve token if we came via token flow (not required for username GET)
-        extra = f"?token={token}" if token else ""
+        # Ensure we *always* have a token for the start step when the user isn't logged in.
+        out_token = token or (sign_uid(ctx["user_obj"].username) if not request.user.is_authenticated else "")
+        extra = f"?token={out_token}" if out_token else ""
+
         return redirect(reverse("payments:easypay_start", args=[p.id]) + extra)
 
-    # GET render (blank, or with confirmed user and/or error)
+    # --- 5) GET render
     return render(request, "payments/choose.html", ctx)
