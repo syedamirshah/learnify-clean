@@ -31,7 +31,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from .utils import aes_ecb_pkcs5_base64, sign_uid, unsign_uid   # add sign/unsign
 from datetime import timedelta
-
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 # ---- Easypay config from settings (put values in your .env or settings.py) ----
 EP_BASE    = getattr(settings, "EASYPAY_BASE",    "https://easypay.easypaisa.com.pk")  # prod base
@@ -357,6 +357,7 @@ def payment_detail(request: HttpRequest, pk) -> JsonResponse:
     }
     return JsonResponse(data)
 
+@ensure_csrf_cookie
 def choose_plan(request):
     """
     Payments entry:
