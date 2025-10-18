@@ -364,7 +364,8 @@ def choose_plan(request):
 
     # --- 0) If username is provided without a token, resolve to user and
     #         immediately re-load this page WITH a signed token.
-    token = request.GET.get("token") or ""
+    # NOTE: Read token from GET or POST (form POST won't retain querystring).
+    token = (request.GET.get("token") or request.POST.get("token") or "").strip()
     username_param = (request.GET.get("username") or "").strip()
     if username_param and not token:
         try:
@@ -374,9 +375,10 @@ def choose_plan(request):
             return redirect(f"{request.path}?token={new_token}")
         except User.DoesNotExist:
             ctx["error"] = "User not found. Please enter the correct User ID."
+        ctx["username_entered"] = username_param  # keep what the user typed
 
     # --- 1) Token → resolve to user
-    if token:
+    if token and not ctx.get("user_obj"):
         username = unsign_uid(token, max_age_seconds=86400)  # 24h
         if username:
             try:

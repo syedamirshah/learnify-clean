@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'payments',
-
 ]
 
 MIDDLEWARE = [
@@ -218,9 +217,10 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",               # ✅ added for local Vite on 127.0.0.1
     "https://learnify-frontend-7y4n.onrender.com",
     "https://www.learnifypakistan.com",
-    "https://learnifypakistan.com",   # ← added non‑www
+    "https://learnifypakistan.com",        # ← added non-www
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -259,20 +259,34 @@ LOGOUT_REDIRECT_URL = '/login/'
 CSRF_TRUSTED_ORIGINS = [
     "https://api.learnifypakistan.com",
     "https://www.learnifypakistan.com",
-    "https://learnifypakistan.com",   # ← added non‑www
+    "https://learnifypakistan.com",   # ← added non-www
     "https://learnify-backend-zlf7.onrender.com",
 ]
 
-# Make cookies usable across api.learnifypakistan.com and learnifypakistan.com
-CSRF_COOKIE_NAME = "csrftoken"                 # explicit, matches frontend lookup
-CSRF_COOKIE_DOMAIN = ".learnifypakistan.com"   # parent domain
-CSRF_COOKIE_SECURE = True                      # send only over HTTPS
-CSRF_COOKIE_SAMESITE = "None"     # ← add this
+# ---------- Cookie scope (domain) ----------
+# If you are serving the API on api.learnifypakistan.com and the frontend on
+# learnifypakistan.com, scoping cookies to the parent domain enables cross-subdomain
+# use. But when you open pages on the Render hostname, this must be disabled or
+# CSRF will fail.
+COOKIE_PARENT_DOMAIN = os.environ.get("COOKIE_PARENT_DOMAIN", "").strip()  # e.g. ".learnifypakistan.com"
 
+# CSRF cookies
+CSRF_COOKIE_NAME = "csrftoken"     # explicit, matches frontend lookup
+CSRF_COOKIE_SECURE = True          # send only over HTTPS
+CSRF_COOKIE_SAMESITE = "None"
 
-SESSION_COOKIE_DOMAIN = ".learnifypakistan.com"
+if COOKIE_PARENT_DOMAIN:
+    CSRF_COOKIE_DOMAIN = COOKIE_PARENT_DOMAIN
+else:
+    CSRF_COOKIE_DOMAIN = None  # host-only cookie (works on Render hostnames)
+
+# Session cookies
 SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = "None"  # ← add this
+SESSION_COOKIE_SAMESITE = "None"
+if COOKIE_PARENT_DOMAIN:
+    SESSION_COOKIE_DOMAIN = COOKIE_PARENT_DOMAIN
+else:
+    SESSION_COOKIE_DOMAIN = None
 
 # Behind Render's proxy: tell Django requests are HTTPS so 'Secure' cookies are sent
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -294,3 +308,9 @@ EASYPAY_CONFIRM_PATH = os.environ.get("EASYPAY_CONFIRM_PATH", "/easypay/Confirm.
 # Portal credentials (from Render environment)
 EASYPAY_STORE_ID = os.environ.get("EASYPAY_STORE_ID", "")
 EASYPAY_HASH_KEY = os.environ.get("EASYPAY_HASH_KEY", "")
+
+# Where the status handler should send users back to on success/failure (overridable)
+FRONTEND_RETURN_URL = os.environ.get(
+    "FRONTEND_RETURN_URL",
+    "https://www.learnifypakistan.com/payments/result"
+)
