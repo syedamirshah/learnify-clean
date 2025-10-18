@@ -406,9 +406,9 @@ def choose_plan(request):
 
         plan = (request.POST.get("plan") or "monthly").lower()
 
-        # Define your pricing here (kept from your version)
-        price_map = {"monthly": 300.0, "quarterly": 800.0, "yearly": 3000.0}
-        months_map = {"monthly": 1, "quarterly": 3, "yearly": 12}
+        # Define your plans here (amounts in PKR)
+        price_map = {"monthly": 10.0, "yearly": 20.0}
+        months_map = {"monthly": 1, "yearly": 12}
 
         amount = price_map.get(plan, 300.0)
         months = months_map.get(plan, 1)

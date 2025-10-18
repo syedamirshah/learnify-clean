@@ -17,6 +17,8 @@ import StudentQuizHistoryTable from './pages/student/StudentQuizHistoryTable';
 import GuestAssessment from './pages/public/GuestAssessment';
 import MembershipPage from '@/pages/public/MembershipPage';
 import HelpCenter from '@/pages/public/HelpCenter';
+import PaymentResult from "./pages/public/PaymentResult";
+
 
 
 
@@ -44,6 +46,7 @@ function App() {
           <Route path="/assessment/public" element={<GuestAssessment />} />
           <Route path="/membership" element={<MembershipPage />} />
           <Route path="/help-center" element={<HelpCenter />} />
+          <Route path="/payment/result" element={<PaymentResult />} />
         </Routes>
       </div>
     </Router>
