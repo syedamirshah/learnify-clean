@@ -4,6 +4,8 @@ import "../../App.css";
 import axiosInstance from '../../utils/axiosInstance';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/?$/, '/')}`;
+
 const LandingPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -33,14 +35,14 @@ const LandingPage = () => {
     const role = localStorage.getItem('user_role');
     if ((role === 'student' || role === 'teacher') && status === 'expired') {
       alert("Your subscription has expired. Redirecting to payment page...");
-      window.location.href = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
+      window.location.href = `${API}payments/choose/`;
     }
   }, []);
 
   // Fetch quiz data from backend and log it
   useEffect(() => {
     import('axios').then(({ default: axios }) => {
-      axios.get(`${import.meta.env.VITE_API_BASE_URL}landing/quizzes/`)
+      axios.get(`${API}landing/quizzes/`)
         .then(res => {
           console.log("✅ Public Quiz API Response:", res.data);
           setQuizData(res.data);
@@ -75,7 +77,7 @@ const LandingPage = () => {
       setFullName(fullName);
 
       if ((role === 'student' || role === 'teacher') && status === 'expired') {
-        window.location.href = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
+        window.location.href = `${API}payments/choose/`;
       } else {
         navigate('/');
       }
@@ -234,7 +236,7 @@ const LandingPage = () => {
             <button className="text-white hover:underline font-normal">Account Settings</button>
             <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
             <a
-                href={`${import.meta.env.VITE_API_BASE_URL}payments/choose/`}
+                href={`${API}payments/choose/`}
                 className="px-4 py-2 hover:bg-gray-100"
               >
                 Make Payment
@@ -255,11 +257,11 @@ const LandingPage = () => {
 
               {/* Make payment (server-rendered flow) */}
               <a
-                href={`${import.meta.env.VITE_API_BASE_URL}payments/choose/`}
-                className="px-4 py-2 hover:bg-gray-100"
-              >
-                Make Payment
-              </a>
+              href={`${API}payments/choose/`}
+              className="px-4 py-2 hover:bg-gray-100"
+            >
+              Make Payment
+            </a>
             </div>
           </div>
         )}
