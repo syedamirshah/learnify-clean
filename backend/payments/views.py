@@ -134,33 +134,35 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 
     amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
     time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
-    payment_method = "MA"  # Easypaisa wallet (per docs)
+    payment_method = "MA_PAYMENT_METHOD"  # per Easypay guide
 
     post_back_url_step1 = request.build_absolute_uri(reverse("payments:easypay_token_handler"))
 
-    # Canonical field order (must match the posted fields)
-    # Do NOT URL-encode in this string; raw values joined by & in this exact order.
-    pairs = [
-        ("storeId", store_id),
-        ("amount", amount_str),
-        ("postBackURL", post_back_url_step1),
-        ("orderRefNum", order_ref),
-        ("timeStamp", time_stamp),
-        ("paymentMethod", payment_method),
-    ]
-    raw = "&".join(f"{k}={v}" for k, v in pairs)
+    # Build a dict and create the canonical string with keys sorted alphabetically
+    fields = {
+        "amount":        amount_str,
+        "autoRedirect":  "0",                # show the gateway page (keep "0" for now)
+        "orderRefNum":   order_ref,
+        "paymentMethod": payment_method,     # MA wallet per docs
+        "postBackURL":   post_back_url_step1,
+        "storeId":       store_id,
+        "timeStamp":     time_stamp,
+        # Optional additional fields supported by Easypay:
+        # "emailAddr":   "",
+        # "mobileNum":   "",
+        # "expiryDate":  "YYYYMMDD HHMMSS",
+    }
+    canonical = "&".join(f"{k}={fields[k]}" for k in sorted(fields.keys()))
 
-    # AES/ECB/PKCS5 -> Base64 over the raw canonical string
-    merchant_hashed_req = aes_ecb_pkcs5_base64(raw, hash_key)
+    # AES/ECB/PKCS5 -> Base64 over the canonical string (sorted keys!)
+    merchant_hashed_req = aes_ecb_pkcs5_base64(canonical, hash_key)
 
-    # Render auto-submit form (keep manual redirect during integration)
-    endpoint = base + index_path
-    fields = dict(pairs)
+    # Final POST payload: include the hash
     fields["merchantHashedReq"] = merchant_hashed_req
-    fields["autoRedirect"] = "0"
+    endpoint = base + index_path
 
     # store for debugging
-    p.request_payload = {"_endpoint": endpoint, "_canonical": raw, "outbound": fields}
+    p.request_payload = {"_endpoint": endpoint, "_canonical": canonical, "outbound": fields}
     p.save(update_fields=["request_payload"])
 
     return render(request, "payments/post_form.html", {"endpoint": endpoint, "fields": fields})

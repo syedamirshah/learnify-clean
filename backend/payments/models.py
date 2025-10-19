@@ -40,6 +40,7 @@ class Payment(models.Model):
     months = models.PositiveIntegerField(default=1)
 
     # gateway references
+    provider = models.CharField(max_length=20, default="easypay", db_index=True)  # 👈 ADD THIS LINE
     merchant_order_id = models.CharField(max_length=24, db_index=True, blank=True)
     provider_txn_id = models.CharField(max_length=64, blank=True)
 
