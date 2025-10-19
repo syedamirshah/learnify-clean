@@ -109,7 +109,12 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         allowed = True
     else:
         token = request.GET.get("token") or ""
-        username = unsign_uid(token, max_age_seconds=86400) if token else None
+        username = None
+        if token:
+            try:
+                username = unsign_uid(token, max_age_seconds=86400)
+            except Exception:
+                username = None
         if username and username == getattr(p.user, "username", None):
             allowed = True
 
@@ -377,9 +382,14 @@ def choose_plan(request):
             ctx["error"] = "User not found. Please enter the correct User ID."
         ctx["username_entered"] = username_param  # keep what the user typed
 
-    # --- 1) Token → resolve to user
+    # --- 1) Token → resolve to user (defensive: never crash on bad token)
     if token and not ctx.get("user_obj"):
-        username = unsign_uid(token, max_age_seconds=86400)  # 24h
+        username = None
+        try:
+            username = unsign_uid(token, max_age_seconds=86400)  # 24h
+        except Exception:
+            username = None  # swallow any bad/old/forged token errors
+
         if username:
             try:
                 ctx["user_obj"] = User.objects.get(username=username)

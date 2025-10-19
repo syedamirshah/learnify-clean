@@ -29,16 +29,14 @@
 
       <form method="post">
         {% csrf_token %}
-        {# keep the signed token across POST submissions (if present in querystring) #}
         {% if request.GET.token %}
           <input type="hidden" name="token" value="{{ request.GET.token }}">
         {% endif %}
-
         <div class="row">
           <label for="plan">Select Plan</label>
           <select id="plan" name="plan" required>
             <option value="monthly">Monthly — PKR 10</option>
-            <option value="yearly">Yearly — PKR 100</option>
+            <option value="yearly">Yearly — PKR 20</option>
           </select>
         </div>
         <button type="submit">Proceed to Easypay</button>
