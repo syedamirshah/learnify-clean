@@ -25,7 +25,16 @@
 
     {% if user_obj %}
       <p class="muted">Confirming user:</p>
-      <p><b>{{ user_obj.get_full_name|default:user_obj.username }}</b> ({{ user_obj.username }})</p>
+      <p>
+        <b>
+          {% if user_obj.get_full_name %}
+            {{ user_obj.get_full_name }}
+          {% else %}
+            {{ user_obj.username }}
+          {% endif %}
+        </b>
+        ({{ user_obj.username }})
+      </p>
 
       <form method="post">
         {% csrf_token %}
