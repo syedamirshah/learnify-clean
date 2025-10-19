@@ -28,13 +28,16 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
 
-    # 🆕 plan (db has NOT NULL; model must define it)
+    # plan (db has NOT NULL; model must define it)
     plan = models.CharField(
         max_length=20,
         choices=Plan.choices,
         default=Plan.MONTHLY,   # safe default for migrations & admin flows
         db_index=True,
     )
+
+    # ✅ months column to satisfy DB NOT NULL and business logic
+    months = models.PositiveIntegerField(default=1)
 
     # gateway references
     merchant_order_id = models.CharField(max_length=24, db_index=True, blank=True)

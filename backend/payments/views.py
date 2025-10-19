@@ -83,7 +83,12 @@ def initiate(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"detail": str(e)}, status=500)
 
     # Create minimal payment row; adjust fields if your model requires more
-    p = Payment.objects.create(user=request.user, amount=amount, plan="custom")
+    p = Payment.objects.create(
+        user=request.user,
+        amount=amount,
+        plan="custom",   # ad-hoc API payment
+        months=1,        # required by model (safe default)
+    )
     next_url = request.build_absolute_uri(reverse("payments:easypay_start", args=[p.id]))
     return JsonResponse({"id": str(p.id), "next": next_url}, status=201)
 
@@ -317,7 +322,12 @@ def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
             messages.error(request, "Please enter a valid amount (> 0).")
             return redirect("payments_admin")
 
-        p = Payment.objects.create(user=request.user, amount=amount, plan="admin")
+        p = Payment.objects.create(
+            user=request.user,
+            amount=amount,
+            plan="admin",  # admin-started flow
+            months=1,      # required by model
+        )
         # jump straight into the Easypay flow
         return redirect("payments:easypay_start", pk=p.id)
 
@@ -439,7 +449,8 @@ def choose_plan(request):
         p = Payment.objects.create(
             user=ctx["user_obj"],
             amount=amount,
-            plan=plan,                      # <-- IMPORTANT: satisfy NOT NULL
+            plan=plan,      # model requires non-null
+            months=months,  # model requires non-null
         )
 
         # Also stash plan/months for the final status handler
