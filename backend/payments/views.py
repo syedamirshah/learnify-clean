@@ -83,7 +83,7 @@ def initiate(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"detail": str(e)}, status=500)
 
     # Create minimal payment row; adjust fields if your model requires more
-    p = Payment.objects.create(user=request.user, amount=amount)
+    p = Payment.objects.create(user=request.user, amount=amount, plan="custom")
     next_url = request.build_absolute_uri(reverse("payments:easypay_start", args=[p.id]))
     return JsonResponse({"id": str(p.id), "next": next_url}, status=201)
 
@@ -317,7 +317,7 @@ def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
             messages.error(request, "Please enter a valid amount (> 0).")
             return redirect("payments_admin")
 
-        p = Payment.objects.create(user=request.user, amount=amount)
+        p = Payment.objects.create(user=request.user, amount=amount, plan="admin")
         # jump straight into the Easypay flow
         return redirect("payments:easypay_start", pk=p.id)
 
@@ -435,8 +435,14 @@ def choose_plan(request):
             ctx["error"] = "Session expired. Please re-enter your User ID."
             return render(request, "payments/choose.html", ctx)
 
-        p = Payment.objects.create(user=ctx["user_obj"], amount=amount)
-        # Stash plan/months for status handler
+        # Create the payment and persist the selected plan (model requires non-null plan)
+        p = Payment.objects.create(
+            user=ctx["user_obj"],
+            amount=amount,
+            plan=plan,                      # <-- IMPORTANT: satisfy NOT NULL
+        )
+
+        # Also stash plan/months for the final status handler
         meta = p.request_payload or {}
         meta.update({"selected_plan": plan, "selected_months": months})
         p.request_payload = meta
