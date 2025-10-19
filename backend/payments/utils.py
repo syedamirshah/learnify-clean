@@ -1,7 +1,7 @@
 import base64
 from Crypto.Cipher import AES
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
-from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from typing import Optional
 
 _signer = TimestampSigner(salt="payments-user-link")
 
@@ -30,7 +30,7 @@ def sign_uid(username: str) -> str:
     """Return a short, signed token for this username (validates later)."""
     return _signer.sign(username)
 
-def unsign_uid(token: str, max_age_seconds: int = 86400) -> str | None:
+def unsign_uid(token: str, max_age_seconds: int = 86400) -> Optional[str]:
     """Validate token and return username or None if invalid/expired."""
     try:
         return _signer.unsign(token, max_age=max_age_seconds)

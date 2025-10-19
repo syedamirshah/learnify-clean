@@ -11,6 +11,13 @@ class Payment(models.Model):
         SUCCESS = "success", "Success"
         FAILED = "failed", "Failed"
 
+    # Optional: centralize plan labels here so UI and business logic can reuse
+    class Plan(models.TextChoices):
+        MONTHLY = "monthly", "Monthly"
+        YEARLY  = "yearly",  "Yearly"
+        CUSTOM  = "custom",  "Custom"   # for ad-hoc/variable cases if needed
+        ADMIN   = "admin",   "Admin"    # for admin-initiated quick payments
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.ForeignKey(
@@ -20,6 +27,14 @@ class Payment(models.Model):
     # minimal business fields – extend as you like
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+
+    # 🆕 plan (db has NOT NULL; model must define it)
+    plan = models.CharField(
+        max_length=20,
+        choices=Plan.choices,
+        default=Plan.MONTHLY,   # safe default for migrations & admin flows
+        db_index=True,
+    )
 
     # gateway references
     merchant_order_id = models.CharField(max_length=24, db_index=True, blank=True)
@@ -49,4 +64,4 @@ class Payment(models.Model):
         self.save(update_fields=["status", "completed_at"])
 
     def __str__(self):
-        return f"{self.user} • {self.amount} • {self.status}"
+        return f"{self.user} • {self.amount} • {self.plan} • {self.status}"
