@@ -36,11 +36,8 @@
         ({{ user_obj.username }})
       </p>
 
-      <form method="post">
-        {% csrf_token %}
-        {% if request.GET.token %}
-          <input type="hidden" name="token" value="{{ request.GET.token }}">
-        {% endif %}
+      {# Submit plan via GET to avoid CSRF issues on cross-host flows #}
+      <form method="get" action="{% if request.GET.token %}?token={{ request.GET.token|urlencode }}{% else %}{% endif %}">
         <div class="row">
           <label for="plan">Select Plan</label>
           <select id="plan" name="plan" required>
