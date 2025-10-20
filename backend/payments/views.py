@@ -134,31 +134,31 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 
     amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
     time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
-    payment_method = "MA_PAYMENT_METHOD"  # per Easypay guide
+    payment_method = "MA"  # Easypaisa wallet code
 
-    post_back_url_step1 = request.build_absolute_uri(reverse("payments:easypay_token_handler"))
+    post_back_url_step1 = request.build_absolute_uri(
+        reverse("payments:easypay_token_handler")
+    )
 
-    # Build a dict and create the canonical string with keys sorted alphabetically
-    fields = {
-        "amount":        amount_str,
-        "autoRedirect":  "0",                # show the gateway page (keep "0" for now)
-        "orderRefNum":   order_ref,
-        "paymentMethod": payment_method,     # MA wallet per docs
-        "postBackURL":   post_back_url_step1,
-        "storeId":       store_id,
-        "timeStamp":     time_stamp,
-        # Optional additional fields supported by Easypay:
-        # "emailAddr":   "",
-        # "mobileNum":   "",
-        # "expiryDate":  "YYYYMMDD HHMMSS",
-    }
-    canonical = "&".join(f"{k}={fields[k]}" for k in sorted(fields.keys()))
+    # Canonical field order required by Easypay (do NOT sort; do NOT include autoRedirect)
+    pairs = [
+        ("storeId",       store_id),
+        ("amount",        amount_str),
+        ("postBackURL",   post_back_url_step1),
+        ("orderRefNum",   order_ref),
+        ("timeStamp",     time_stamp),
+        ("paymentMethod", payment_method),
+    ]
+    canonical = "&".join(f"{k}={v}" for k, v in pairs)
 
-    # AES/ECB/PKCS5 -> Base64 over the canonical string (sorted keys!)
+    # AES/ECB/PKCS5 -> Base64 over the canonical string
     merchant_hashed_req = aes_ecb_pkcs5_base64(canonical, hash_key)
 
-    # Final POST payload: include the hash
+    # Final POST payload (now you can include autoRedirect)
+    fields = dict(pairs)
     fields["merchantHashedReq"] = merchant_hashed_req
+    fields["autoRedirect"] = "1"  # auto-redirect into the gateway UI
+
     endpoint = base + index_path
 
     # store for debugging
