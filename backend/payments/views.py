@@ -132,33 +132,34 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         p.merchant_order_id = order_ref
         p.save(update_fields=["merchant_order_id"])
 
-        amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
+    # Amount and timestamp
+    amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
     time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
 
     post_back_url_step1 = request.build_absolute_uri(reverse("payments:easypay_token_handler"))
 
     # Do NOT force a paymentMethod — let Easypay decide based on store config.
-    fields = {
-        "amount":       amount_str,
-        "autoRedirect": "0",                # keep the hosted page visible
-        "orderRefNum":  order_ref,
-        "postBackURL":  post_back_url_step1,
-        "storeId":      store_id,
-        "timeStamp":    time_stamp,
-    }
+    pairs = [
+        ("storeId",      store_id),
+        ("amount",       amount_str),
+        ("postBackURL",  post_back_url_step1),
+        ("orderRefNum",  order_ref),
+        ("timeStamp",    time_stamp),
+        ("autoRedirect", "0"),  # keep hosted form visible
+    ]
+
+    # Build dict and canonical string (sorted keys as required by hash)
+    fields = dict(pairs)
     canonical = "&".join(f"{k}={fields[k]}" for k in sorted(fields.keys()))
 
     # AES/ECB/PKCS5 -> Base64 over the canonical string
     merchant_hashed_req = aes_ecb_pkcs5_base64(canonical, hash_key)
 
-    # Final POST payload (now you can include autoRedirect)
-    fields = dict(pairs)
+    # Final POST payload: include the hash
     fields["merchantHashedReq"] = merchant_hashed_req
-    fields["autoRedirect"] = "1"  # auto-redirect into the gateway UI
-
     endpoint = base + index_path
 
-    # store for debugging
+    # Store for debugging
     p.request_payload = {"_endpoint": endpoint, "_canonical": canonical, "outbound": fields}
     p.save(update_fields=["request_payload"])
 
