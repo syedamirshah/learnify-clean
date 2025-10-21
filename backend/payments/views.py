@@ -133,9 +133,8 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         p.save(update_fields=["merchant_order_id"])
 
     # Amount and timestamp
-        amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
+    amount_str = f"{float(p.amount):.2f}"  # two decimals (e.g., 10.00)
     time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
-    payment_method = "MA"  # MA wallet (enabled for your store)
 
     post_back_url_step1 = request.build_absolute_uri(
         reverse("payments:easypay_token_handler")
@@ -143,17 +142,15 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 
     # --- IMPORTANT: canonical must follow the gateway’s required order ---
     # Do NOT sort keys; build the string in this exact order.
+    # NOTE: intentionally NOT sending `paymentMethod` to avoid "Invalid Payment Option Selected".
     pairs = [
-        ("storeId", store_id),
-        ("amount", amount_str),
+        ("storeId",     store_id),
+        ("amount",      amount_str),
         ("postBackURL", post_back_url_step1),
         ("orderRefNum", order_ref),
-        ("timeStamp", time_stamp),
-        ("paymentMethod", payment_method),
-        # If you want the Easypay page to auto-redirect without showing their UI:
-        # ("autoRedirect", "1"),
-        # For manual review during integration keep it visible:
-        ("autoRedirect", "0"),
+        ("timeStamp",   time_stamp),
+        # If you want Easypay to auto-redirect without showing their UI later, flip to "1".
+        ("autoRedirect","0"),
     ]
 
     # Canonical string used for hashing – EXACTLY the same fields & order as posted.
