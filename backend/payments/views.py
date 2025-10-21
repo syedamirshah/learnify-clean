@@ -133,33 +133,30 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         p.save(update_fields=["merchant_order_id"])
 
     # Amount and timestamp
-    amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
-    time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
-    payment_method = "MA"  # MA wallet (enabled for your store)
+    amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place (e.g., 10.0)
+    time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     post_back_url_step1 = request.build_absolute_uri(
         reverse("payments:easypay_token_handler")
     )
 
-    # --------- IMPORTANT: hash only these fields, in this exact order ----------
-    # DO NOT include autoRedirect in the hash (Easypay doesn't include it)
+    # -------- Hash ONLY these fields in this exact order (NO paymentMethod) --------
     hash_pairs = [
         ("storeId", store_id),
         ("amount", amount_str),
         ("postBackURL", post_back_url_step1),
         ("orderRefNum", order_ref),
         ("timeStamp", time_stamp),
-        ("paymentMethod", payment_method),
     ]
     raw = "&".join(f"{k}={v}" for k, v in hash_pairs)  # raw, not URL-encoded
 
     # AES/ECB/PKCS5 -> Base64 over the canonical raw string
     merchant_hashed_req = aes_ecb_pkcs5_base64(raw, hash_key)
 
-    # Final POST payload: the same fields + hash, and THEN add autoRedirect
+    # Final POST payload: the same fields + hash; THEN add autoRedirect (not hashed)
     fields = dict(hash_pairs)
     fields["merchantHashedReq"] = merchant_hashed_req
-    fields["autoRedirect"] = "0"  # optional UI control; NOT part of hash
+    fields["autoRedirect"] = "0"  # keep the Easypay UI visible during testing
 
     endpoint = base + index_path
 
@@ -172,7 +169,6 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
     p.save(update_fields=["request_payload"])
 
     return render(request, "payments/post_form.html", {"endpoint": endpoint, "fields": fields})
-
 
 # --------------------------------------------------------------------------------------
 # 3) Token handler: receives ?auth_token=... and auto-POSTs to Confirm.jsf
