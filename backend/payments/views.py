@@ -133,35 +133,33 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         p.save(update_fields=["merchant_order_id"])
 
     # Amount and timestamp
-    amount_str = f"{float(p.amount):.2f}"  # two decimals (e.g., 10.00)
+    amount_str = f"{float(p.amount):.1f}"  # exactly one decimal place
     time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # keep this format
+    payment_method = "MA"  # MA wallet (enabled for your store)
 
     post_back_url_step1 = request.build_absolute_uri(
         reverse("payments:easypay_token_handler")
     )
 
-    # --- IMPORTANT: canonical must follow the gateway’s required order ---
-    # Do NOT sort keys; build the string in this exact order.
-    # NOTE: intentionally NOT sending `paymentMethod` to avoid "Invalid Payment Option Selected".
-    pairs = [
-        ("storeId",     store_id),
-        ("amount",      amount_str),
+    # --------- IMPORTANT: hash only these fields, in this exact order ----------
+    # DO NOT include autoRedirect in the hash (Easypay doesn't include it)
+    hash_pairs = [
+        ("storeId", store_id),
+        ("amount", amount_str),
         ("postBackURL", post_back_url_step1),
         ("orderRefNum", order_ref),
-        ("timeStamp",   time_stamp),
-        # If you want Easypay to auto-redirect without showing their UI later, flip to "1".
-        ("autoRedirect","0"),
+        ("timeStamp", time_stamp),
+        ("paymentMethod", payment_method),
     ]
+    raw = "&".join(f"{k}={v}" for k, v in hash_pairs)  # raw, not URL-encoded
 
-    # Canonical string used for hashing – EXACTLY the same fields & order as posted.
-    raw = "&".join(f"{k}={v}" for k, v in pairs)
-
-    # AES/ECB/PKCS5 -> Base64 over the canonical string
+    # AES/ECB/PKCS5 -> Base64 over the canonical raw string
     merchant_hashed_req = aes_ecb_pkcs5_base64(raw, hash_key)
 
-    # Final POST payload: same fields + hash
-    fields = dict(pairs)
+    # Final POST payload: the same fields + hash, and THEN add autoRedirect
+    fields = dict(hash_pairs)
     fields["merchantHashedReq"] = merchant_hashed_req
+    fields["autoRedirect"] = "0"  # optional UI control; NOT part of hash
 
     endpoint = base + index_path
 
