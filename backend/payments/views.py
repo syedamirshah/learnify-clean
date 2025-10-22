@@ -216,24 +216,35 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     # Accept both GET and POST (Easypay can vary)
     params = request.GET if request.method == "GET" else request.POST
 
-    # Normalize inputs (be lenient with gateway variations)
-    raw_status = (params.get("status") or "").strip()
-    status_val = raw_status.lower()
-    desc = (params.get("desc") or "").strip()
-    response_code = (params.get("responseCode") or params.get("ResponseCode") or "").strip()
-    message = (params.get("message") or params.get("Message") or "").strip()
+    # ---------- Robust normalization (keeps your original keys, adds variants) ----------
+    def _pick(*keys: str, default: str = "") -> str:
+        for k in keys:
+            v = params.get(k)
+            if v is not None and str(v).strip() != "":
+                return str(v).strip()
+        return default
+
+    # Your originals (preserved) + variants
+    raw_status    = _pick("status", "result", "paymentStatus", "payStatus", default="")
+    status_val    = raw_status.lower()
+    desc          = _pick("desc", "Desc", "reason", "message", "Message", default="")
+    response_code = _pick("responseCode", "ResponseCode", "code", "respCode", default="")
+    message       = _pick("message", "Message", default="")
 
     order_ref = (
-        (params.get("orderRefNumber") or "").strip()
-        or (params.get("orderRefNum") or "").strip()
-        or (params.get("orderRef") or "").strip()
-        or (params.get("merchant_order_id") or "").strip()
+        _pick("orderRefNumber")
+        or _pick("orderRefNum")
+        or _pick("orderRef")
+        or _pick("merchant_order_id")
+        or ""
     )
 
+    # Expanded provider transaction id detection (backwards compatible)
     provider_txn_id = (
-        (params.get("transactionId") or "").strip()
-        or (params.get("txn_id") or "").strip()
-        or (params.get("trans_id") or "").strip()
+        _pick(
+            "transactionId", "txn_id", "trans_id",            # your originals
+            "transaction_id", "bankTransId", "tranRef", "trx_id", "paymentId"
+        ) or ""
     )
 
     p = None
@@ -251,12 +262,16 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         if provider_txn_id:
             p.provider_txn_id = provider_txn_id
 
-        # --- Expanded Success Detection ---
-        success_flags = {"success", "paid", "approved", "completed"}
+        # --- Expanded Success Detection (superset of your current logic) ---
+        success_flags = {"success", "paid", "approved", "completed", "succeeded", "ok", "captured", "1"}
+        ok_codes      = {"0000", "00", "0"}
+
         looks_success = (
             (status_val in success_flags)
-            or desc in {"0000", "00"}
-            or response_code in {"0000", "00"}
+            or (desc.lower() in success_flags if desc else False)
+            or (response_code.lower() in success_flags if response_code else False)
+            or (desc in ok_codes)
+            or (response_code in ok_codes)
             or ("success" in message.lower())
         )
 
@@ -265,9 +280,10 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
 
             # ✨ Activate or extend subscription based on what we stashed at creation time
             try:
-                meta = p.request_payload or {}
-                months = int(meta.get("selected_months") or 1)          # 1, 3, or 12
-                plan   = (meta.get("selected_plan") or "").lower()      # "monthly" | "quarterly" | "yearly"
+                meta   = p.request_payload or {}
+                # Safe fallbacks if meta didn't capture these during creation
+                months = int(meta.get("selected_months") or getattr(p, "months", 1) or 1)
+                plan   = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
 
                 user = p.user
                 today = timezone.now().date()
@@ -314,7 +330,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         outcome = "unknown"
 
     # ----------------------------
-    # Enhanced redirect selection
+    # Enhanced redirect selection (preserved)
     # ----------------------------
     default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
     success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
@@ -335,7 +351,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
             "status": outcome,
             "orderRef": order_ref,
             "txn": provider_txn_id,
-            "desc": desc or response_code or message,
+            "desc": (desc or response_code or message),
         })
         sep = "&" if "?" in base_url else "?"
         return HttpResponseRedirect(f"{base_url}{sep}{q}")
