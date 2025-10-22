@@ -132,40 +132,47 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
         p.merchant_order_id = order_ref
         p.save(update_fields=["merchant_order_id"])
 
-    # Amount and timestamp
-    amount_str = f"{float(p.amount):.1f}"  # one decimal point
-    time_stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        # ----- Build Easypay POST (Index.jsf) exactly as per guide -----
+    # Amount in 1 decimal place
+    amount_str = f"{float(p.amount):.1f}"
 
     post_back_url_step1 = request.build_absolute_uri(
         reverse("payments:easypay_token_handler")
     )
 
-    # Step 1: Core fields
+    # Base fields we will POST (keep this set minimal and per spec)
     fields = {
-        "storeId": store_id,
         "amount": amount_str,
-        "postBackURL": post_back_url_step1,
+        "autoRedirect": "0",          # keep Easypay UI visible for now
         "orderRefNum": order_ref,
-        "timeStamp": time_stamp,
-        "autoRedirect": "0",  # still needed, even if not hashed explicitly earlier
+        "postBackURL": post_back_url_step1,
+        "storeId": store_id,
+        # Optional: if you want to use expiryDate, add it here in "YYYYMMDD HHMMSS"
+        # "expiryDate": timezone.now().strftime("%Y%m%d %H%M%S"),
     }
 
-    # Step 2: Sort alphabetically by key (as per Merchant Guide)
-    sorted_items = sorted(fields.items())
-    raw = "&".join(f"{k}={v}" for k, v in sorted_items)
+    # Optional: force a payment method (ONLY if you really need to).
+    # Valid values: OTC_PAYMENT_METHOD | MA_PAYMENT_METHOD | CC_PAYMENT_METHOD | QR_PAYMENT_METHOD
+    force_method = getattr(settings, "EASYPAY_PAYMENT_METHOD", "").strip()
+    if force_method:
+        fields["paymentMethod"] = force_method  # e.g. "MA_PAYMENT_METHOD"
 
-    # Step 3: Encrypt raw string using AES/ECB/PKCS5Padding and Base64 encode
-    merchant_hashed_req = aes_ecb_pkcs5_base64(raw, hash_key)
+    # ----- Hash per guide: sort keys alphabetically, join as k=v with & -----
+    # This canonical MUST be built from the EXACT keys you will post.
+    canonical = "&".join(f"{k}={fields[k]}" for k in sorted(fields.keys()))
 
-    # Step 4: Add the hash to the outgoing payload
+    # AES/ECB/PKCS5Padding over canonical -> Base64
+    merchant_hashed_req = aes_ecb_pkcs5_base64(canonical, hash_key)
+
+    # Add the hash to the outbound fields
     fields["merchantHashedReq"] = merchant_hashed_req
 
     endpoint = base + index_path
 
-    # Save for debug
+    # Save for debugging/trace
     p.request_payload = {
         "_endpoint": endpoint,
-        "_canonical": raw,
+        "_canonical": canonical,
         "outbound": fields,
     }
     p.save(update_fields=["request_payload"])
