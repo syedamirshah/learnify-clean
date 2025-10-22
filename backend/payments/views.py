@@ -208,8 +208,9 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     """
     Final status handler called by Easypay (browser redirect).
     Updates Payment and then:
-      - If FRONTEND_RETURN_URL is set: redirect user there with
+      - If FRONTEND_*_URL is set: redirect user there with
         ?pid=&status=&orderRef=&txn=&desc=
+      - Else: use FRONTEND_RETURN_URL as a general catch-all
       - Else: return a simple 'OK'
     """
     # Accept both GET and POST (Easypay can vary)
@@ -219,6 +220,8 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     raw_status = (params.get("status") or "").strip()
     status_val = raw_status.lower()
     desc = (params.get("desc") or "").strip()
+    response_code = (params.get("responseCode") or params.get("ResponseCode") or "").strip()
+    message = (params.get("message") or params.get("Message") or "").strip()
 
     order_ref = (
         (params.get("orderRefNumber") or "").strip()
@@ -248,8 +251,16 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         if provider_txn_id:
             p.provider_txn_id = provider_txn_id
 
-        # Interpret success/failure (desc == '0000' or status 'success/paid/approved')
-        if status_val in {"success", "paid", "approved"} or desc == "0000":
+        # --- Expanded Success Detection ---
+        success_flags = {"success", "paid", "approved", "completed"}
+        looks_success = (
+            (status_val in success_flags)
+            or desc in {"0000", "00"}
+            or response_code in {"0000", "00"}
+            or ("success" in message.lower())
+        )
+
+        if looks_success:
             p.mark_success(provider_txn_id=p.provider_txn_id)
 
             # ✨ Activate or extend subscription based on what we stashed at creation time
@@ -298,25 +309,38 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         else:
             # unknown / pending-ish — keep what we have
             p.save()
-            outcome = status_val or "unknown"
+            outcome = status_val or response_code or "unknown"
     else:
         outcome = "unknown"
 
-    # Friendly redirect to your frontend if configured
-    return_to = getattr(settings, "FRONTEND_RETURN_URL", None)
-    if return_to:
+    # ----------------------------
+    # Enhanced redirect selection
+    # ----------------------------
+    default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
+    success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
+    failure_to = getattr(settings, "FRONTEND_FAILURE_URL", None)
+
+    # Decide best base URL
+    if outcome == "success" and success_to:
+        base_url = success_to
+    elif outcome == "failed" and failure_to:
+        base_url = failure_to
+    else:
+        base_url = default_return   # fall back to existing result URL if set
+
+    if base_url:
         from urllib.parse import urlencode
         q = urlencode({
             "pid": str(p.id) if p else "",
             "status": outcome,
             "orderRef": order_ref,
             "txn": provider_txn_id,
-            "desc": desc,
+            "desc": desc or response_code or message,
         })
-        return HttpResponseRedirect(f"{return_to}?{q}")
+        sep = "&" if "?" in base_url else "?"
+        return HttpResponseRedirect(f"{base_url}{sep}{q}")
 
     return HttpResponse("OK")
-
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
