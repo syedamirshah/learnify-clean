@@ -222,15 +222,15 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
                 return str(v).strip()
         return default
 
-    # Your originals (preserved) + variants
-    raw_status    = _pick("status", "result", "paymentStatus", "payStatus", default="")
+    # Your originals (preserved) + additional common Easypay variants
+    raw_status    = _pick("status", "Status", "result", "paymentStatus", "payStatus", default="")
     status_val    = raw_status.lower()
-    desc          = _pick("desc", "Desc", "reason", "message", "Message", default="")
-    response_code = _pick("responseCode", "ResponseCode", "code", "respCode", default="")
-    message       = _pick("message", "Message", default="")
+    desc          = _pick("desc", "Desc", "DESC", "reason", "message", "Message", "MESSAGE", default="")
+    response_code = _pick("responseCode", "ResponseCode", "RESPONSECODE", "code", "respCode", default="")
+    message       = _pick("message", "Message", "MESSAGE", default="")
 
     order_ref = (
-        _pick("orderRefNumber")
+        _pick("orderRefNumber", "OrderRefNumber")
         or _pick("orderRefNum")
         or _pick("orderRef")
         or _pick("merchant_order_id")
@@ -240,7 +240,8 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     # Expanded provider transaction id detection (backwards compatible)
     provider_txn_id = (
         _pick(
-            "transactionId", "txn_id", "trans_id",            # your originals
+            "transactionId", "TransactionId", "TransactionID",   # common caps variants
+            "txn_id", "trans_id",
             "transaction_id", "bankTransId", "tranRef", "trx_id", "paymentId"
         ) or ""
     )
