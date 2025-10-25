@@ -143,12 +143,10 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
     # Base fields we will POST (keep this set minimal and per spec)
     fields = {
         "amount": amount_str,
-        "autoRedirect": "0",          # keep Easypay UI visible for now
+        "autoRedirect": getattr(settings, "EASYPAY_AUTO_REDIRECT", "1"),
         "orderRefNum": order_ref,
         "postBackURL": post_back_url_step1,
         "storeId": store_id,
-        # Optional: if you want to use expiryDate, add it here in "YYYYMMDD HHMMSS"
-        # "expiryDate": timezone.now().strftime("%Y%m%d %H%M%S"),
     }
 
     # Optional: force a payment method (ONLY if you really need to).
