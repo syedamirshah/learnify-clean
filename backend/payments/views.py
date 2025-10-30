@@ -235,6 +235,8 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         "transactionStatus", "TransactionStatus", "TRANSACTIONSTATUS",
         default=""
     )
+    status_val = (raw_status or "").lower()  # NEW: define status_val so it’s not NameError
+
     desc = _pick(
         "desc", "Desc", "DESC",
         "reason", "Reason", "REASON",
@@ -262,6 +264,8 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     # Expanded provider transaction id detection (backwards compatible)
     provider_txn_id = (
         _pick(
+            # NEW: include Easypay's transactionRefNumber variants
+            "transactionRefNumber", "TransactionRefNumber", "TRANSACTIONREFNUMBER",
             "transactionId", "TransactionId", "TransactionID",   # common caps variants
             "txn_id", "trans_id",
             "transaction_id", "bankTransId", "tranRef", "trx_id", "paymentId"
@@ -306,7 +310,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
             or (response_code.lower() in success_flags if response_code else False)
             or (desc in ok_codes)
             or (response_code in ok_codes)
-            or ("success" in message.lower())
+            or ("success" in (message or "").lower())  # NEW: guard against None
         )
 
         if looks_success:
