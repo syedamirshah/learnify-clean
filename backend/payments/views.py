@@ -205,20 +205,25 @@ def easypay_token_handler(request: HttpRequest) -> HttpResponse:
 # --------------------------------------------------------------------------------------
 # 4) Final status handler: Easypay calls with ?status=&desc=&orderRefNumber=
 # --------------------------------------------------------------------------------------
+from django.utils import timezone
+from urllib.parse import urlencode
+from datetime import timedelta
+
 @csrf_exempt
 def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     """
     Final status handler called by Easypay (browser redirect).
-    Updates Payment and then:
-      - If FRONTEND_*_URL is set: redirect user there with
-        ?pid=&status=&orderRef=&txn=&desc=
-      - Else: use FRONTEND_RETURN_URL as a general catch-all
-      - Else: return a simple 'OK'
+    Updates Payment and then redirects to the configured FRONTEND_* URL
+    with ?pid=&status=&orderRef=&txn=&desc=.
     """
-    # Accept both GET and POST (Easypay can vary)
-    params = request.GET if request.method == "GET" else request.POST
+    # Accept both GET and POST; combine so we don't miss keys
+    if request.method == "GET":
+        params = request.GET.copy()
+        params.update(request.POST)
+    else:
+        params = request.POST.copy()
+        params.update(request.GET)
 
-    # ---------- Robust normalization (keeps your original keys, adds variants) ----------
     def _pick(*keys: str, default: str = "") -> str:
         for k in keys:
             v = params.get(k)
@@ -226,7 +231,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
                 return str(v).strip()
         return default
 
-    # Your originals (preserved) + additional common Easypay variants
+    # ---- Normalize incoming fields (wider coverage) ----
     raw_status = _pick(
         "status", "Status", "STATUS",
         "result", "Result", "RESULT",
@@ -235,7 +240,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         "transactionStatus", "TransactionStatus", "TRANSACTIONSTATUS",
         default=""
     )
-    status_val = (raw_status or "").lower()  # NEW: define status_val so it’s not NameError
+    status_val = raw_status.lower().strip()  # ✅ define it
 
     desc = _pick(
         "desc", "Desc", "DESC",
@@ -244,6 +249,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         "description", "Description", "DESCRIPTION",
         default=""
     )
+
     response_code = _pick(
         "responseCode", "ResponseCode", "RESPONSECODE",
         "code", "Code", "CODE",
@@ -251,39 +257,42 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         "statusCode", "StatusCode", "STATUSCODE",
         default=""
     )
+
     message = _pick("message", "Message", "MESSAGE", "remarks", "Remarks", "REMARKS", default="")
 
     order_ref = (
-        _pick("orderRefNumber", "OrderRefNumber")
-        or _pick("orderRefNum")
-        or _pick("orderRef")
-        or _pick("merchant_order_id")
-        or ""
+        _pick("orderRefNumber", "OrderRefNumber") or
+        _pick("orderRefNum") or
+        _pick("orderRef") or
+        _pick("merchant_order_id") or
+        ""
     )
 
-    # Expanded provider transaction id detection (backwards compatible)
+    # Provider Txn ID – include Easypay's transactionRefNumber variant (your screenshot)
     provider_txn_id = (
         _pick(
-            # NEW: include Easypay's transactionRefNumber variants
-            "transactionRefNumber", "TransactionRefNumber", "TRANSACTIONREFNUMBER",
-            "transactionId", "TransactionId", "TransactionID",   # common caps variants
-            "txn_id", "trans_id",
-            "transaction_id", "bankTransId", "tranRef", "trx_id", "paymentId"
+            "transactionRefNumber", "transactionId", "TransactionId", "TransactionID",
+            "txn_id", "trans_id", "transaction_id", "bankTransId", "tranRef", "trx_id", "paymentId"
         ) or ""
     )
 
-    p = None
+    # Optional: compare amounts if present
+    amt_str = _pick("amount", "Amount", "AMOUNT", default="")
+    try:
+        amount_from_gateway = float(amt_str) if amt_str else None
+    except Exception:
+        amount_from_gateway = None
 
-    # Primary lookup via Easypay's orderRefNumber variants
+    p = None
     if order_ref:
         try:
             p = Payment.objects.get(merchant_order_id=order_ref)
         except Payment.DoesNotExist:
             p = None
 
-    # 🔁 Fallback: try PID if passed via query string (from our own postBackURL)
+    # Fallback by pid we may have injected earlier
     if p is None:
-        pid = request.GET.get("pid") or request.POST.get("pid")
+        pid = _pick("pid")
         if pid:
             try:
                 p = Payment.objects.get(pk=pid)
@@ -294,65 +303,56 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         # keep raw data for audit trail (append, don't overwrite)
         new_payload = params.dict() if hasattr(params, "dict") else dict(params)
         p.webhook_payload = {**(p.webhook_payload or {}), "status_handler": new_payload}
-
         if provider_txn_id:
             p.provider_txn_id = provider_txn_id
 
-        # --- Expanded Success Detection (superset of your current logic) ---
-        success_flags = {
-            "success", "paid", "approved", "completed", "succeeded", "ok", "captured",
-            "1", "true", "yes"  # add common boolean-y values
-        }
-        ok_codes = {"0000", "00", "0", "200"}  # include common HTTP-ish success code some integrations send
+        # ---- Decide success ----
+        success_flags = {"success", "paid", "approved", "completed", "succeeded", "ok", "captured", "1", "true", "yes"}
+        ok_codes = {"0000", "00", "0", "200"}
+
         looks_success = (
-            (status_val in success_flags)
-            or (desc.lower() in success_flags if desc else False)
-            or (response_code.lower() in success_flags if response_code else False)
-            or (desc in ok_codes)
-            or (response_code in ok_codes)
-            or ("success" in (message or "").lower())  # NEW: guard against None
+            (status_val in success_flags) or
+            (desc.lower() in success_flags if desc else False) or
+            (response_code.lower() in success_flags if response_code else False) or
+            (desc in ok_codes) or
+            (response_code in ok_codes) or
+            ("success" in message.lower())
         )
+
+        # ✅ Pragmatic fallback: Easypay often returns transactionRefNumber even if no explicit status.
+        # If we have provider_txn_id AND the amount matches (when provided), treat as success.
+        if not looks_success and provider_txn_id:
+            if amount_from_gateway is None or float(p.amount) == float(amount_from_gateway):
+                looks_success = True
 
         if looks_success:
             p.mark_success(provider_txn_id=p.provider_txn_id)
 
-            # ✨ Activate or extend subscription based on what we stashed at creation time
+            # Activate/extend subscription
             try:
-                meta   = p.request_payload or {}
-                # Safe fallbacks if meta didn't capture these during creation
+                meta = p.request_payload or {}
                 months = int(meta.get("selected_months") or getattr(p, "months", 1) or 1)
-                plan   = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
+                plan = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
 
                 user = p.user
                 today = timezone.now().date()
                 current_expiry = getattr(user, "subscription_expiry", None)
-
-                # If user already has an active subscription, extend from that date; else start today
                 start = current_expiry if (current_expiry and current_expiry > today) else today
                 new_expiry = start + timedelta(days=30 * months)
 
-                # Optional: save plan label if your model has it
                 if hasattr(user, "subscription_plan") and plan:
                     user.subscription_plan = plan
-
-                # Set/extend expiry if present on your model
                 if hasattr(user, "subscription_expiry"):
                     user.subscription_expiry = new_expiry
-
-                # Ensure activation flags
                 if hasattr(user, "account_status"):
                     user.account_status = "active"
                 user.is_active = True
-
-                # Clear renewal flags if your model uses them
                 if hasattr(user, "renewal_requested"):
                     user.renewal_requested = False
                 if hasattr(user, "renewal_plan_requested"):
                     user.renewal_plan_requested = None
-
                 user.save()
             except Exception:
-                # Don't crash the handler if user update fails; payment is already marked success
                 p.save()
 
             outcome = "success"
@@ -361,29 +361,24 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
             p.mark_failed()
             outcome = "failed"
         else:
-            # unknown / pending-ish — keep what we have
             p.save()
             outcome = status_val or response_code or "unknown"
     else:
         outcome = "unknown"
 
-    # ----------------------------
-    # Enhanced redirect selection (preserved)
-    # ----------------------------
+    # ---- Redirect to frontend result page ----
     default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
     success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
     failure_to = getattr(settings, "FRONTEND_FAILURE_URL", None)
 
-    # Decide best base URL
     if outcome == "success" and success_to:
         base_url = success_to
     elif outcome == "failed" and failure_to:
         base_url = failure_to
     else:
-        base_url = default_return   # fall back to existing result URL if set
+        base_url = default_return
 
     if base_url:
-        from urllib.parse import urlencode
         q = urlencode({
             "pid": str(p.id) if p else "",
             "status": outcome,
@@ -394,16 +389,14 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         sep = "&" if "?" in base_url else "?"
         return HttpResponseRedirect(f"{base_url}{sep}{q}")
 
-    # Render a simple human-readable fallback if no redirect URL is set
-    html = f"""
-    <html><body style="font-family:sans-serif;text-align:center;padding:50px">
-        <h2>Payment {outcome.title()}</h2>
-        <p>Reference: {order_ref or 'N/A'}</p>
-        <p>Transaction ID: {provider_txn_id or 'N/A'}</p>
-        <p>You can safely close this window and return to Learnify Pakistan.</p>
-    </body></html>
-    """
-    return HttpResponse(html)
+    # fallback HTML if no frontend URL configured
+    return HttpResponse(
+        f"<html><body style='font-family:sans-serif;padding:48px'>"
+        f"<h2>Payment {outcome.title()}</h2>"
+        f"<p>Reference: {order_ref or 'N/A'}</p>"
+        f"<p>Transaction ID: {provider_txn_id or 'N/A'}</p>"
+        f"</body></html>"
+    )
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
