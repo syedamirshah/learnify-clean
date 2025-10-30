@@ -138,7 +138,7 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 
     post_back_url_step1 = request.build_absolute_uri(
         reverse("payments:easypay_token_handler")
-    )
+    ) + f"?pid={p.id}"
 
     # Base fields we will POST (keep this set minimal and per spec)
     fields = {
@@ -192,7 +192,12 @@ def easypay_token_handler(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest("Missing auth_token")
 
     endpoint = base + confirm_path
-    post_back_url_step2 = request.build_absolute_uri(reverse("payments:easypay_status_handler"))
+    pid = request.GET.get("pid", "")
+    post_back_url_step2 = request.build_absolute_uri(
+        reverse("payments:easypay_status_handler")
+    )
+    if pid:
+        post_back_url_step2 += f"?pid={pid}"
 
     fields = {"auth_token": auth_token, "postBackURL": post_back_url_step2}
     return render(request, "payments/confirm_post.html", {"endpoint": endpoint, "fields": fields})
@@ -247,11 +252,22 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     )
 
     p = None
+
+    # Primary lookup via Easypay's orderRefNumber variants
     if order_ref:
         try:
             p = Payment.objects.get(merchant_order_id=order_ref)
         except Payment.DoesNotExist:
             p = None
+
+    # 🔁 Fallback: try PID if passed via query string (from our own postBackURL)
+    if p is None:
+        pid = request.GET.get("pid") or request.POST.get("pid")
+        if pid:
+            try:
+                p = Payment.objects.get(pk=pid)
+            except Payment.DoesNotExist:
+                p = None
 
     if p:
         # keep raw data for audit trail (append, don't overwrite)
@@ -355,7 +371,16 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         sep = "&" if "?" in base_url else "?"
         return HttpResponseRedirect(f"{base_url}{sep}{q}")
 
-    return HttpResponse("OK")
+    # Render a simple human-readable fallback if no redirect URL is set
+    html = f"""
+    <html><body style="font-family:sans-serif;text-align:center;padding:50px">
+        <h2>Payment {outcome.title()}</h2>
+        <p>Reference: {order_ref or 'N/A'}</p>
+        <p>Transaction ID: {provider_txn_id or 'N/A'}</p>
+        <p>You can safely close this window and return to Learnify Pakistan.</p>
+    </body></html>
+    """
+    return HttpResponse(html)
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:

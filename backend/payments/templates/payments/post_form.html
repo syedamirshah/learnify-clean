@@ -19,6 +19,7 @@
     <p class="muted">If you’re not redirected automatically, click the button below.</p>
 
     <form id="epForm" action="{{ endpoint }}" method="post" target="_self">
+      <input type="hidden" name="pid" value="{{ fields.pid|default:pid }}">
       {% for k, v in fields.items %}
         <input type="hidden" name="{{ k }}" value="{{ v|escape }}">
       {% endfor %}
@@ -28,6 +29,7 @@
     <details style="margin-top:16px">
       <summary class="muted">Show outgoing fields (debug)</summary>
       <table>
+        <tr><td>pid</td><td><code>{{ fields.pid|default:pid }}</code></td></tr>
         {% for k, v in fields.items %}
         <tr><td>{{ k }}</td><td><code>{{ v }}</code></td></tr>
         {% endfor %}
@@ -37,7 +39,8 @@
   </div>
 
   <script>
-    setTimeout(function(){ document.getElementById('epForm').submit(); }, 50);
+    // auto-submit form after short delay
+    setTimeout(() => document.getElementById('epForm').submit(), 100);
   </script>
 </body>
 </html>
