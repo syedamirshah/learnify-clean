@@ -5,31 +5,31 @@
   <title>Confirming with Easypay…</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:24px}
-    .box{max-width:640px;margin:40px auto;border:1px solid #ddd;border-radius:8px;padding:24px}
+    .box{max-width:560px;margin:40px auto;border:1px solid #ddd;border-radius:8px;padding:24px}
     .muted{color:#666;font-size:14px}
     button{padding:10px 16px;border:0;border-radius:6px;background:#2e7d32;color:#fff;cursor:pointer}
     table{width:100%;border-collapse:collapse;margin-top:12px}
     td{border-bottom:1px dashed #e5e5e5;padding:6px 0;vertical-align:top}
-    td:first-child{color:#444;width:200px}
+    td:first-child{color:#444;width:180px}
   </style>
 </head>
 <body>
   <div class="box">
-    <h2>Confirming with Easypay…</h2>
-    <p class="muted">Please wait while your payment is being confirmed. If it doesn’t proceed automatically, click the button below.</p>
+    <h2>Confirming payment…</h2>
+    <p class="muted">We’re confirming with Easypay. If nothing happens, click the button.</p>
 
-    <form id="confirmForm" method="post" action="{{ endpoint }}">
+    <form id="confirmForm" method="post" action="{{ endpoint }}" target="_self">
       {% for k, v in fields.items %}
         <input type="hidden" name="{{ k }}" value="{{ v|escape }}">
       {% endfor %}
-      <button type="submit">Continue to Confirmation</button>
+      <button type="submit">Continue</button>
     </form>
 
     <details style="margin-top:16px">
       <summary class="muted">Show outgoing fields (debug)</summary>
       <table>
         {% for k, v in fields.items %}
-        <tr><td>{{ k }}</td><td><code>{{ v }}</code></td></tr>
+          <tr><td>{{ k }}</td><td><code>{{ v }}</code></td></tr>
         {% endfor %}
       </table>
       <p class="muted">Endpoint: <code>{{ endpoint }}</code></p>
@@ -37,8 +37,7 @@
   </div>
 
   <script>
-    // auto-submit form after short delay
-    setTimeout(() => document.getElementById('confirmForm').submit(), 100);
+    setTimeout(function(){ document.getElementById('confirmForm').submit(); }, 80);
   </script>
 </body>
 </html>

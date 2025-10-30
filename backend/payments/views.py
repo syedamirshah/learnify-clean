@@ -180,28 +180,27 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 # --------------------------------------------------------------------------------------
 # 3) Token handler: receives ?auth_token=... and auto-POSTs to Confirm.jsf
 # --------------------------------------------------------------------------------------
-@csrf_exempt  # Easypay will redirect the browser here
+@csrf_exempt
 def easypay_token_handler(request: HttpRequest) -> HttpResponse:
     try:
-        base, confirm_path, _, _ = EP_BASE, EP_CONFIRM, EP_STORE_ID, EP_HASH_KEY  # avoid raising here
+        base, confirm_path, store_id, _ = EP_BASE, EP_CONFIRM, EP_STORE_ID, EP_HASH_KEY
     except Exception:
-        base, confirm_path = EP_BASE, EP_CONFIRM
+        base, confirm_path, store_id = EP_BASE, EP_CONFIRM, EP_STORE_ID  # keep going
 
     auth_token = request.GET.get("auth_token", "")
     if not auth_token:
         return HttpResponseBadRequest("Missing auth_token")
 
     endpoint = base + confirm_path
-    pid = request.GET.get("pid", "")
-    post_back_url_step2 = request.build_absolute_uri(
-        reverse("payments:easypay_status_handler")
-    )
-    if pid:
-        post_back_url_step2 += f"?pid={pid}"
+    post_back_url_step2 = request.build_absolute_uri(reverse("payments:easypay_status_handler"))
 
-    fields = {"auth_token": auth_token, "postBackURL": post_back_url_step2}
+    # ✅ Include storeId here (many integrations require it on Confirm)
+    fields = {
+        "auth_token": auth_token,
+        "storeId": (store_id or "").strip(),
+        "postBackURL": post_back_url_step2,
+    }
     return render(request, "payments/confirm_post.html", {"endpoint": endpoint, "fields": fields})
-
 
 # --------------------------------------------------------------------------------------
 # 4) Final status handler: Easypay calls with ?status=&desc=&orderRefNumber=
@@ -228,11 +227,29 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         return default
 
     # Your originals (preserved) + additional common Easypay variants
-    raw_status    = _pick("status", "Status", "result", "paymentStatus", "payStatus", default="")
-    status_val    = raw_status.lower()
-    desc          = _pick("desc", "Desc", "DESC", "reason", "message", "Message", "MESSAGE", default="")
-    response_code = _pick("responseCode", "ResponseCode", "RESPONSECODE", "code", "respCode", default="")
-    message       = _pick("message", "Message", "MESSAGE", default="")
+    raw_status = _pick(
+        "status", "Status", "STATUS",
+        "result", "Result", "RESULT",
+        "paymentStatus", "PaymentStatus", "PAYMENTSTATUS",
+        "payStatus", "PayStatus", "PAYSTATUS",
+        "transactionStatus", "TransactionStatus", "TRANSACTIONSTATUS",
+        default=""
+    )
+    desc = _pick(
+        "desc", "Desc", "DESC",
+        "reason", "Reason", "REASON",
+        "message", "Message", "MESSAGE",
+        "description", "Description", "DESCRIPTION",
+        default=""
+    )
+    response_code = _pick(
+        "responseCode", "ResponseCode", "RESPONSECODE",
+        "code", "Code", "CODE",
+        "respCode", "RespCode", "RESPCODE",
+        "statusCode", "StatusCode", "STATUSCODE",
+        default=""
+    )
+    message = _pick("message", "Message", "MESSAGE", "remarks", "Remarks", "REMARKS", default="")
 
     order_ref = (
         _pick("orderRefNumber", "OrderRefNumber")
@@ -278,9 +295,11 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
             p.provider_txn_id = provider_txn_id
 
         # --- Expanded Success Detection (superset of your current logic) ---
-        success_flags = {"success", "paid", "approved", "completed", "succeeded", "ok", "captured", "1"}
-        ok_codes      = {"0000", "00", "0"}
-
+        success_flags = {
+            "success", "paid", "approved", "completed", "succeeded", "ok", "captured",
+            "1", "true", "yes"  # add common boolean-y values
+        }
+        ok_codes = {"0000", "00", "0", "200"}  # include common HTTP-ish success code some integrations send
         looks_success = (
             (status_val in success_flags)
             or (desc.lower() in success_flags if desc else False)
