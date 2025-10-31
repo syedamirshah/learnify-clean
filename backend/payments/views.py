@@ -374,12 +374,14 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     else:
         outcome = "unknown"
 
-    # ---- Redirect to frontend result page (with sensible defaults) ----
+        # ---- Redirect to frontend result page (with sensible defaults) ----
     default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
     success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
     failure_to = getattr(settings, "FRONTEND_FAILURE_URL", None)
+    frontend_base = getattr(settings, "FRONTEND_BASE_URL", "").rstrip("/")
 
-    # On success, prefer explicit SUCCESS url; otherwise go to home ('/') instead of a blank result page.
+    # On success, prefer explicit SUCCESS url; otherwise go to "/" on the FRONTEND,
+    # not the backend — we’ll prefix relative paths with FRONTEND_BASE_URL.
     if outcome == "success":
         base_url = success_to or "/"
     elif outcome == "failed" and failure_to:
@@ -387,17 +389,23 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
     else:
         base_url = default_return or "/"
 
-    from urllib.parse import urlencode  # local import to avoid missing import issues
-    if base_url:
-        q = urlencode({
-            "pid": str(p.id) if p else "",
-            "status": outcome,
-            "orderRef": order_ref,
-            "txn": provider_txn_id,
-            "desc": (desc or response_code or message),
-        })
-        sep = "&" if "?" in base_url else "?"
-        return HttpResponseRedirect(f"{base_url}{sep}{q}")
+    # If `base_url` is relative, turn it into an absolute URL on the FRONTEND domain.
+    if base_url and not base_url.lower().startswith(("http://", "https://")):
+        if frontend_base:
+            # ensure exactly one slash between base and path
+            base_url = f"{frontend_base}{'' if base_url.startswith('/') else '/'}{base_url.lstrip('/')}"
+        # else: leave as-is (will redirect on current host)
+
+    from urllib.parse import urlencode  # local import to avoid global import surprises
+    q = urlencode({
+        "pid": str(p.id) if p else "",
+        "status": outcome,
+        "orderRef": order_ref,
+        "txn": provider_txn_id,
+        "desc": (desc or response_code or message),
+    })
+    sep = "&" if "?" in base_url else "?"
+    return HttpResponseRedirect(f"{base_url}{sep}{q}")
 
     # fallback HTML if no frontend URL configured
     return HttpResponse(
