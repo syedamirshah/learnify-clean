@@ -268,7 +268,7 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         ""
     )
 
-    # Provider Txn ID – include Easypay's transactionRefNumber variant (your screenshot)
+    # Provider Txn ID – include Easypay's transactionRefNumber variant
     provider_txn_id = (
         _pick(
             "transactionRefNumber", "transactionId", "TransactionId", "TransactionID",
@@ -303,81 +303,91 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         # keep raw data for audit trail (append, don't overwrite)
         new_payload = params.dict() if hasattr(params, "dict") else dict(params)
         p.webhook_payload = {**(p.webhook_payload or {}), "status_handler": new_payload}
+
         if provider_txn_id:
             p.provider_txn_id = provider_txn_id
 
-        # ---- Decide success ----
-        success_flags = {"success", "paid", "approved", "completed", "succeeded", "ok", "captured", "1", "true", "yes"}
-        ok_codes = {"0000", "00", "0", "200"}
-
-        looks_success = (
-            (status_val in success_flags) or
-            (desc.lower() in success_flags if desc else False) or
-            (response_code.lower() in success_flags if response_code else False) or
-            (desc in ok_codes) or
-            (response_code in ok_codes) or
-            ("success" in message.lower())
-        )
-
-        # ✅ Pragmatic fallback: Easypay often returns transactionRefNumber even if no explicit status.
-        # If we have provider_txn_id AND the amount matches (when provided), treat as success.
-        if not looks_success and provider_txn_id:
-            if amount_from_gateway is None or float(p.amount) == float(amount_from_gateway):
-                looks_success = True
-
-        if looks_success:
-            p.mark_success(provider_txn_id=p.provider_txn_id)
-
-            # Activate/extend subscription
-            try:
-                meta = p.request_payload or {}
-                months = int(meta.get("selected_months") or getattr(p, "months", 1) or 1)
-                plan = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
-
-                user = p.user
-                today = timezone.now().date()
-                current_expiry = getattr(user, "subscription_expiry", None)
-                start = current_expiry if (current_expiry and current_expiry > today) else today
-                new_expiry = start + timedelta(days=30 * months)
-
-                if hasattr(user, "subscription_plan") and plan:
-                    user.subscription_plan = plan
-                if hasattr(user, "subscription_expiry"):
-                    user.subscription_expiry = new_expiry
-                if hasattr(user, "account_status"):
-                    user.account_status = "active"
-                user.is_active = True
-                if hasattr(user, "renewal_requested"):
-                    user.renewal_requested = False
-                if hasattr(user, "renewal_plan_requested"):
-                    user.renewal_plan_requested = None
-                user.save()
-            except Exception:
-                p.save()
-
+        # 🔒 Idempotency guard: if we've already marked this payment successful,
+        # do NOT extend subscription again on repeated callbacks or refreshes.
+        if p.status == Payment.Status.SUCCESS:
+            p.save(update_fields=["webhook_payload", "provider_txn_id"])
             outcome = "success"
-
-        elif status_val in {"failed", "declined", "rejected"}:
-            p.mark_failed()
-            outcome = "failed"
         else:
-            p.save()
-            outcome = status_val or response_code or "unknown"
+            # ---- Decide success (your existing heuristics) ----
+            success_flags = {"success", "paid", "approved", "completed", "succeeded", "ok", "captured", "1", "true", "yes"}
+            ok_codes = {"0000", "00", "0", "200"}
+
+            looks_success = (
+                (status_val in success_flags) or
+                (desc.lower() in success_flags if desc else False) or
+                (response_code.lower() in success_flags if response_code else False) or
+                (desc in ok_codes) or
+                (response_code in ok_codes) or
+                ("success" in message.lower())
+            )
+
+            # Pragmatic fallback: if we have a provider_txn_id and amount matches (when provided), treat as success.
+            if not looks_success and provider_txn_id:
+                if amount_from_gateway is None or float(p.amount) == float(amount_from_gateway):
+                    looks_success = True
+
+            if looks_success:
+                # Mark success FIRST so repeat hits short-circuit next time.
+                p.mark_success(provider_txn_id=p.provider_txn_id)
+
+                # Activate/extend subscription (once)
+                try:
+                    meta = p.request_payload or {}
+                    months = int(meta.get("selected_months") or getattr(p, "months", 1) or 1)
+                    plan = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
+
+                    user = p.user
+                    today = timezone.now().date()
+                    current_expiry = getattr(user, "subscription_expiry", None)
+                    start = current_expiry if (current_expiry and current_expiry > today) else today
+                    new_expiry = start + timedelta(days=30 * months)
+
+                    if hasattr(user, "subscription_plan") and plan:
+                        user.subscription_plan = plan
+                    if hasattr(user, "subscription_expiry"):
+                        user.subscription_expiry = new_expiry
+                    if hasattr(user, "account_status"):
+                        user.account_status = "active"
+                    user.is_active = True
+                    if hasattr(user, "renewal_requested"):
+                        user.renewal_requested = False
+                    if hasattr(user, "renewal_plan_requested"):
+                        user.renewal_plan_requested = None
+                    user.save()
+                except Exception:
+                    # Don't block the redirect even if user update fails
+                    p.save()
+
+                outcome = "success"
+
+            elif status_val in {"failed", "declined", "rejected"}:
+                p.mark_failed()
+                outcome = "failed"
+            else:
+                p.save()
+                outcome = status_val or response_code or "unknown"
     else:
         outcome = "unknown"
 
-    # ---- Redirect to frontend result page ----
+    # ---- Redirect to frontend result page (with sensible defaults) ----
     default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
     success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
     failure_to = getattr(settings, "FRONTEND_FAILURE_URL", None)
 
-    if outcome == "success" and success_to:
-        base_url = success_to
+    # On success, prefer explicit SUCCESS url; otherwise go to home ('/') instead of a blank result page.
+    if outcome == "success":
+        base_url = success_to or "/"
     elif outcome == "failed" and failure_to:
         base_url = failure_to
     else:
-        base_url = default_return
+        base_url = default_return or "/"
 
+    from urllib.parse import urlencode  # local import to avoid missing import issues
     if base_url:
         q = urlencode({
             "pid": str(p.id) if p else "",
