@@ -382,45 +382,50 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
 
         # Choose the base target
         if outcome == "success":
-            # Prefer explicit success page; otherwise land on the frontend home
             base_url = success_to or "/"
         elif outcome == "failed":
             base_url = failure_to or (default_return or "/")
         else:
             base_url = default_return or "/"
 
-        # Turn a relative path into an absolute URL under the FRONTEND domain
+        # Helper to make absolute on the frontend host
         def _absolutize(url: str) -> str:
             if not url:
-                # ultimate fallback: public site (prevents Django login page)
                 return "https://learnifypakistan.com/"
             if url.lower().startswith(("http://", "https://")):
                 return url
             if frontend_base:
                 return f"{frontend_base}/{url.lstrip('/')}"
-            # no FRONTEND_BASE_URL configured → hard fallback
             return "https://learnifypakistan.com/"
 
-        base_url = _absolutize(base_url)
+        # Build final redirect URL safely; never raise
+        try:
+            base_url = _absolutize(base_url)
 
-        # Build/merge query string safely
-        from urllib.parse import urlencode, urlsplit, urlunsplit
+            from urllib.parse import urlencode, urlsplit, urlunsplit
 
-        qdict = {
-            "pid":   str(p.id) if p else "",
-            "status": outcome,
-            "orderRef": order_ref,
-            "txn":   provider_txn_id,
-            "desc":  (desc or response_code or message),
-        }
+            qdict = {
+                "pid":     str(p.id) if p else "",
+                "status":  outcome,
+                "orderRef": order_ref,
+                "txn":     provider_txn_id,
+                "desc":    (desc or response_code or message),
+            }
 
-        parts = list(urlsplit(base_url))  # scheme, netloc, path, query, fragment
-        existing_q = parts[3]
-        new_q = urlencode(qdict)
-        parts[3] = (existing_q + "&" + new_q) if existing_q else new_q
-        final_url = urlunsplit(parts)
+            parts = list(urlsplit(base_url))  # scheme, netloc, path, query, fragment
+            existing_q = parts[3]
+            new_q = urlencode(qdict, doseq=False)
+            parts[3] = (existing_q + "&" + new_q) if existing_q else new_q
+            final_url = urlunsplit(parts)
 
-        return HttpResponseRedirect(final_url)
+            return HttpResponseRedirect(final_url)
+        except Exception as e:
+            # Last-resort: log and send user somewhere safe rather than 500
+            import logging
+            logging.getLogger(__name__).exception("Status handler redirect failed: %s", e)
+
+            fallback = _absolutize(default_return or success_to or "/")
+            return HttpResponseRedirect(fallback)
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
