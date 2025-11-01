@@ -375,46 +375,52 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
         outcome = "unknown"
 
         # ---- Redirect to frontend result page (with sensible defaults) ----
-    default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
-    success_to = getattr(settings, "FRONTEND_SUCCESS_URL", None)
-    failure_to = getattr(settings, "FRONTEND_FAILURE_URL", None)
-    frontend_base = getattr(settings, "FRONTEND_BASE_URL", "").rstrip("/")
+        default_return = getattr(settings, "FRONTEND_RETURN_URL", None)
+        success_to     = getattr(settings, "FRONTEND_SUCCESS_URL", None)
+        failure_to     = getattr(settings, "FRONTEND_FAILURE_URL", None)
+        frontend_base  = (getattr(settings, "FRONTEND_BASE_URL", "") or "").rstrip("/")
 
-    # On success, prefer explicit SUCCESS url; otherwise go to "/" on the FRONTEND,
-    # not the backend — we’ll prefix relative paths with FRONTEND_BASE_URL.
-    if outcome == "success":
-        base_url = success_to or "/"
-    elif outcome == "failed" and failure_to:
-        base_url = failure_to
-    else:
-        base_url = default_return or "/"
+        # Choose the base target
+        if outcome == "success":
+            # Prefer explicit success page; otherwise land on the frontend home
+            base_url = success_to or "/"
+        elif outcome == "failed":
+            base_url = failure_to or (default_return or "/")
+        else:
+            base_url = default_return or "/"
 
-    # If `base_url` is relative, turn it into an absolute URL on the FRONTEND domain.
-    if base_url and not base_url.lower().startswith(("http://", "https://")):
-        if frontend_base:
-            # ensure exactly one slash between base and path
-            base_url = f"{frontend_base}{'' if base_url.startswith('/') else '/'}{base_url.lstrip('/')}"
-        # else: leave as-is (will redirect on current host)
+        # Turn a relative path into an absolute URL under the FRONTEND domain
+        def _absolutize(url: str) -> str:
+            if not url:
+                # ultimate fallback: public site (prevents Django login page)
+                return "https://learnifypakistan.com/"
+            if url.lower().startswith(("http://", "https://")):
+                return url
+            if frontend_base:
+                return f"{frontend_base}/{url.lstrip('/')}"
+            # no FRONTEND_BASE_URL configured → hard fallback
+            return "https://learnifypakistan.com/"
 
-    from urllib.parse import urlencode  # local import to avoid global import surprises
-    q = urlencode({
-        "pid": str(p.id) if p else "",
-        "status": outcome,
-        "orderRef": order_ref,
-        "txn": provider_txn_id,
-        "desc": (desc or response_code or message),
-    })
-    sep = "&" if "?" in base_url else "?"
-    return HttpResponseRedirect(f"{base_url}{sep}{q}")
+        base_url = _absolutize(base_url)
 
-    # fallback HTML if no frontend URL configured
-    return HttpResponse(
-        f"<html><body style='font-family:sans-serif;padding:48px'>"
-        f"<h2>Payment {outcome.title()}</h2>"
-        f"<p>Reference: {order_ref or 'N/A'}</p>"
-        f"<p>Transaction ID: {provider_txn_id or 'N/A'}</p>"
-        f"</body></html>"
-    )
+        # Build/merge query string safely
+        from urllib.parse import urlencode, urlsplit, urlunsplit
+
+        qdict = {
+            "pid":   str(p.id) if p else "",
+            "status": outcome,
+            "orderRef": order_ref,
+            "txn":   provider_txn_id,
+            "desc":  (desc or response_code or message),
+        }
+
+        parts = list(urlsplit(base_url))  # scheme, netloc, path, query, fragment
+        existing_q = parts[3]
+        new_q = urlencode(qdict)
+        parts[3] = (existing_q + "&" + new_q) if existing_q else new_q
+        final_url = urlunsplit(parts)
+
+        return HttpResponseRedirect(final_url)
 
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
