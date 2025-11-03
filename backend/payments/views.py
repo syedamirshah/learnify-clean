@@ -430,31 +430,48 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
 @staff_member_required
 def admin_payments_dashboard(request: HttpRequest) -> HttpResponse:
     """
-    Lightweight, friendly admin page to:
-      - start an Easypay payment by entering an amount
-      - see the latest payments
+    Admin payments overview (no manual 'start payment' here).
+    Adds a simple time-range filter and summary stats.
+
+    Supported ?range= values:
+      - 7d  -> last 7 days
+      - 30d -> last 30 days (default)
+      - 3m  -> last ~90 days
+      - 1y  -> last ~365 days
     """
-    if request.method == "POST":
-        try:
-            amount = float(request.POST.get("amount") or 0)
-        except Exception:
-            amount = 0
+    # -------- range filter --------
+    range_key = (request.GET.get("range") or "30d").lower()
+    days_map = {"7d": 7, "30d": 30, "3m": 90, "1y": 365}
+    days = days_map.get(range_key, 30)
 
-        if amount <= 0:
-            messages.error(request, "Please enter a valid amount (> 0).")
-            return redirect("payments_admin")
+    now = timezone.now()
+    start = now - timedelta(days=days)
 
-        p = Payment.objects.create(
-            user=request.user,
-            amount=amount,
-            plan="admin",  # admin-started flow
-            months=1,      # required by model
-        )
-        # jump straight into the Easypay flow
-        return redirect("payments:easypay_start", pk=p.id)
+    # -------- base queryset --------
+    qs = (
+        Payment.objects
+        .select_related("user")
+        .filter(initiated_at__gte=start)
+        .order_by("-initiated_at")
+    )
 
-    recent = Payment.objects.select_related("user").order_by("-initiated_at")[:20]
-    return render(request, "payments/admin_dashboard.html", {"recent": recent})
+    # -------- quick stats --------
+    stats = {
+        "count": qs.count(),
+        "sum": float(qs.aggregate(Sum("amount"))["amount__sum"] or 0),
+        "success": qs.filter(status=Payment.Status.SUCCESS).count(),
+        "failed": qs.filter(status=Payment.Status.FAILED).count(),
+        "pending": qs.filter(status=Payment.Status.PENDING).count(),
+    }
+
+    # show a reasonable number of rows
+    recent = list(qs[:200])
+
+    return render(
+        request,
+        "payments/admin_dashboard.html",
+        {"recent": recent, "range_key": range_key, "stats": stats},
+    )
 
 
 @login_required

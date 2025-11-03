@@ -4,48 +4,77 @@
 {% block title %}Payments Admin{% endblock %}
 
 {% block content %}
-<h1 style="margin-bottom:16px;">💳 Payments</h1>
+<h1 style="margin-bottom:12px;">💳 Payments</h1>
 
-<!-- Start payment -->
-<form method="post" action="" style="margin-bottom:24px; padding:16px; border:1px solid #ddd; border-radius:8px;">
-  {% csrf_token %}
-  <label for="amount"><b>Amount (PKR)</b></label>
-  <input id="amount" name="amount" type="number" step="0.1" min="1" value="10.0"
-         style="margin-left:10px; padding:6px 10px; width:140px;">
-  <button type="submit" class="button-link" style="margin-left:10px;">▶️ Start Payment</button>
-  <p style="margin:8px 0 0; color:#666;">This will create a Payment and redirect you to Easypay.</p>
+<!-- Filter bar -->
+<form method="get" style="display:flex; gap:12px; align-items:center; margin:0 0 16px;">
+  <label for="range" style="font-weight:600;">Range</label>
+  <select id="range" name="range" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px;">
+    <option value="7d"  {% if range_key == "7d" %}selected{% endif %}>Last 7 days</option>
+    <option value="30d" {% if range_key == "30d" %}selected{% endif %}>Last 30 days</option>
+    <option value="3m"  {% if range_key == "3m" %}selected{% endif %}>Last 3 months</option>
+    <option value="1y"  {% if range_key == "1y" %}selected{% endif %}>Last 1 year</option>
+  </select>
+  <button type="submit" class="button-link">Apply</button>
 </form>
+
+<!-- Stats summary -->
+<div style="display:flex; gap:16px; flex-wrap:wrap; margin:0 0 16px;">
+  <div class="chip">Total: <b>{{ stats.count }}</b></div>
+  <div class="chip">Sum: <b>{{ stats.sum }}</b></div>
+  <div class="chip ok">Success: <b>{{ stats.success }}</b></div>
+  <div class="chip warn">Pending: <b>{{ stats.pending }}</b></div>
+  <div class="chip err">Failed: <b>{{ stats.failed }}</b></div>
+</div>
+
+<!-- Helpful note -->
+<p class="muted" style="margin:8px 0 16px;">
+  <b>OrderRef</b> = the reference Easypay shows on their portal (useful for reconciliation).<br>
+  <b>ID</b> = our internal payment UUID (useful for debugging/support). You can keep both; if you want a leaner table later, hide the ID column.
+</p>
 
 <!-- Recent payments -->
 <div style="padding:16px; border:1px solid #ddd; border-radius:8px;">
-  <h2 style="margin-top:0;">🧾 Recent Payments</h2>
+  <h2 style="margin-top:0;">🧾 Payments ({{ range_key }})</h2>
   {% if recent %}
     <table style="width:100%; border-collapse:collapse;">
       <thead>
         <tr>
-          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">ID</th>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">User</th>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Amount</th>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Status</th>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">OrderRef</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">ID</th>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Initiated</th>
         </tr>
       </thead>
       <tbody>
         {% for p in recent %}
         <tr>
-          <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.id }}</td>
           <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.user }}</td>
           <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.amount }}</td>
-          <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.status }}</td>
-          <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.merchant_order_id|default:"—" }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f5f5f5;">
+            {% if p.status == "success" %}
+              <span class="badge ok">success</span>
+            {% elif p.status == "failed" %}
+              <span class="badge err">failed</span>
+            {% else %}
+              <span class="badge warn">{{ p.status }}</span>
+            {% endif %}
+          </td>
+          <td style="padding:8px; border-bottom:1px solid #f5f5f5;">
+            <code>{{ p.merchant_order_id|default:"—" }}</code>
+          </td>
+          <td style="padding:8px; border-bottom:1px solid #f5f5f5; color:#666; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
+            <small>{{ p.id }}</small>
+          </td>
           <td style="padding:8px; border-bottom:1px solid #f5f5f5;">{{ p.initiated_at }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   {% else %}
-    <p>No payments yet.</p>
+    <p>No payments in this range.</p>
   {% endif %}
 </div>
 
@@ -56,5 +85,21 @@
   }
   .button-link:hover { background:#afc5ea; }
   #content-main + div, #nav-sidebar { display:none !important; }
+
+  .chip {
+    padding:6px 10px; border:1px solid #e2e2e2; border-radius:999px; background:#fafafa;
+  }
+  .chip.ok   { border-color:#cde9ce; background:#f2fbf2; }
+  .chip.warn { border-color:#ffe7b3; background:#fffaf0; }
+  .chip.err  { border-color:#f4c7c7; background:#fff5f5; }
+
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600;
+    border:1px solid #ddd; background:#f7f7f7;
+  }
+  .badge.ok   { color:#1b5e20; background:#e8f5e9; border-color:#c8e6c9; }
+  .badge.warn { color:#8a6d3b; background:#fff8e1; border-color:#ffe0b2; }
+  .badge.err  { color:#7f1d1d; background:#fee2e2; border-color:#fecaca; }
+  .muted { color:#666; }
 </style>
 {% endblock %}
