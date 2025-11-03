@@ -31,6 +31,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from .utils import aes_ecb_pkcs5_base64, sign_uid, unsign_uid   # add sign/unsign
 from datetime import timedelta
+from django.db.models import Sum
 
 # ---- Easypay config from settings (put values in your .env or settings.py) ----
 EP_BASE    = getattr(settings, "EASYPAY_BASE",    "https://easypay.easypaisa.com.pk")  # prod base
