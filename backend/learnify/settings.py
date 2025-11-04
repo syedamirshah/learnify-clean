@@ -17,6 +17,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
+# Surface full tracebacks to logs even when DEBUG=False (controlled by env var)
+DEBUG_PROPAGATE_EXCEPTIONS = os.getenv("DEBUG_PROPAGATE_EXCEPTIONS", "0") == "1"
+
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
