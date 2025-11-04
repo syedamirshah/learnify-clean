@@ -88,7 +88,6 @@ class User(AbstractUser):
     subscription_plan = models.CharField(max_length=20, choices=SUBSCRIPTION_PLANS, blank=True, null=True)
     subscription_expiry = models.DateField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    fee_receipt = models.ImageField(upload_to='fee_receipts/', blank=True, null=True)
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUSES, default='inactive')
     is_active = models.BooleanField(default=True)
     grade_change_count = models.IntegerField(default=0)

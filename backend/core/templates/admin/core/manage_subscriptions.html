@@ -67,11 +67,7 @@
       <td style="border: 1px solid #ccc; padding: 8px;">{{ user.username }}</td>
       <td style="border: 1px solid #ccc; padding: 8px;">{{ user.subscription_plan }}</td>
       <td style="border: 1px solid #ccc; padding: 8px;">
-        {% if user.fee_receipt %}
-          <a href="{{ user.fee_receipt.url }}" target="_blank">View</a>
-        {% else %}
-          No receipt
-        {% endif %}
+        Not Applicable
       </td>
       <td style="border: 1px solid #ccc; padding: 8px;">
         {% if user.renewal_requested %}

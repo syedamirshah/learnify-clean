@@ -49,7 +49,7 @@ class SelfRegistrationForm(forms.ModelForm):
         fields = [
             'username', 'email', 'full_name', 'password', 'role', 'gender', 'schooling_status',
             'grade', 'school_name', 'city', 'province',
-            'subscription_plan', 'profile_picture', 'fee_receipt', 'language_used_at_home'
+            'subscription_plan', 'profile_picture', 'language_used_at_home'
         ]
 
     def __init__(self, *args, **kwargs):

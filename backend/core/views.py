@@ -1516,3 +1516,6 @@ def get_all_grades(request):
 @ensure_csrf_cookie
 def csrf_view(request):
     return JsonResponse({"detail": "CSRF cookie set"})
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

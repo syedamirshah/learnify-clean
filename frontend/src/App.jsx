@@ -8,7 +8,6 @@ import HonorBoard from './pages/public/HonorBoard';
 import LandingPage from './pages/public/LandingPage';
 import WhyJoin from './pages/public/WhyJoin';
 import SignupPage from '@/pages/public/SignupPage';
-import RenewSubscription from './pages/account/RenewSubscription';
 import EditProfile from './pages/account/EditProfile';
 import TeacherAssessment from './pages/teacher/TeacherAssessment';
 import StudentQuizHistory from './pages/teacher/StudentQuizHistory';
@@ -37,7 +36,6 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/why-join" element={<WhyJoin />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/account/renew-subscription" element={<RenewSubscription />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />
           <Route path="/teacher/assessment" element={<TeacherAssessment />} />
           <Route path="/teacher/student/:username/quiz-history" element={<StudentQuizHistory />} />

@@ -50,7 +50,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'password', 'full_name', 'email', 'gender',
             'language_used_at_home', 'schooling_status', 'school_name',
-            'grade', 'city', 'province', 'subscription_plan', 'profile_picture', 'fee_receipt', 'role'
+            'grade', 'city', 'province', 'subscription_plan', 'profile_picture', 'role'
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -84,7 +84,7 @@ class PublicSignupSerializer(serializers.ModelSerializer):
             'username', 'password', 'full_name', 'email', 'gender',
             'language_used_at_home', 'schooling_status', 'school_name',
             'grade', 'city', 'province', 'subscription_plan',
-            'profile_picture', 'fee_receipt', 'role'  # ✅ add role
+            'profile_picture', 'role'  # ✅ add role
         ]
         extra_kwargs = {
             'password': {'write_only': True},
