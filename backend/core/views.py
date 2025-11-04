@@ -1330,33 +1330,40 @@ def teacher_student_list(request):
     if user.role != 'teacher':
         return Response({'error': 'Unauthorized'}, status=403)
 
-    # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Debug: See teacher info
-    print(f"√î¬£√∏‚àö¬∫‚àö¬¥¬¨√Ü‚Äö√Ñ√∂‚àö√ë‚àö√ü√î¬£√∏‚àö¬∫‚àö¬Æ¬¨¬• Teacher Logged In: {user.username}")
-    print(f"√î¬£√∏‚àö¬∫‚àö¬Æ¬¨¬• School: {user.school_name} | √î¬£√∏‚àö¬∫‚àö¬Æ‚àö¬•‚àö√Æ‚Äö√†√®‚àö¬Æ City: {user.city}")
+    # Normalize teacher fields
+    teacher_city = (user.city or "").strip()
+    teacher_school = (user.school_name or "").strip()
 
-    teacher_city = user.city
-    teacher_school = user.school_name
+    qs = User.objects.filter(role='student')
 
-    students = User.objects.filter(
-        role='student',
-        city=teacher_city,
-        school_name=teacher_school
-    )
+    # Only filter by fields that are actually present on the teacher
+    if teacher_city:
+        qs = qs.filter(city__iexact=teacher_city)
+    else:
+        # if teacher has no city, return empty list to be explicit
+        return Response([], status=200)
+
+    if teacher_school:
+        qs = qs.filter(school_name__iexact=teacher_school)
+
+    # Optional: only active accounts
+    # qs = qs.filter(is_active=True, account_status='active')
 
     student_data = []
-    for student in students:
+    for s in qs.exclude(city__isnull=True).exclude(city__exact=""):
         student_data.append({
-            'full_name': student.full_name,
-            'email': student.email,
-            'grade': student.grade,
-            'gender': student.gender,
-            'school_name': student.school_name,
-            'city': student.city,
-            'province': student.province,
-            'username': student.username,
+            'full_name': s.full_name,
+            'email': s.email,
+            'grade': getattr(s.grade, "name", "") if s.grade else "",
+            'gender': s.gender,
+            'school_name': s.school_name,
+            'city': s.city,
+            'province': s.province,
+            'username': s.username,
         })
 
     return Response(student_data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1369,23 +1376,26 @@ def teacher_student_quiz_history_view(request, username):
     except User.DoesNotExist:
         return Response({'error': 'Student not found.'}, status=404)
 
-    # Only show attempts if student is from the same city and school as teacher
-    if student.city != request.user.city or student.school_name != request.user.school_name:
-        return Response({'error': 'You are not authorized to view this student\'s data.'}, status=403)
+    # Normalize + case-insensitive compare for authorization
+    same_city = ((student.city or "").strip().casefold()
+                 == (request.user.city or "").strip().casefold())
+    same_school = ((student.school_name or "").strip().casefold()
+                   == (request.user.school_name or "").strip().casefold())
+
+    if not same_city or not same_school:
+        return Response({'error': "You aren't authorized to view this student's data."}, status=403)
 
     from django.db.models import Max
 
-# Step 1: Get latest attempt per quiz
-    latest_attempt_ids = StudentQuizAttempt.objects.filter(
+    latest_attempt_times = StudentQuizAttempt.objects.filter(
         student=student,
         completed_at__isnull=False
     ).values('quiz').annotate(latest=Max('completed_at')).values_list('latest', flat=True)
 
-    # Step 2: Fetch only those latest attempts
     attempts = StudentQuizAttempt.objects.filter(
         student=student,
-        completed_at__in=latest_attempt_ids
-    ).order_by('-completed_at')
+        completed_at__in=list(latest_attempt_times)
+    ).select_related('quiz', 'quiz__grade', 'quiz__subject', 'quiz__chapter').order_by('-completed_at')
 
     results = []
     for attempt in attempts:
@@ -1393,7 +1403,7 @@ def teacher_student_quiz_history_view(request, username):
         total_questions = quiz.assignments.aggregate(total=models.Sum('num_questions'))['total'] or 0
         total_marks = total_questions * quiz.marks_per_question
         percentage = round((attempt.score / total_marks) * 100, 2) if total_marks else 0
-        grade = calculate_grade(percentage)
+        letter = calculate_grade(percentage)
 
         results.append({
             'quiz_title': quiz.title,
@@ -1404,15 +1414,12 @@ def teacher_student_quiz_history_view(request, username):
             'total_questions': total_questions,
             'marks_per_question': quiz.marks_per_question,
             'percentage': percentage,
-            'grade_letter': grade,
+            'grade_letter': letter,
             'attempted_on': localtime(attempt.completed_at, timezone=pk_timezone).strftime('%d-%m-%Y %I:%M %p'),
-            'attempt_id': str(attempt.id)
+            'attempt_id': str(attempt.id),
         })
 
-    return Response({
-        'full_name': student.full_name,
-        'results': results
-    })
+    return Response({'full_name': student.full_name, 'results': results})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
