@@ -43,7 +43,7 @@ class UserAdmin(BaseUserAdmin):
                 'role', 'gender', 'schooling_status', 'school_name', 'grade',
                 'city', 'province', 'language_used_at_home',
                 'subscription_plan', 'subscription_expiry',
-                'profile_picture', 'fee_receipt', 'account_status',
+                'profile_picture', 'account_status',
                 'is_active',  # ✅ NEW — allows enabling/disabling from edit form
             ),
         }),
@@ -59,7 +59,7 @@ class UserAdmin(BaseUserAdmin):
                 'role', 'gender', 'schooling_status', 'school_name', 'grade',
                 'city', 'province', 'language_used_at_home',
                 'subscription_plan', 'subscription_expiry',
-                'profile_picture', 'fee_receipt', 'account_status',
+                'profile_picture', 'account_status',
                 'is_active',  # ✅ NEW — ensures activation works during creation
             ),
         }),

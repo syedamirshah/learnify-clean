@@ -1274,51 +1274,6 @@ def subscription_info(request):
 
 from rest_framework.parsers import MultiPartParser, FormParser
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-@parser_classes([MultiPartParser, FormParser])
-def renew_subscription(request):
-    user = request.user
-
-    if user.role not in ['student', 'teacher']:
-        return Response({'error': 'Access denied.'}, status=403)
-
-    plan = request.data.get('plan')
-    receipt = request.FILES.get('fee_receipt')
-
-    if not plan or not receipt:
-        return Response({'error': 'Missing plan or fee receipt.'}, status=400)
-
-    # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Save plan and receipt
-    user.subscription_plan = plan
-    user.fee_receipt = receipt
-    user.renewal_requested = True
-
-    # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Compute new expiry date (but don't activate yet)
-    today = timezone.now().date()
-    current_expiry = user.subscription_expiry
-
-    if not current_expiry or current_expiry < today:
-        current_expiry = today
-
-    if plan == 'monthly':
-        new_expiry = current_expiry + timezone.timedelta(days=30)
-    elif plan == 'yearly':
-        new_expiry = current_expiry + timezone.timedelta(days=365)
-    else:
-        return Response({'error': 'Invalid plan selected.'}, status=400)
-
-    user.subscription_expiry = new_expiry
-
-    # ‚Äö√Ñ√∂‚àöœÄ‚àö‚Ä¢ DO NOT ACTIVATE ACCOUNT HERE
-    # user.account_status = 'active'
-
-    user.save()
-
-    return Response({'success': 'Renewal request submitted. Please wait for approval.'})
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
