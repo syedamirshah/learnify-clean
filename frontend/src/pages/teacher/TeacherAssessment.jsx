@@ -11,16 +11,33 @@ const TeacherAssessment = () => {
   const [sortDirection, setSortDirection] = useState('asc');
   const [loading, setLoading] = useState(true);
 
+  // ---- helpers: robust name compare + apply current sort ----
+  const norm = (s) => (s ?? '').toString().trim();
+  const cmpName = (a, b) =>
+    norm(a.full_name).localeCompare(norm(b.full_name), undefined, {
+      sensitivity: 'base',   // case-insensitive
+      numeric: true,         // natural order if numbers appear
+    });
+
+  const applySort = (list, direction) => {
+    const data = [...list];
+    data.sort((a, b) => (direction === 'asc' ? cmpName(a, b) : cmpName(b, a)));
+    return data;
+  };
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem('access_token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axiosInstance.get('teacher/students/', { headers });
-        setStudents(res.data);
-        setFilteredStudents(res.data);
 
-        const uniqueGrades = Array.from(new Set(res.data.map(s => s.grade))).filter(Boolean);
+        // sort once on load for a consistent initial view
+        const initial = applySort(res.data, 'asc');
+        setStudents(initial);
+        setFilteredStudents(initial);
+
+        const uniqueGrades = Array.from(new Set(initial.map((s) => s.grade))).filter(Boolean);
         setGrades(uniqueGrades);
       } catch (err) {
         console.error('Failed to load students:', err);
@@ -30,30 +47,21 @@ const TeacherAssessment = () => {
     };
 
     fetchStudents();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGradeChange = (e) => {
     const grade = e.target.value;
     setSelectedGrade(grade);
-    if (grade === 'All') {
-      setFilteredStudents(students);
-    } else {
-      const filtered = students.filter((s) => s.grade === grade);
-      setFilteredStudents(filtered);
-    }
+
+    const base = grade === 'All' ? students : students.filter((s) => s.grade === grade);
+    // keep current sort after filtering
+    setFilteredStudents(applySort(base, sortDirection));
   };
 
   const handleSortByName = () => {
-    const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    setSortDirection(newDirection);
-
-    const sorted = [...filteredStudents].sort((a, b) => {
-      if (a.full_name < b.full_name) return newDirection === 'asc' ? -1 : 1;
-      if (a.full_name > b.full_name) return newDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    setFilteredStudents(sorted);
+    const next = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(next);
+    setFilteredStudents((prev) => applySort(prev, next));
   };
 
   return (
@@ -110,7 +118,7 @@ const TeacherAssessment = () => {
                   <th className="px-4 py-3 border">School</th>
                   <th className="px-4 py-3 border">City</th>
                   <th className="px-4 py-3 border">Province</th>
-                  <th className="px-4 py-3 border">Action</th> {/* ✅ Restored */}
+                  <th className="px-4 py-3 border">Action</th>
                 </tr>
               </thead>
               <tbody>
