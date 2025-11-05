@@ -244,15 +244,27 @@ MIDDLEWARE += [
     'core.middleware.AutoExpireUserMiddleware',
 ]
 
-# Gmail SMTP Email Settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# Email (Zoho SMTP)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.zoho.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = 'polscience.uob@gmail.com'
-EMAIL_HOST_PASSWORD = 'fykonmbfkkuhcccn'
-DEFAULT_FROM_EMAIL = 'Learnify Pakistan <polscience.uob@gmail.com>'
+# Pull from environment (Render → Environment tab)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")        # e.g. "syedamir@learnifypakistan.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")  # Zoho App Password (not your login PW)
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    f"Learnify Pakistan <{EMAIL_HOST_USER}>"
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL                # for Django error emails
+EMAIL_SUBJECT_PREFIX = "[Learnify] "
+
+# Optional: send to console while developing locally
+if DEBUG and os.getenv("EMAIL_CONSOLE", "0") == "1":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/admin/'
