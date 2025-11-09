@@ -51,6 +51,7 @@ import pytz
 from core.utils import normalize_text
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
+from core.emails import send_password_change_email
 
 
 # Define the Pakistan time zone once
@@ -63,9 +64,15 @@ def register(request):
         form = SelfRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
+
+            # capture plain password so the post_save signal can email it
+            plain_pw = form.cleaned_data['password']
+            user._plain_password = plain_pw
+            user.set_password(plain_pw)
+
             user.account_status = 'inactive'  # Always inactive
             user.save()
+
             messages.success(request, "Registration submitted successfully. Please wait for account activation.")
             return redirect('/register/')
     else:
@@ -1313,13 +1320,28 @@ def edit_profile_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password_view(request):
+    from core.emails import send_password_change_email  # add this import inside or at top of file
+
     user = request.user
     serializer = ChangePasswordSerializer(data=request.data)
     if serializer.is_valid():
+        # Verify the old password
         if not user.check_password(serializer.validated_data['old_password']):
             return Response({'error': 'Old password is incorrect.'}, status=400)
-        user.set_password(serializer.validated_data['new_password'])
+
+        # Capture plain text for email before hashing
+        new_plain_password = serializer.validated_data['new_password']
+
+        # Save new password
+        user.set_password(new_plain_password)
         user.save()
+
+        # 🔔 Send confirmation email (non-blocking)
+        try:
+            send_password_change_email(user, password=new_plain_password)
+        except Exception:
+            pass  # Do not break flow if email fails
+
         return Response({'success': 'Password changed successfully.'})
     return Response(serializer.errors, status=400)
 

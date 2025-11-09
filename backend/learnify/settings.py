@@ -128,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Asia/Karachi"   # was "UTC"
 
 USE_I18N = True
 
@@ -255,11 +255,15 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")        # e.g. "syedamir@learnifypakistan.com"
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")  # Zoho App Password (not your login PW)
 
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    f"Learnify Pakistan <{EMAIL_HOST_USER}>"
+# Email safety fallbacks (avoid empty “From:” if envs are missing)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
+
+DEFAULT_FROM_EMAIL = (
+    os.getenv("DEFAULT_FROM_EMAIL")
+    or (f"Learnify Pakistan <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Learnify Pakistan <no-reply@learnifypakistan.com>")
 )
-SERVER_EMAIL = DEFAULT_FROM_EMAIL                # for Django error emails
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
 EMAIL_SUBJECT_PREFIX = "[Learnify] "
 
 # Optional: send to console while developing locally
