@@ -51,7 +51,7 @@ import pytz
 from core.utils import normalize_text
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
-from core.emails import send_password_change_email
+from core.emails import send_password_change_email, send_welcome_email
 
 
 # Define the Pakistan time zone once
@@ -66,9 +66,13 @@ def register(request):
             user = form.save(commit=False)
 
             # capture plain password so the post_save signal can email it
-            plain_pw = form.cleaned_data['password']
-            user._plain_password = plain_pw
-            user.set_password(plain_pw)
+            plain_pw = (
+                form.cleaned_data.get('password')     # some forms use 'password'
+                or form.cleaned_data.get('password1') # many Django forms use 'password1'
+                or form.cleaned_data.get('new_password')
+            )
+            user._plain_password = plain_pw or ""
+            user.set_password(plain_pw or "")
 
             user.account_status = 'inactive'  # Always inactive
             user.save()
@@ -1255,10 +1259,25 @@ def public_register_user(request):
     serializer = PublicSignupSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Account created. Please wait for admin approval."}, status=status.HTTP_201_CREATED)
+        user = serializer.save()
 
-    print(serializer.errors)  # √î¬£√∏‚àö¬∫‚àö¬¥‚àö‚Ä† Add this line temporarily
+        # Try to read the raw password from the posted data
+        raw_pw = (
+            request.data.get('password')
+            or request.data.get('password1')
+            or request.data.get('new_password')
+        )
+
+        # Send the welcome email explicitly so it includes the password
+        try:
+            send_welcome_email(user, password=raw_pw or "")
+        except Exception:
+            pass
+
+        return Response({"message": "Account created. Please wait for admin approval."},
+                        status=status.HTTP_201_CREATED)
+
+    print(serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
