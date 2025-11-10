@@ -1317,46 +1317,89 @@ def edit_profile_view(request):
         })
     return Response(serializer.errors, status=400)
 
+# core/views.py
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password_view(request):
-    from core.emails import send_password_change_email  # local import avoids circulars
+    from core.emails import send_password_change_email  # avoid circulars
 
     user = request.user
 
     # Accept both snake_case and camelCase from the frontend
-    payload = {
-        "old_password": request.data.get("old_password") or request.data.get("oldPassword"),
-        "new_password": request.data.get("new_password") or request.data.get("newPassword"),
+    data = {
+        "old_password": (
+            request.data.get("old_password")
+            or request.data.get("oldPassword")
+        ),
+        "new_password": (
+            request.data.get("new_password")
+            or request.data.get("newPassword")
+        ),
+        "confirm_password": (
+            request.data.get("confirm_password")
+            or request.data.get("confirmNewPassword")
+            or request.data.get("new_password2")
+        ),
     }
 
-    # Fast check for missing fields (helps UX)
-    if not payload["old_password"] or not payload["new_password"]:
+    # Fast presence checks
+    missing = [k for k in ("old_password", "new_password") if not data[k]]
+    if missing:
         return Response(
-            {"error": "Both old_password and new_password are required."},
+            {"error": f"Missing field(s): {', '.join(missing)}"},
             status=400
         )
 
-    serializer = ChangePasswordSerializer(data=payload)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=400)
+    # Optional confirm support (frontend may or may not send it)
+    if data["confirm_password"] is not None and data["confirm_password"] != data["new_password"]:
+        return Response({"error": "New password and confirmation do not match."}, status=400)
+
+    # If you still want to use the serializer, pass what it expects;
+    # otherwise, skip it entirely and validate here.
+    # Try serializer first (keeps backward-compat if it exists/validates).
+    try:
+        serializer = ChangePasswordSerializer(data={
+            "old_password": data["old_password"],
+            "new_password": data["new_password"],
+            # Only pass confirm if the serializer supports it (harmless if ignored)
+            "confirm_password": data["confirm_password"],
+        })
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        old_pw = serializer.validated_data["old_password"]
+        new_pw = serializer.validated_data["new_password"]
+    except Exception:
+        # Fallback: no/changed serializer—use normalized values
+        old_pw = data["old_password"]
+        new_pw = data["new_password"]
 
     # Verify old password
-    if not user.check_password(serializer.validated_data['old_password']):
-        return Response({'error': 'Old password is incorrect.'}, status=400)
+    if not user.check_password(old_pw):
+        return Response({"error": "Old password is incorrect."}, status=400)
 
-    # Apply new password
-    new_plain_password = serializer.validated_data['new_password']
-    user.set_password(new_plain_password)
+    # Disallow reusing the same password (optional but helpful)
+    if user.check_password(new_pw):
+        return Response({"error": "New password cannot be the same as the old password."}, status=400)
+
+    # Django strength validation
+    try:
+        validate_password(new_pw, user=user)
+    except DjangoValidationError as e:
+        return Response({"error": e.messages}, status=400)
+
+    # Save + email (non-blocking)
+    user.set_password(new_pw)
     user.save()
 
-    # Fire-and-forget confirmation email
     try:
-        send_password_change_email(user, password=new_plain_password)
+        send_password_change_email(user, password=new_pw)
     except Exception:
-        pass  # never block on email
+        pass  # never block the request on email
 
-    return Response({'success': 'Password changed successfully.'})
+    return Response({"success": "Password changed successfully."}, status=200)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
