@@ -1259,10 +1259,10 @@ def public_register_user(request):
     """
     Public signup:
     - Accepts multipart/form-data
-    - Normalizes common password field names
-    - Returns 200 + {success: true} on success (to satisfy frontend)
-    - Returns 400 + {success: false, errors: {...}} on failure
-    - Sends welcome email including the raw password if provided
+    - Normalizes common password field names -> 'password'
+    - Returns HTTP 200 with multiple success markers so any frontend check succeeds
+    - Returns HTTP 400 with a consistent error shape
+    - Sends welcome email with raw password if provided
     """
     from core.emails import send_welcome_email  # avoid circulars
 
@@ -1284,32 +1284,40 @@ def public_register_user(request):
     if serializer.is_valid():
         user = serializer.save()
 
-        # Optionally ensure default status (comment out if your serializer already sets it)
-        # try:
-        #     if getattr(user, "account_status", None) is None:
-        #         user.account_status = "inactive"
-        #         user.save(update_fields=["account_status"])
-        # except Exception:
-        #     pass
-
-        # Send welcome email (include password if we captured one)
         try:
             send_welcome_email(user, password=raw_pw or "")
         except Exception:
             pass  # never block on email
 
-        # IMPORTANT: return 200 and include a success flag the frontend can rely on
+        # Return a response shape that satisfies various frontends
         return Response(
             {
                 "success": True,
-                "message": "Account created. Please wait for admin approval.",
+                "ok": True,
+                "status": "ok",
+                "code": 200,
+                "message": "Registration successful",
+                "detail": "Account created. Please wait for admin approval.",
+                "user": {
+                    "username": user.username,
+                    "email": user.email,
+                    "role": getattr(user, "role", None),
+                },
             },
             status=200,
         )
 
-    # Return detailed errors with a standard shape
+    # Failure: standardized shape that UIs can surface
     return Response(
-        {"success": False, "errors": serializer.errors},
+        {
+            "success": False,
+            "ok": False,
+            "status": "error",
+            "code": 400,
+            "message": "Registration failed",
+            "detail": "Validation error",
+            "errors": serializer.errors,
+        },
         status=400,
     )
 
