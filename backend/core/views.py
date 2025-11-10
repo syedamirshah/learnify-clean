@@ -1320,43 +1320,30 @@ def edit_profile_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password_view(request):
-    from core.emails import send_password_change_email  # local import avoids circulars
+    from core.emails import send_password_change_email  # add this import inside or at top of file
 
     user = request.user
+    serializer = ChangePasswordSerializer(data=request.data)
+    if serializer.is_valid():
+        # Verify the old password
+        if not user.check_password(serializer.validated_data['old_password']):
+            return Response({'error': 'Old password is incorrect.'}, status=400)
 
-    # Accept both snake_case and camelCase from the frontend
-    payload = {
-        "old_password": request.data.get("old_password") or request.data.get("oldPassword"),
-        "new_password": request.data.get("new_password") or request.data.get("newPassword"),
-    }
+        # Capture plain text for email before hashing
+        new_plain_password = serializer.validated_data['new_password']
 
-    # Fast check for missing fields (helps UX)
-    if not payload["old_password"] or not payload["new_password"]:
-        return Response(
-            {"error": "Both old_password and new_password are required."},
-            status=400
-        )
+        # Save new password
+        user.set_password(new_plain_password)
+        user.save()
 
-    serializer = ChangePasswordSerializer(data=payload)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=400)
+        # 🔔 Send confirmation email (non-blocking)
+        try:
+            send_password_change_email(user, password=new_plain_password)
+        except Exception:
+            pass  # Do not break flow if email fails
 
-    # Verify old password
-    if not user.check_password(serializer.validated_data['old_password']):
-        return Response({'error': 'Old password is incorrect.'}, status=400)
-
-    # Apply new password
-    new_plain_password = serializer.validated_data['new_password']
-    user.set_password(new_plain_password)
-    user.save()
-
-    # Fire-and-forget confirmation email
-    try:
-        send_password_change_email(user, password=new_plain_password)
-    except Exception:
-        pass  # never block on email
-
-    return Response({'success': 'Password changed successfully.'})
+        return Response({'success': 'Password changed successfully.'})
+    return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
