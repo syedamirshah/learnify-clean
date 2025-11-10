@@ -1256,29 +1256,62 @@ def get_current_user(request):
 @permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def public_register_user(request):
-    serializer = PublicSignupSerializer(data=request.data)
+    """
+    Public signup:
+    - Accepts multipart/form-data
+    - Normalizes common password field names
+    - Returns 200 + {success: true} on success (to satisfy frontend)
+    - Returns 400 + {success: false, errors: {...}} on failure
+    - Sends welcome email including the raw password if provided
+    """
+    from core.emails import send_welcome_email  # avoid circulars
+
+    data = request.data.copy()
+
+    # Normalize password from common field names
+    raw_pw = (
+        data.get('password')
+        or data.get('password1')
+        or data.get('new_password')
+        or data.get('newPassword')
+        or data.get('rawPassword')
+    )
+    if raw_pw and 'password' not in data:
+        data['password'] = raw_pw
+
+    serializer = PublicSignupSerializer(data=data)
 
     if serializer.is_valid():
         user = serializer.save()
 
-        # Try to read the raw password from the posted data
-        raw_pw = (
-            request.data.get('password')
-            or request.data.get('password1')
-            or request.data.get('new_password')
-        )
+        # Optionally ensure default status (comment out if your serializer already sets it)
+        # try:
+        #     if getattr(user, "account_status", None) is None:
+        #         user.account_status = "inactive"
+        #         user.save(update_fields=["account_status"])
+        # except Exception:
+        #     pass
 
-        # Send the welcome email explicitly so it includes the password
+        # Send welcome email (include password if we captured one)
         try:
             send_welcome_email(user, password=raw_pw or "")
         except Exception:
-            pass
+            pass  # never block on email
 
-        return Response({"message": "Account created. Please wait for admin approval."},
-                        status=status.HTTP_201_CREATED)
+        # IMPORTANT: return 200 and include a success flag the frontend can rely on
+        return Response(
+            {
+                "success": True,
+                "message": "Account created. Please wait for admin approval.",
+            },
+            status=200,
+        )
 
-    print(serializer.errors)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # Return detailed errors with a standard shape
+    return Response(
+        {"success": False, "errors": serializer.errors},
+        status=400,
+    )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
