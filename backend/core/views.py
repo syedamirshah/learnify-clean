@@ -1260,15 +1260,12 @@ def public_register_user(request):
     Public signup:
     - Accepts multipart/form-data
     - Normalizes common password field names -> 'password'
-    - Returns HTTP 200 with multiple success markers so any frontend check succeeds
-    - Returns HTTP 400 with a consistent error shape
+    - Returns HTTP 201 + {"success": true, ...} on success
+    - Returns HTTP 400 + {"success": false, errors: {...}} on failure
     - Sends welcome email with raw password if provided
     """
-    from core.emails import send_welcome_email  # avoid circulars
-
     data = request.data.copy()
 
-    # Normalize password from common field names
     raw_pw = (
         data.get('password')
         or data.get('password1')
@@ -1280,45 +1277,31 @@ def public_register_user(request):
         data['password'] = raw_pw
 
     serializer = PublicSignupSerializer(data=data)
-
     if serializer.is_valid():
         user = serializer.save()
 
+        # Send exactly once here; disable the signal-based email to avoid duplicates
         try:
             send_welcome_email(user, password=raw_pw or "")
         except Exception:
-            pass  # never block on email
+            pass
 
-        # Return a response shape that satisfies various frontends
         return Response(
             {
                 "success": True,
-                "ok": True,
-                "status": "ok",
-                "code": 200,
-                "message": "Registration successful",
-                "detail": "Account created. Please wait for admin approval.",
+                "message": "Account created. Please wait for admin approval.",
                 "user": {
                     "username": user.username,
                     "email": user.email,
                     "role": getattr(user, "role", None),
                 },
             },
-            status=200,
+            status=status.HTTP_201_CREATED,
         )
 
-    # Failure: standardized shape that UIs can surface
     return Response(
-        {
-            "success": False,
-            "ok": False,
-            "status": "error",
-            "code": 400,
-            "message": "Registration failed",
-            "detail": "Validation error",
-            "errors": serializer.errors,
-        },
-        status=400,
+        {"success": False, "errors": serializer.errors},
+        status=status.HTTP_400_BAD_REQUEST,
     )
 
 @api_view(['GET'])
