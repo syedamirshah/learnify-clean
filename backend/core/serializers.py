@@ -57,14 +57,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        role = validated_data.get('role', 'student')
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password'],
+        password = validated_data.pop('password')
+        role = validated_data.pop('role', 'student')
+
+        user = User(
             role=role,
-            is_active=False,  # account inactive until approved
-            **{k: v for k, v in validated_data.items() if k not in ['username', 'password', 'role']}
+            is_active=False,  # wait for approval
+            **validated_data
         )
+        # --- IMPORTANT: prevent the signal from sending a 2nd email ---
+        user._suppress_welcome_email = True     # signal will see this and skip
+        user._plain_password = password or ""   # keep for consistency/debug
+
+        user.set_password(password)
+        user.save()
         return user
 
     def validate_username(self, value):

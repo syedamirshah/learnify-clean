@@ -23,17 +23,28 @@ User = get_user_model()
 def _send_welcome_on_create(sender, instance: User, created: bool, **kwargs):
     """
     Fire once when a new user row is created.
-    If your creation code sets instance._plain_password, it will be included.
+
+    We only send from the signal if we have a captured raw password.
+    This prevents a second 'no-password' email when the view already sent one.
+    You can also explicitly suppress the signal by setting
+    instance._suppress_welcome_email = True before saving.
     """
     if not created:
         return
-    plain = getattr(instance, "_plain_password", "")  # optional
+
+    # optional explicit kill-switch if some creation paths want to own the email
+    if getattr(instance, "_suppress_welcome_email", False):
+        return
+
+    plain = getattr(instance, "_plain_password", None)
+    if not plain:  # no captured password -> assume another path handled the email
+        return
+
     try:
         send_welcome_email(instance, password=plain)
     except Exception:
         # Never break user creation on mail errors
         pass
-
 
 # -------------------------------------------------------------------
 # (ii) PAYMENT SUCCESS → receipt email
