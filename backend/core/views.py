@@ -1280,11 +1280,6 @@ def public_register_user(request):
     if serializer.is_valid():
         user = serializer.save()
 
-        # Send exactly once here; disable the signal-based email to avoid duplicates
-        try:
-            send_welcome_email(user, password=raw_pw or "")
-        except Exception:
-            pass
 
         return Response(
             {

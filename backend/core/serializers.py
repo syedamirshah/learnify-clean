@@ -114,6 +114,7 @@ class PublicSignupSerializer(serializers.ModelSerializer):
             is_active=False,  # Wait for approval
             **validated_data
         )
+        user._plain_password = password          # ← so the signal can include it
         user.set_password(password)
         user.save()
         return user
