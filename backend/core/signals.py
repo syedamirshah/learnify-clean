@@ -1,5 +1,6 @@
 # backend/core/signals.py
 from __future__ import annotations
+from django.db import transaction
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -72,7 +73,8 @@ def _stash_old_payment_status(sender, instance, **kwargs):
 def _send_receipt_on_success(sender, instance, created: bool, **kwargs):
     """
     Send receipt only when status moves to SUCCESS
-    (either created as success or updated from non-success → success).
+    (either created as success or updated from non-success → success),
+    and do it AFTER the DB transaction commits so subscription_expiry is up-to-date.
     """
     try:
         Status = sender.Status  # enum from the Payment model
@@ -80,8 +82,16 @@ def _send_receipt_on_success(sender, instance, created: bool, **kwargs):
             instance.status == Status.SUCCESS
             and (created or getattr(instance, "_old_status", None) != Status.SUCCESS)
         )
-        if moved_to_success:
-            send_payment_receipt_email(instance.user, instance)
+        if not moved_to_success:
+            return
+
+        def _after_commit():
+            # Re-fetch the user so we see the final subscription_expiry, plan, etc.
+            refreshed_user = User.objects.get(pk=instance.user_id)
+            send_payment_receipt_email(refreshed_user, instance)
+
+        transaction.on_commit(_after_commit)
+
     except Exception:
         # Never block request flow on mail issues
         pass
