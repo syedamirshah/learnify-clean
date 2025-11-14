@@ -4,8 +4,7 @@ from django.core.mail import send_mail
 
 
 FRONTEND_LOGIN_URL = "https://www.learnifypakistan.com/login"
-SUPPORT_EMAIL = "hello@learnifypakistan.com"
-
+SUPPORT_EMAIL = "info@learnifypakistan.com"
 
 def _safe_send(subject: str, message: str, recipient_list: list[str]) -> None:
     """Send an email safely without blocking on errors."""

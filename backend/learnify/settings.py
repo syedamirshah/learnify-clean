@@ -252,24 +252,31 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
 # Pull from environment (Render → Environment tab)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")        # e.g. "syedamir@learnifypakistan.com"
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")  # Zoho App Password (not your login PW)
+# We now standardize on a single mailbox: info@learnifypakistan.com
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "info@learnifypakistan.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")  # Zoho App Password
 
-# Email safety fallbacks (avoid empty “From:” if envs are missing)
+# Email safety + identity
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
 
-DEFAULT_FROM_EMAIL = (
-    os.getenv("DEFAULT_FROM_EMAIL")
-    or (f"Learnify Pakistan <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Learnify Pakistan <no-reply@learnifypakistan.com>")
+# All outgoing emails will appear from this address
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    "Learnify Pakistan <info@learnifypakistan.com>",
 )
-SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+# Server-level emails (error reports, etc.)
+SERVER_EMAIL = os.getenv(
+    "SERVER_EMAIL",
+    "info@learnifypakistan.com",
+)
 
 EMAIL_SUBJECT_PREFIX = "[Learnify] "
 
 # Optional: send to console while developing locally
 if DEBUG and os.getenv("EMAIL_CONSOLE", "0") == "1":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
+    
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/admin/'
 LOGOUT_REDIRECT_URL = '/login/'
