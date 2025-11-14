@@ -574,11 +574,16 @@ def choose_plan(request):
         carrier = request.POST if request.method == "POST" else request.GET
         plan = (carrier.get("plan") or "monthly").lower()
 
-        # Define your plans here
-        price_map = {"monthly": 10.0, "yearly": 100.0}  # your current test values
+        # Define your plans here (Learnify Pakistan final fees)
+        # Monthly: Rs. 100
+        # Yearly: 12 × 100 = 1200 → 25% OFF = 900
+        price_map = {
+            "monthly": 100.0,  # Rs. 100 per month
+            "yearly": 900.0,   # Rs. 900 per year (25% off)
+        }
         months_map = {"monthly": 1, "yearly": 12}
 
-        amount = price_map.get(plan, 10.0)
+        amount = price_map.get(plan, 100.0)
         months = months_map.get(plan, 1)
 
         if not ctx.get("user_obj"):

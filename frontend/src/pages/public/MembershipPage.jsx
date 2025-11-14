@@ -24,37 +24,69 @@ const MembershipPage = () => {
             📚 Membership & Subscription Details
           </h1>
 
+          {/* How to Subscribe */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold text-green-700 mb-2">💡 How to Subscribe</h2>
-            <ol className="list-decimal list-inside text-gray-800">
-              <li>Sign up for a Learnify Pakistan account.</li>
-              <li>Go to your <strong>Account Settings</strong> and select <strong>Renew Subscription</strong>.</li>
-              <li>Choose your desired plan (Monthly or Yearly).</li>
-              <li>Upload a picture/screenshot of your paid fee receipt.</li>
-              <li>Submit your request and wait for admin verification.</li>
+            <ol className="list-decimal list-inside text-gray-800 space-y-1">
+              <li>
+                On the top green bar, move your mouse to <strong>Sign up</strong> and click{' '}
+                <strong>Create Account</strong> to register for Learnify Pakistan.
+              </li>
+              <li>
+                After your account is created, again go to <strong>Sign up</strong> and select{' '}
+                <strong>Make Payment</strong>.
+              </li>
+              <li>
+                On the payment page, enter your <strong>User ID</strong> (if asked) and choose your
+                plan: <strong>Monthly</strong> or <strong>Yearly</strong>.
+              </li>
+              <li>
+                Click <strong>Pay with Easypay</strong> to open the secure Easypaisa payment page.
+              </li>
+              <li>
+                Complete your payment. Once the payment is successful, your subscription will be
+                activated automatically.
+              </li>
             </ol>
           </section>
 
+          {/* Subscription Plans & Rates */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold text-green-700 mb-2">💰 Subscription Plans & Rates</h2>
-            <ul className="list-disc list-inside text-gray-800">
-              <li><strong>Monthly Plan:</strong> Rs. 300 per student</li>
-              <li><strong>Annual Plan:</strong> Rs. 3,600 – 25% OFF → Pay only Rs. 2,700</li>
-              <li><strong>School Plan:</strong> For schools with 100+ students – 25% discount on total fee</li>
+            <ul className="list-disc list-inside text-gray-800 space-y-1">
+              <li>
+                <strong>Monthly Plan:</strong> Rs. 100 per student
+              </li>
+              <li>
+                <strong>Annual Plan:</strong> Rs. 1,200 – 25% OFF → Pay only Rs. 900
+              </li>
+              <li>
+                <strong>School Plan:</strong> For schools with 100+ students – 25% discount on
+                total fee
+              </li>
             </ul>
           </section>
 
+          {/* Payment Methods */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold text-green-700 mb-2">🏦 Payment Methods</h2>
-            <ul className="list-disc list-inside text-gray-800">
-              <li>💳 Bank Transfer (Account details provided during checkout)</li>
-              <li>📱 EasyPaisa</li>
-              <li>📞 JazzCash</li>
+            <ul className="list-disc list-inside text-gray-800 space-y-1">
+              <li>
+                📱 All online payments are processed securely through{' '}
+                <strong>Easypay (Easypaisa)</strong>.
+              </li>
+              <li>
+                You can pay using the Easypaisa app or any option available on the Easypay
+                checkout page.
+              </li>
             </ul>
           </section>
 
           <section className="text-sm text-gray-600">
-            <p>If you have any issues or questions, please contact Learnify Support through the Help Center.</p>
+            <p>
+              If you have any issues or questions, please contact Learnify Support through the
+              Help Center.
+            </p>
           </section>
         </div>
       </div>
