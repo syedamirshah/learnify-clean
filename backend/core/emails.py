@@ -106,3 +106,28 @@ def send_password_change_email(user, password: str = "") -> None:
         "Team Learnify Pakistan"
     )
     _safe_send(subject, body, [user.email])
+
+
+    def send_subscription_expired_email(user) -> None:
+        """Notify user when their subscription has expired."""
+        username = getattr(user, "username", "")
+        full_name = getattr(user, "full_name", "") or username
+        expiry = getattr(user, "subscription_expiry", None)
+
+        expiry_text = f" on {expiry}" if expiry else ""
+
+        subject = "Your Learnify Pakistan Subscription Has Expired ⏰"
+        body = (
+            f"Assalamualaikum {full_name},\n\n"
+            "This is to inform you that your Learnify Pakistan subscription has expired"
+            f"{expiry_text}.\n\n"
+            "You can renew your subscription any time to continue accessing quizzes and learning materials.\n\n"
+            "To renew:\n"
+            "1. Go to the Learnify Pakistan website.\n"
+            "2. Login with your User ID.\n"
+            "3. Go to the Membership / Make Payment page and complete your payment.\n\n"
+            f"If you need any help, please contact {SUPPORT_EMAIL}.\n\n"
+            "JazakAllah,\n"
+            "Team Learnify Pakistan"
+        )
+        _safe_send(subject, body, [user.email])

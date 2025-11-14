@@ -106,10 +106,28 @@ class User(AbstractUser):
         return self.subscription_expiry and timezone.now().date() > self.subscription_expiry
 
     def mark_expired_if_due(self):
-        if self.is_expired():
-            self.account_status = 'expired'
-            self.save()
+        """
+        If the user's subscription has passed its expiry date, mark as expired
+        and send a one-time notification email.
+        """
+        # Not expired → nothing to do
+        if not self.is_expired():
+            return
 
+        # Only act the first time we flip to 'expired'
+        if self.account_status != 'expired':
+            self.account_status = 'expired'
+            # Optional: also block login if you want
+            # self.is_active = False
+            self.save(update_fields=['account_status'])
+
+            # Send expiry notification (ignore any email errors)
+            try:
+                from .emails import send_subscription_expired_email
+                send_subscription_expired_email(self)
+            except Exception:
+                pass
+            
     def __str__(self):
         return f"{self.username} ({self.role})"
 
