@@ -744,8 +744,9 @@ def create_metadata_view(request):
 def quiz_question_assignment_view(request):
     quizzes = Quiz.objects.all()
     grades = Grade.objects.all()
+    chapters = Chapter.objects.all().select_related('subject__grade').order_by('subject__grade__name', 'subject__name', 'name')
     
-    # √î¬£√∏‚àö¬∫‚àö¬®‚àö‚Ä¢ Apply grade filter if selected
+    #  Apply grade filter if selected
     selected_grade_id = request.GET.get('grade_filter')
     if selected_grade_id:
         quizzes = quizzes.filter(grade_id=selected_grade_id)
@@ -776,13 +777,14 @@ def quiz_question_assignment_view(request):
                 messages.success(request, f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'.")
                 return redirect('quiz-question-assignments')  # ‚Äö√Ñ√∂‚àö‚à´‚àö√± works now
             except Exception as e:
-                messages.error(request, f"‚Äö√Ñ√∂‚àöœÄ‚àö‚Ä¢ Error: {e}")
+                messages.error(request, f" Error: {e}")
 
     return render(request, 'admin/core/quiz_question_assignments.html', {
         'quizzes': quizzes,
         'grades': grades,
         'selected_grade_id': selected_grade_id,
-        'question_banks': question_banks
+        'question_banks': question_banks,
+        'chapters': chapters,   # NEW
     })
 
 

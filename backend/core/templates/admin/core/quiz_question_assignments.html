@@ -10,6 +10,7 @@
     <form method="POST">
         {% csrf_token %}
 
+        <!-- Grade filter -->
         <div style="margin-bottom: 20px;">
             <label for="gradeSelect" style="font-weight: 600;">🎓 Select Grade:</label><br>
             <select id="gradeSelect" style="padding: 8px; width: 280px; margin-top: 6px;">
@@ -20,18 +21,35 @@
             </select>
         </div>
 
+        <!-- Chapter filter (NEW) -->
+        <div style="margin-bottom: 20px;">
+            <label for="chapterSelect" style="font-weight: 600;">📚 Select Chapter (optional):</label><br>
+            <select id="chapterSelect" style="padding: 8px; width: 380px; margin-top: 6px;">
+                <option value="">-- All Chapters --</option>
+                {% for chapter in chapters %}
+                    <option value="{{ chapter.id }}" data-grade="{{ chapter.subject.grade.id }}">
+                        {{ chapter.subject.grade.name }} / {{ chapter.subject.name }} / {{ chapter.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Quiz dropdown -->
         <div style="margin-bottom: 30px;">
             <label for="quiz_id" style="font-weight: 600;">📄 Select Quiz:</label><br>
             <select name="quiz_id" id="quiz_id" required style="padding: 8px; width: 500px; margin-top: 6px;">
                 <option value="">-- Select Quiz --</option>
                 {% for quiz in quizzes %}
-                    <option value="{{ quiz.id }}" data-grade="{{ quiz.grade.id }}">
+                    <option value="{{ quiz.id }}"
+                            data-grade="{{ quiz.grade.id }}"
+                            data-chapter="{% if quiz.chapter %}{{ quiz.chapter.id }}{% else %}""{% endif %}">
                         {{ quiz.title }} — {{ quiz.grade.name }} / {{ quiz.subject.name }} / {{ quiz.chapter.name }}
                     </option>
                 {% endfor %}
             </select>
         </div>
 
+        <!-- Question banks table -->
         <table style="width: 100%; border-collapse: collapse; background: white; margin-top: 10px;">
             <thead style="background-color: #f9f9f9;">
                 <tr>
@@ -65,17 +83,54 @@
 </div>
 
 <script>
-    document.getElementById('gradeSelect').addEventListener('change', function () {
-        const selectedGrade = this.value;
-        const quizOptions = document.querySelectorAll('#quiz_id option');
+    const gradeSelect = document.getElementById('gradeSelect');
+    const chapterSelect = document.getElementById('chapterSelect');
+    const quizSelect = document.getElementById('quiz_id');
+
+    function filterQuizzes() {
+        const selectedGrade = gradeSelect.value;
+        const selectedChapter = chapterSelect.value;
+        const quizOptions = quizSelect.querySelectorAll('option');
 
         quizOptions.forEach(option => {
-            if (!option.value) return;
+            if (!option.value) return; // skip placeholder
+
+            const gradeId = option.getAttribute('data-grade');
+            const chapterId = option.getAttribute('data-chapter');
+
+            const gradeMatches = (selectedGrade === "" || gradeId === selectedGrade);
+            const chapterMatches = (selectedChapter === "" || chapterId === selectedChapter);
+
+            option.style.display = (gradeMatches && chapterMatches) ? 'block' : 'none';
+        });
+
+        // Reset quiz selection whenever filters change
+        quizSelect.value = "";
+    }
+
+    // Filter chapters when grade changes
+    function filterChaptersByGrade() {
+        const selectedGrade = gradeSelect.value;
+        const chapterOptions = chapterSelect.querySelectorAll('option');
+
+        chapterOptions.forEach(option => {
+            if (!option.value) return; // skip placeholder
+
             const gradeId = option.getAttribute('data-grade');
             option.style.display = (selectedGrade === "" || gradeId === selectedGrade) ? 'block' : 'none';
         });
 
-        document.getElementById('quiz_id').value = "";
+        // Reset chapter and quizzes after grade change
+        chapterSelect.value = "";
+        filterQuizzes();
+    }
+
+    gradeSelect.addEventListener('change', function () {
+        filterChaptersByGrade();
+    });
+
+    chapterSelect.addEventListener('change', function () {
+        filterQuizzes();
     });
 </script>
 
