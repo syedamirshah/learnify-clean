@@ -301,7 +301,7 @@ def bulk_upload_scq(request, bank_id):
                 rows_added += 1
 
             messages.success(request, f"{rows_added} SCQ questions uploaded successfully!")
-            return redirect(f'/preview-questions/{bank.id}/')
+            return redirect('admin-question-bank')
     else:
         form = UploadSCQForm(initial={'question_bank_id': bank.id})
 
@@ -340,7 +340,7 @@ def bulk_upload_mcq(request, bank_id):
                 rows_added += 1
 
             messages.success(request, f"{rows_added} MCQ questions uploaded successfully!")
-            return redirect(f'/preview-questions/{bank.id}/')
+            return redirect('admin-question-bank')
     else:
         form = UploadMCQForm(initial={'question_bank_id': bank.id})
 
@@ -375,7 +375,7 @@ def bulk_upload_fib(request, bank_id):
                 rows_added += 1
 
             messages.success(request, f"{rows_added} FIB questions uploaded successfully!")
-            return redirect(f'/preview-questions/{bank.id}/')
+            return redirect('admin-question-bank')
     else:
         form = UploadFIBForm(initial={'question_bank_id': bank.id})
 
