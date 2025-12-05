@@ -3,6 +3,8 @@ import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from '../../utils/axiosInstance';
 import { Link, useNavigate } from 'react-router-dom';
+import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
+
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/?$/, '/')}`;
 
@@ -267,15 +269,16 @@ const LandingPage = () => {
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="bg-[#ecfbec] border border-green-300 shadow-md rounded-xl mt-10 p-8 max-w-7xl mx-auto">
-        <h2 className="text-3xl text-center font-bold text-[#1E7F12] mb-4">
-          Learnify Pakistan: A Smarter Way to Learn
-        </h2>
-        <p className="text-lg text-gray-700 text-center max-w-4xl mx-auto">
-          Learnify Pakistan is a modern digital learning platform designed especially for primary school students, teachers, and parents. Fully aligned with the National Curriculum, it offers an inclusive and affordable way to master school subjects, track performance in real time, and foster meaningful learning - inside and outside the classroom. Learnify brings education to life through unlimited quizzes, smart feedback, and parent-teacher visibility like never before.
-        </p>
-      </section>
+            {/* Hero Section */}
+            <section className="mt-10 max-w-7xl mx-auto">
+              <div className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white">
+                <img
+                  src={heroBanner}
+                  alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </section>
 
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
