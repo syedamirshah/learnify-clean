@@ -271,18 +271,14 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="w-full mt-10">
-              {/* Heading Only */}
-              <h2 className="text-4xl text-center font-bold text-[#1E7F12] mb-6">
-                Learnify Pakistan: <br /> A Smarter Way to Learn
-              </h2>
-
+          
               {/* Full-width Banner */}
               <div className="w-full">
                 <img
                   src={heroBanner}
                   alt="Learnify Pakistan Hero Banner"
                   className="w-full object-cover"
-                  style={{ height: "380px" }}  // adjust to 300, 350, 450 as needed
+                  style={{ height: "360px" }}  // adjust to 300, 350, 450 as needed
                 />
               </div>
             </section>
