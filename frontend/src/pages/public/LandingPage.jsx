@@ -271,16 +271,20 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="mt-10 max-w-7xl mx-auto">
-              <div 
-                className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white mx-auto"
-                style={{ maxWidth: "1100px" }}   // ← adjust width here
+              <div
+                className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white mx-auto p-4"
+                style={{ maxWidth: "1150px" }}   // ← width of the whole banner
               >
-                <img
-                  src={heroBanner}
-                  alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
-                  className="w-full object-cover"
-                  style={{ height: "320px" }}     // ← adjust height here
-                />
+                <div
+                  className="w-full flex justify-center items-center"
+                  style={{ height: "320px" }}    // ← height of the banner
+                >
+                  <img
+                    src={heroBanner}
+                    alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
               </div>
             </section>
 
