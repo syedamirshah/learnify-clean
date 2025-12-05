@@ -274,7 +274,7 @@ const LandingPage = () => {
 
             <div 
               className="w-full bg-[#f6fff6] flex justify-center items-center overflow-hidden"
-              style={{ height: "360px" }}   // adjust 350 / 400 / 450 as you like
+              style={{ height: "450px" }}   // adjust 350 / 400 / 450 as you like
             >
               <img
                 src={heroBanner}
