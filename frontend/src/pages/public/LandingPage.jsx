@@ -270,21 +270,13 @@ const LandingPage = () => {
       </nav>
 
             {/* Hero Section */}
-            <section className="mt-10 max-w-7xl mx-auto">
-              <div
-                className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white mx-auto p-4"
-                style={{ maxWidth: "1150px" }}   // ← width of the whole banner
-              >
-                <div
-                  className="w-full flex justify-center items-center"
-                  style={{ height: "320px" }}    // ← height of the banner
-                >
-                  <img
-                    src={heroBanner}
-                    alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
+            <section className="mt-10 max-w-6xl mx-auto px-4">
+              <div className="rounded-2xl overflow-hidden shadow-md border border-green-300">
+                <img
+                  src={heroBanner}
+                  alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
+                  className="block w-full h-auto"
+                />
               </div>
             </section>
 
