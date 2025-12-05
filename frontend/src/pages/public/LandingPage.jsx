@@ -269,14 +269,56 @@ const LandingPage = () => {
         )}
       </nav>
 
-            {/* Hero Section */}
-            <section className="mt-5 max-w-3xl mx-auto px-2">
-              <div className="rounded-2xl overflow-hidden shadow-md border border-green-300">
-                <img
-                  src={heroBanner}
-                  alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
-                  className="block w-full h-auto"
-                />
+            {/* Hero Section – best-practice hero layout */}
+            <section className="bg-[#f0fff2] mt-10">
+              <div className="max-w-7xl mx-auto px-4 py-10 lg:py-14 flex flex-col md:flex-row items-center gap-10">
+                
+                {/* Text side */}
+                <div className="md:w-1/2">
+                  <h1 className="text-3xl md:text-4xl font-extrabold text-[#1E7F12] mb-4 leading-tight">
+                    Learnify Pakistan:
+                    <br />
+                    A Smarter Way to Learn
+                  </h1>
+
+                  <p className="text-base md:text-lg text-gray-700 mb-4">
+                    Interactive quizzes for young minds in Grades 1–5 – designed for students, teachers, and parents across Pakistan.
+                  </p>
+
+                  <ul className="text-base text-gray-800 mb-6 space-y-1 list-disc list-inside">
+                    <li>Fun quizzes with instant feedback</li>
+                    <li>Real-time progress tracking</li>
+                    <li>Fully aligned with Pakistan’s National Curriculum</li>
+                    <li>Supports home, classroom, and tuition learning</li>
+                  </ul>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      to="/signup"
+                      className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-[#42b72a] text-white font-semibold shadow hover:bg-green-700 transition"
+                    >
+                      Start Learning Now
+                    </Link>
+                    <Link
+                      to="/assessment/public"
+                      className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-[#42b72a] text-[#42b72a] font-semibold hover:bg-[#e9fbe9] transition"
+                    >
+                      Explore Sample Quizzes
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Image side */}
+                <div className="md:w-1/2">
+                  <div className="rounded-2xl overflow-hidden shadow-md border border-green-200">
+                    <img
+                      src={heroBanner}
+                      alt="Two primary school children happily using a tablet for Learnify Pakistan quizzes."
+                      className="block w-full h-auto object-cover"
+                    />
+                  </div>
+                </div>
+
               </div>
             </section>
 
