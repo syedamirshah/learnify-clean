@@ -271,15 +271,19 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="mt-10 max-w-7xl mx-auto">
-              <div className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white max-w-4xl mx-auto">
+              <div 
+                className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white mx-auto"
+                style={{ maxWidth: "1100px" }}   // ← adjust width here
+              >
                 <img
                   src={heroBanner}
                   alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
-                  className="w-full max-h-[420px] object-cover"
+                  className="w-full object-cover"
+                  style={{ height: "320px" }}     // ← adjust height here
                 />
               </div>
             </section>
-            
+
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
