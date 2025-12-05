@@ -271,22 +271,20 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="w-full mt-10">
-              
-              {/* Full-width Banner ONLY (no heading) */}
-              <div className="w-full">
-                <img
-                  src={heroBanner}
-                  alt="Learnify Pakistan Hero Banner"
-                  className="w-full object-cover"
-                  style={{ 
-                    height: "420px",      // adjust if needed
-                    objectPosition: "center center" 
-                  }}
-                />
-              </div>
 
-            </section>
+            <div 
+              className="w-full bg-[#f6fff6] flex justify-center items-center overflow-hidden"
+              style={{ height: "420px" }}   // adjust 350 / 400 / 450 as you like
+            >
+              <img
+                src={heroBanner}
+                alt="Learnify Pakistan Hero Banner"
+                className="h-full object-contain"
+                style={{ objectPosition: "center center" }}
+              />
+            </div>
 
+</section>
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
