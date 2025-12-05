@@ -271,18 +271,21 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="w-full mt-10">
-          
-              {/* Full-width Banner */}
+              
+              {/* Full-width Banner ONLY (no heading) */}
               <div className="w-full">
                 <img
                   src={heroBanner}
                   alt="Learnify Pakistan Hero Banner"
                   className="w-full object-cover"
-                  style={{ height: "360px" }}  // adjust to 300, 350, 450 as needed
+                  style={{ 
+                    height: "420px",      // adjust if needed
+                    objectPosition: "center center" 
+                  }}
                 />
               </div>
-            </section>
 
+            </section>
 
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
