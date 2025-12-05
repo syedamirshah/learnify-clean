@@ -287,6 +287,7 @@ const LandingPage = () => {
               </div>
             </section>
 
+
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
