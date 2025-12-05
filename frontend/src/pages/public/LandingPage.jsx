@@ -270,7 +270,7 @@ const LandingPage = () => {
       </nav>
 
             {/* Hero Section */}
-            <section className="mt-10 max-w-6xl mx-auto px-4">
+            <section className="mt-10 max-w-4xl mx-auto px-2">
               <div className="rounded-2xl overflow-hidden shadow-md border border-green-300">
                 <img
                   src={heroBanner}
