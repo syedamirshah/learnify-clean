@@ -271,15 +271,15 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="mt-10 max-w-7xl mx-auto">
-              <div className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white">
+              <div className="overflow-hidden rounded-2xl shadow-md border border-green-300 bg-white max-w-4xl mx-auto">
                 <img
                   src={heroBanner}
                   alt="Learnify Pakistan – Interactive quizzes, real-time progress, and National Curriculum aligned learning for young minds."
-                  className="w-full h-auto object-cover"
+                  className="w-full max-h-[420px] object-cover"
                 />
               </div>
             </section>
-
+            
       {/* Dynamic Quiz View */}
       <div className="mt-10 px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => (
