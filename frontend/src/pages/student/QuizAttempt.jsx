@@ -283,7 +283,7 @@ const QuizAttempt = () => {
             >
               {quizTitle}
               {previewMode && (
-                <span style={{ fontSize: '16px', fontWeight: 400, marginLeft: '6px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 400, marginLeft: '6px' }}>
                   (Preview Mode)
                 </span>
               )}
