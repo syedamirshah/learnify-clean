@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from "../../utils/axiosInstance";
@@ -175,7 +175,9 @@ const LandingPage = () => {
     `${gradeName}__${subjectName}__${chapterName}__${idx}`;
 
   const activeChapterKeyForSubject = (subjectKey) =>
-    pinnedChapterBySubject[subjectKey] || hoverChapterBySubject[subjectKey] || null;
+    pinnedChapterBySubject[subjectKey] ||
+    hoverChapterBySubject[subjectKey] ||
+    null;
 
   const sortedQuizzes = (quizzes) => {
     return [...(quizzes || [])].sort((a, b) => {
@@ -440,11 +442,10 @@ const LandingPage = () => {
                       subjectItem.subject
                     );
 
-                    // Resolve active chapter for this subject (hover > click pinned)
                     const activeKey = activeChapterKeyForSubject(subjectKey);
 
-                    // Map chapterKey -> chapter object for quick lookup
-                    const chapterIndexMap = useMemo(() => {
+                    // ✅ FIX: NO useMemo here (hooks cannot be inside loops)
+                    const chapterIndexMap = (() => {
                       const map = new Map();
                       (subjectItem.chapters || []).forEach((ch, idx) => {
                         const ck = getChapterKey(
@@ -456,8 +457,7 @@ const LandingPage = () => {
                         map.set(ck, ch);
                       });
                       return map;
-                      // eslint-disable-next-line react-hooks/exhaustive-deps
-                    }, [gradeItem.grade, subjectItem.subject, subjectItem.chapters]);
+                    })();
 
                     const activeChapterObj =
                       activeKey && chapterIndexMap.has(activeKey)
@@ -505,7 +505,6 @@ const LandingPage = () => {
                                   }}
                                   onMouseLeave={() => {
                                     setHoverChapterBySubject((prev) => {
-                                      // only clear hover if not pinned
                                       if (pinnedChapterBySubject[subjectKey]) return prev;
                                       const next = { ...prev };
                                       delete next[subjectKey];
@@ -529,7 +528,6 @@ const LandingPage = () => {
                                     onClick={() => {
                                       setPinnedChapterBySubject((prev) => {
                                         const currentlyPinned = prev[subjectKey];
-                                        // click same chapter again -> unpin
                                         if (currentlyPinned === chapterKey) {
                                           const next = { ...prev };
                                           delete next[subjectKey];
@@ -553,7 +551,7 @@ const LandingPage = () => {
                             })}
                           </div>
 
-                          {/* RIGHT: exercises panel (hover shows; click keeps) */}
+                          {/* RIGHT: exercises panel */}
                           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                             <div className="px-5 py-4 border-b bg-gray-50 rounded-t-xl">
                               <div className="text-lg font-extrabold text-green-900">
