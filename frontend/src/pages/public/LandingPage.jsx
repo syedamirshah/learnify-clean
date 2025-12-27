@@ -169,9 +169,21 @@ const LandingPage = () => {
 
   const getSubjectKey = (gradeName, subjectName) => `${gradeName}__${subjectName}`;
 
-  // ✅ FIX: chapterKey must be STABLE (do NOT use idx, because sorting changes idx)
-  const getChapterKey = (gradeName, subjectName, chapterName) =>
-    `${gradeName}__${subjectName}__${String(chapterName || "").trim()}`;
+  // ✅ chapterKey must be STABLE, but also UNIQUE enough to avoid collisions
+  // We use chapterName + a fallback id if backend gives one.
+  const getChapterKey = (gradeName, subjectName, chapterObjOrName) => {
+    // allow passing either chapter string OR full chapter object
+    const chapterName =
+      typeof chapterObjOrName === "string"
+        ? chapterObjOrName
+        : chapterObjOrName?.chapter;
+
+    const chapterId =
+      typeof chapterObjOrName === "object" ? chapterObjOrName?.id : null;
+
+    const safeName = String(chapterName || "").trim();
+    return `${gradeName}__${subjectName}__${safeName}__${chapterId ?? "noid"}`;
+  };
 
   const activeChapterKeyForSubject = (subjectKey) =>
     pinnedChapterBySubject[subjectKey] || hoverChapterBySubject[subjectKey] || null;
@@ -194,6 +206,21 @@ const LandingPage = () => {
       return getNum(a.chapter) - getNum(b.chapter);
     });
   };
+
+    // 🎨 Kid-friendly chapter colors (Tailwind classes)
+  // Split background + border so we can apply them cleanly (no conflicts)
+  const chapterPalettes = [
+    { cardBg: "bg-rose-50",    cardBorder: "border-rose-200",    accent: "text-rose-700",    panelBg: "bg-rose-50",    panelBorder: "border-rose-200" },
+    { cardBg: "bg-amber-50",   cardBorder: "border-amber-200",   accent: "text-amber-700",   panelBg: "bg-amber-50",   panelBorder: "border-amber-200" },
+    { cardBg: "bg-lime-50",    cardBorder: "border-lime-200",    accent: "text-lime-700",    panelBg: "bg-lime-50",    panelBorder: "border-lime-200" },
+    { cardBg: "bg-emerald-50", cardBorder: "border-emerald-200", accent: "text-emerald-700", panelBg: "bg-emerald-50", panelBorder: "border-emerald-200" },
+    { cardBg: "bg-sky-50",     cardBorder: "border-sky-200",     accent: "text-sky-700",     panelBg: "bg-sky-50",     panelBorder: "border-sky-200" },
+    { cardBg: "bg-indigo-50",  cardBorder: "border-indigo-200",  accent: "text-indigo-700",  panelBg: "bg-indigo-50",  panelBorder: "border-indigo-200" },
+    { cardBg: "bg-fuchsia-50", cardBorder: "border-fuchsia-200", accent: "text-fuchsia-700", panelBg: "bg-fuchsia-50", panelBorder: "border-fuchsia-200" },
+    { cardBg: "bg-teal-50",    cardBorder: "border-teal-200",    accent: "text-teal-700",    panelBg: "bg-teal-50",    panelBorder: "border-teal-200" },
+  ];
+
+  const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
@@ -381,15 +408,20 @@ const LandingPage = () => {
               {!gradeOpen ? null : (
                 <div className="mt-6 space-y-10">
                   {gradeItem.subjects.map((subjectItem, subjectIndex) => {
-                    const subjectKey = getSubjectKey(gradeItem.grade, subjectItem.subject);
+                    // ✅ Keep sorting + attach a stable UI color index
+                    const chaptersSorted = sortedChapters(subjectItem.chapters).map((ch, idxSorted) => ({
+                      ...ch,
+                      _colorIndex: idxSorted, // UI-only
+                    }));
 
+                    const subjectKey = getSubjectKey(gradeItem.grade, subjectItem.subject);
                     const activeKey = activeChapterKeyForSubject(subjectKey);
 
-                    // ✅ Build map using the SAME stable chapterKey (no idx)
+                    // ✅ Build map using the SAME stable chapterKey (NO idx)
                     const chapterIndexMap = (() => {
                       const map = new Map();
-                      (subjectItem.chapters || []).forEach((ch) => {
-                        const ck = getChapterKey(gradeItem.grade, subjectItem.subject, ch.chapter);
+                      (chaptersSorted || []).forEach((ch) => {
+                        const ck = getChapterKey(gradeItem.grade, subjectItem.subject, ch);
                         map.set(ck, ch);
                       });
                       return map;
@@ -398,9 +430,10 @@ const LandingPage = () => {
                     const activeChapterObj =
                       activeKey && chapterIndexMap.has(activeKey) ? chapterIndexMap.get(activeKey) : null;
 
-                    // ✅ Use sorted chapters everywhere (display + hover/pin)
-                    const chaptersSorted = sortedChapters(subjectItem.chapters);
+                    const activePalette =
+                      activeChapterObj ? getChapterPalette(activeChapterObj._colorIndex ?? 0) : null;
 
+                    
                     return (
                       <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
                         {/* ✅ Subject styled like Grade (no big box) */}
@@ -415,23 +448,23 @@ const LandingPage = () => {
                           {/* LEFT: Chapters */}
                           <div className="rounded-2xl border border-gray-200 bg-white/60 shadow-sm p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <div className="text-sm font-semibold text-gray-600">
+                              <div className="text-sm font-semibold text-gray-800">
                                 Chapters
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Hover = preview • Click = pin
                               </div>
                             </div>
 
                             <div className="space-y-2">
-                              {chaptersSorted.map((chapterItem, idx) => {
+                            {chaptersSorted.map((chapterItem, idx) => {
                                 const chapterKey = getChapterKey(
                                   gradeItem.grade,
                                   subjectItem.subject,
-                                  chapterItem.chapter
+                                  chapterItem
                                 );
 
                                 const pinned = pinnedChapterBySubject[subjectKey] === chapterKey;
+
+                                // ✅ chapter color
+                                const palette = getChapterPalette(chapterItem._colorIndex ?? idx);
 
                                 return (
                                   <button
@@ -462,37 +495,32 @@ const LandingPage = () => {
                                         return { ...prev, [subjectKey]: chapterKey };
                                       });
                                     }}
-                                    className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border transition
-                                      ${
-                                        pinned
-                                          ? "border-blue-700 bg-blue-50 shadow-sm"
-                                          : "border-gray-200 bg-white hover:bg-gray-50"
-                                      }`}
+                                    className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border-2 transition shadow-sm
+                                      ${palette.cardBg} ${palette.cardBorder}
+                                      ${pinned ? "ring-2 ring-offset-2 ring-green-400" : "hover:shadow-md"}
+                                    `}
                                     title="Hover to preview exercises • Click to keep exercises open"
                                   >
                                     <div
-                                      className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border
-                                        ${
-                                          pinned
-                                            ? "bg-blue-100 border-blue-700 text-blue-900"
-                                            : "bg-gray-50 border-gray-200 text-gray-700"
-                                        }`}
+                                      className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border-2 bg-white/70
+                                        ${palette.cardBorder} ${palette.accent}
+                                      `}
                                     >
                                       {idx + 1}
                                     </div>
 
                                     <div className="min-w-0">
-                                      <div className="font-bold text-base md:text-lg text-gray-900 truncate">
+                                      <div className={`font-bold text-base md:text-lg truncate ${palette.accent}`}>
                                         {chapterItem.chapter}
                                       </div>
-                                      <div className="text-xs text-gray-500">
+                                      <div className="text-xs text-gray-600">
                                         {Array.isArray(chapterItem.quizzes)
                                           ? `${chapterItem.quizzes.length} exercise(s)`
                                           : "0 exercise(s)"}
                                       </div>
                                     </div>
 
-                                    <div className="ml-auto text-gray-400 font-bold">
+                                    <div className="ml-auto font-bold text-gray-500">
                                       {pinned ? "📌" : "›"}
                                     </div>
                                   </button>
@@ -502,9 +530,18 @@ const LandingPage = () => {
                           </div>
 
                           {/* RIGHT: Exercises */}
-                          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                            <div className="px-5 py-4 border-b bg-gray-50">
-                              <div className="text-lg font-extrabold text-green-900">
+                          <div
+                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
+                                ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                              `}
+                            >
+                            <div
+                                className={`px-5 py-4 border-b
+                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
+                                  ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                                `}
+                              >
+                              <div className={`text-lg font-extrabold ${activePalette ? activePalette.accent : "text-green-900"}`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
                               <div className="text-sm text-gray-600 mt-1">
@@ -527,9 +564,12 @@ const LandingPage = () => {
                                     <Link
                                       key={`quiz-${quiz.id}`}
                                       to={`/student/attempt-quiz/${quiz.id}`}
-                                      className="block rounded-xl border border-gray-200 bg-white px-4 py-3 hover:bg-green-50 hover:border-green-300 transition"
+                                      className={`block rounded-xl border bg-white px-4 py-3 transition
+                                        ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                                        ${activePalette ? "hover:opacity-90" : "hover:bg-green-50 hover:border-green-300"}
+                                      `}
                                     >
-                                      <div className="font-semibold text-green-900">
+                                      <div className={`font-semibold ${activePalette ? activePalette.accent : "text-green-900"}`}>
                                         {quiz.title}
                                       </div>
                                       <div className="text-xs text-gray-500 mt-1">
