@@ -118,7 +118,7 @@ const LandingPage = () => {
     window.location.href = "/";
   };
 
-  // ====== existing helpers (unchanged) ======
+  // ====== existing helpers (unchanged, kept as-is even if not used) ======
   const chapterWeight = (ch) =>
     1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
 
@@ -146,16 +146,15 @@ const LandingPage = () => {
     return out;
   };
 
-  // Soft neutral tints we’ll cycle through for chapter cards
   const chapterCardTints = [
-    "bg-gray-100", // neutral
-    "bg-green-100", // very light green
-    "bg-blue-100", // soft blue
-    "bg-yellow-100", // pale yellow
-    "bg-pink-100", // soft pink
-    "bg-purple-100", // lavender
-    "bg-teal-100", // mint
-    "bg-orange-100", // peach
+    "bg-gray-100",
+    "bg-green-100",
+    "bg-blue-100",
+    "bg-yellow-100",
+    "bg-pink-100",
+    "bg-purple-100",
+    "bg-teal-100",
+    "bg-orange-100",
   ];
 
   // NEW helpers (presentation-only)
@@ -168,29 +167,20 @@ const LandingPage = () => {
     });
   };
 
-  const getSubjectKey = (gradeName, subjectName) =>
-    `${gradeName}__${subjectName}`;
+  const getSubjectKey = (gradeName, subjectName) => `${gradeName}__${subjectName}`;
 
-  const getChapterKey = (gradeName, subjectName, chapterName, idx) =>
-    `${gradeName}__${subjectName}__${chapterName}__${idx}`;
+  // ✅ FIX: chapterKey must be STABLE (do NOT use idx, because sorting changes idx)
+  const getChapterKey = (gradeName, subjectName, chapterName) =>
+    `${gradeName}__${subjectName}__${String(chapterName || "").trim()}`;
 
   const activeChapterKeyForSubject = (subjectKey) =>
-    pinnedChapterBySubject[subjectKey] ||
-    hoverChapterBySubject[subjectKey] ||
-    null;
+    pinnedChapterBySubject[subjectKey] || hoverChapterBySubject[subjectKey] || null;
 
   const sortedQuizzes = (quizzes) => {
     return [...(quizzes || [])].sort((a, b) => {
-      const numA = parseInt(
-        (a.title || "").trim().match(/^\d+/)?.[0] ?? "999999",
-        10
-      );
-      const numB = parseInt(
-        (b.title || "").trim().match(/^\d+/)?.[0] ?? "999999",
-        10
-      );
-      if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB)
-        return numA - numB;
+      const numA = parseInt((a.title || "").trim().match(/^\d+/)?.[0] ?? "999999", 10);
+      const numB = parseInt((b.title || "").trim().match(/^\d+/)?.[0] ?? "999999", 10);
+      if (Number.isFinite(numA) && Number.isFinite(numB) && numA !== numB) return numA - numB;
       return (a.title || "").localeCompare(b.title || "");
     });
   };
@@ -284,38 +274,24 @@ const LandingPage = () => {
         <div className="relative group py-2">
           {role === "student" && (
             <>
-              <button className="text-white hover:underline font-normal">
-                Assessment
-              </button>
+              <button className="text-white hover:underline font-normal">Assessment</button>
               <div className="absolute left-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
-                <Link
-                  to="/student/assessment"
-                  className="px-4 py-2 hover:bg-gray-100"
-                >
+                <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
                   Subject-wise Performance
                 </Link>
-                <Link
-                  to="/student/quiz-history"
-                  className="px-4 py-2 hover:bg-gray-100"
-                >
+                <Link to="/student/quiz-history" className="px-4 py-2 hover:bg-gray-100">
                   Quiz History
                 </Link>
               </div>
             </>
           )}
           {role === "teacher" && (
-            <Link
-              to="/teacher/assessment"
-              className="text-white hover:underline font-normal"
-            >
+            <Link to="/teacher/assessment" className="text-white hover:underline font-normal">
               Assessment
             </Link>
           )}
           {!role && (
-            <Link
-              to="/assessment/public"
-              className="text-white hover:underline font-normal"
-            >
+            <Link to="/assessment/public" className="text-white hover:underline font-normal">
               Assessment
             </Link>
           )}
@@ -339,20 +315,12 @@ const LandingPage = () => {
 
         {role && (
           <div className="relative group py-2">
-            <button className="text-white hover:underline font-normal">
-              Account Settings
-            </button>
+            <button className="text-white hover:underline font-normal">Account Settings</button>
             <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
-              <a
-                href={`${API}payments/choose/`}
-                className="px-4 py-2 hover:bg-gray-100"
-              >
+              <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
                 Make Payment
               </a>
-              <Link
-                to="/account/edit-profile"
-                className="px-4 py-2 hover:bg-gray-100"
-              >
+              <Link to="/account/edit-profile" className="px-4 py-2 hover:bg-gray-100">
                 Edit Profile
               </Link>
             </div>
@@ -361,17 +329,12 @@ const LandingPage = () => {
 
         {!role && (
           <div className="relative group py-2">
-            <button className="text-white hover:underline font-normal">
-              Sign up
-            </button>
+            <button className="text-white hover:underline font-normal">Sign up</button>
             <div className="absolute right-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
               <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
                 Create Account
               </Link>
-              <a
-                href={`${API}payments/choose/`}
-                className="px-4 py-2 hover:bg-gray-100"
-              >
+              <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
                 Make Payment
               </a>
             </div>
@@ -394,117 +357,100 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Content Explorer (new presentation; data + links + logic preserved) */}
-      <div className="mt-8 px-6 max-w-[1200px] mx-auto">
-  
-        {/* Grades -> Subjects -> Chapters (hover shows exercises, click pins) */}
+      {/* Content Explorer */}
+      <div className="mt-10 px-4 md:px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => {
           const gradeOpen = openGrades.has(gradeItem.grade);
 
           return (
             <div key={`grade-${gradeIndex}`} className="mb-12">
-              {/* If collapsed, show only title line */}
-              <div className="flex items-center justify-center mb-4">
+              {/* ✅ Grade itself is the toggle (no extra expand/collapse button) */}
+              <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={() => toggleGrade(gradeItem.grade)}
-                  className="text-2xl font-extrabold text-green-900 hover:underline cursor-pointer flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-green-200 bg-white/70 shadow-sm hover:shadow transition
+                             text-2xl font-extrabold text-green-900"
                   title="Click to expand/collapse"
                 >
                   {gradeItem.grade}
-                  <span className="text-base font-bold">
-                    {gradeOpen ? "▾" : "▸"}
-                  </span>
+                  <span className="text-base font-bold">{gradeOpen ? "▾" : "▸"}</span>
                 </button>
               </div>
+
               {!gradeOpen ? null : (
-                <>
+                <div className="mt-6 space-y-10">
                   {gradeItem.subjects.map((subjectItem, subjectIndex) => {
-                    const subjectKey = getSubjectKey(
-                      gradeItem.grade,
-                      subjectItem.subject
-                    );
+                    const subjectKey = getSubjectKey(gradeItem.grade, subjectItem.subject);
 
                     const activeKey = activeChapterKeyForSubject(subjectKey);
 
-                    // ✅ FIX: NO useMemo here (hooks cannot be inside loops)
+                    // ✅ Build map using the SAME stable chapterKey (no idx)
                     const chapterIndexMap = (() => {
                       const map = new Map();
-                      (subjectItem.chapters || []).forEach((ch, idx) => {
-                        const ck = getChapterKey(
-                          gradeItem.grade,
-                          subjectItem.subject,
-                          ch.chapter,
-                          idx
-                        );
+                      (subjectItem.chapters || []).forEach((ch) => {
+                        const ck = getChapterKey(gradeItem.grade, subjectItem.subject, ch.chapter);
                         map.set(ck, ch);
                       });
                       return map;
                     })();
 
                     const activeChapterObj =
-                      activeKey && chapterIndexMap.has(activeKey)
-                        ? chapterIndexMap.get(activeKey)
-                        : null;
+                      activeKey && chapterIndexMap.has(activeKey) ? chapterIndexMap.get(activeKey) : null;
+
+                    // ✅ Use sorted chapters everywhere (display + hover/pin)
+                    const chaptersSorted = sortedChapters(subjectItem.chapters);
 
                     return (
-                      <div
-                        key={`subject-${gradeIndex}-${subjectIndex}`}
-                        className="mb-10"
-                      >
-                        {/* Subject Bar */}
-                        <div className="flex justify-center mb-4">
+                      <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
+                        {/* ✅ Subject styled like Grade (no big box) */}
+                        <div className="flex justify-center">
                           <div className="text-2xl font-extrabold text-green-900">
                             {subjectItem.subject}
                           </div>
                         </div>
-                        {/* Chapters (left) + Exercises (right) */}
-                        <div className="mt-3 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
-                          {/* LEFT: chapter list */}
-                          <div className="space-y-4">
-                            {sortedChapters(subjectItem.chapters).map((chapterItem, idx) => {
-                              const chapterKey = getChapterKey(
-                                gradeItem.grade,
-                                subjectItem.subject,
-                                chapterItem.chapter,
-                                idx
-                              );
 
-                              const pinned =
-                                pinnedChapterBySubject[subjectKey] === chapterKey;
+                        {/* Modern two-panel layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
+                          {/* LEFT: Chapters */}
+                          <div className="rounded-2xl border border-gray-200 bg-white/60 shadow-sm p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="text-sm font-semibold text-gray-600">
+                                Chapters
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Hover = preview • Click = pin
+                              </div>
+                            </div>
 
-                              return (
-                                <div
-                                  key={`chapter-row-${chapterKey}`}
-                                  className="flex gap-4"
-                                  onMouseEnter={() => {
-                                    setHoverChapterBySubject((prev) => ({
-                                      ...prev,
-                                      [subjectKey]: chapterKey,
-                                    }));
-                                  }}
-                                  onMouseLeave={() => {
-                                    setHoverChapterBySubject((prev) => {
-                                      if (pinnedChapterBySubject[subjectKey]) return prev;
-                                      const next = { ...prev };
-                                      delete next[subjectKey];
-                                      return next;
-                                    });
-                                  }}
-                                >
-                                  {/* Number box */}
-                                  <div
-                                    className={`w-16 shrink-0 flex items-center justify-center rounded-xl border-2 border-blue-800 font-extrabold text-xl ${
-                                      pinned ? "bg-blue-100" : "bg-[#f1f7f1]"
-                                    }`}
-                                    style={{ height: "70px" }}
-                                  >
-                                    {idx + 1}
-                                  </div>
+                            <div className="space-y-2">
+                              {chaptersSorted.map((chapterItem, idx) => {
+                                const chapterKey = getChapterKey(
+                                  gradeItem.grade,
+                                  subjectItem.subject,
+                                  chapterItem.chapter
+                                );
 
-                                  {/* Chapter title box */}
+                                const pinned = pinnedChapterBySubject[subjectKey] === chapterKey;
+
+                                return (
                                   <button
+                                    key={`chapter-row-${chapterKey}`}
                                     type="button"
+                                    onMouseEnter={() => {
+                                      setHoverChapterBySubject((prev) => ({
+                                        ...prev,
+                                        [subjectKey]: chapterKey,
+                                      }));
+                                    }}
+                                    onMouseLeave={() => {
+                                      setHoverChapterBySubject((prev) => {
+                                        if (pinnedChapterBySubject[subjectKey]) return prev;
+                                        const next = { ...prev };
+                                        delete next[subjectKey];
+                                        return next;
+                                      });
+                                    }}
                                     onClick={() => {
                                       setPinnedChapterBySubject((prev) => {
                                         const currentlyPinned = prev[subjectKey];
@@ -516,28 +462,50 @@ const LandingPage = () => {
                                         return { ...prev, [subjectKey]: chapterKey };
                                       });
                                     }}
-                                    className={`flex-1 text-left rounded-xl border-2 border-blue-800 px-5 font-bold text-base md:text-lg transition ${
-                                      pinned
-                                        ? "bg-blue-100"
-                                        : "bg-[#f1f7f1] hover:bg-white"
-                                    }`}
-                                    style={{ height: "70px" }}
+                                    className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border transition
+                                      ${
+                                        pinned
+                                          ? "border-blue-700 bg-blue-50 shadow-sm"
+                                          : "border-gray-200 bg-white hover:bg-gray-50"
+                                      }`}
                                     title="Hover to preview exercises • Click to keep exercises open"
                                   >
-                                    {chapterItem.chapter}
+                                    <div
+                                      className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border
+                                        ${
+                                          pinned
+                                            ? "bg-blue-100 border-blue-700 text-blue-900"
+                                            : "bg-gray-50 border-gray-200 text-gray-700"
+                                        }`}
+                                    >
+                                      {idx + 1}
+                                    </div>
+
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-base md:text-lg text-gray-900 truncate">
+                                        {chapterItem.chapter}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {Array.isArray(chapterItem.quizzes)
+                                          ? `${chapterItem.quizzes.length} exercise(s)`
+                                          : "0 exercise(s)"}
+                                      </div>
+                                    </div>
+
+                                    <div className="ml-auto text-gray-400 font-bold">
+                                      {pinned ? "📌" : "›"}
+                                    </div>
                                   </button>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
 
-                          {/* RIGHT: exercises panel */}
-                          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                            <div className="px-5 py-4 border-b bg-gray-50 rounded-t-xl">
+                          {/* RIGHT: Exercises */}
+                          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b bg-gray-50">
                               <div className="text-lg font-extrabold text-green-900">
-                                {activeChapterObj
-                                  ? `Exercises — ${activeChapterObj.chapter}`
-                                  : "Exercises"}
+                                {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
                               <div className="text-sm text-gray-600 mt-1">
                                 {activeChapterObj
@@ -550,18 +518,23 @@ const LandingPage = () => {
 
                             <div className="p-5">
                               {!activeChapterObj ? (
-                                <div className="text-gray-600">
-                                  No chapter selected.
+                                <div className="text-gray-500 text-center py-12">
+                                  Select a chapter to view exercises.
                                 </div>
                               ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => (
                                     <Link
                                       key={`quiz-${quiz.id}`}
                                       to={`/student/attempt-quiz/${quiz.id}`}
-                                      className="text-green-900 hover:text-green-700 hover:underline"
+                                      className="block rounded-xl border border-gray-200 bg-white px-4 py-3 hover:bg-green-50 hover:border-green-300 transition"
                                     >
-                                      {quiz.title}
+                                      <div className="font-semibold text-green-900">
+                                        {quiz.title}
+                                      </div>
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        Tap to attempt
+                                      </div>
                                     </Link>
                                   ))}
                                 </div>
@@ -569,10 +542,10 @@ const LandingPage = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </section>
                     );
                   })}
-                </>
+                </div>
               )}
             </div>
           );
