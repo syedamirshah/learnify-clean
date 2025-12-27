@@ -197,8 +197,6 @@ const LandingPage = () => {
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
-  const brandSecondary =
-    "Clear, meaningful exercises aligned with national curriculum and approved textbooks.";
 
   return (
     <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
@@ -211,11 +209,8 @@ const LandingPage = () => {
             <div className="text-xl md:text-2xl font-extrabold text-green-900 leading-tight">
               {brandTitle}
             </div>
-            <div className="text-sm md:text-base font-semibold text-green-800 leading-tight">
+            <div className="text-sm md:text-base font-semibold italic text-green-800 leading-tight">
               {brandMotto}
-            </div>
-            <div className="text-xs md:text-sm text-gray-700 leading-snug mt-1">
-              {brandSecondary}
             </div>
           </div>
         </div>
@@ -391,30 +386,7 @@ const LandingPage = () => {
 
       {/* Content Explorer (new presentation; data + links + logic preserved) */}
       <div className="mt-8 px-6 max-w-[1200px] mx-auto">
-        {/* Grade Bars (collapsible) */}
-        <div className="flex flex-wrap gap-3 justify-center mb-6">
-          {quizData.map((g, idx) => {
-            const isOpen = openGrades.has(g.grade);
-            return (
-              <button
-                key={`grade-bar-${idx}`}
-                onClick={() => toggleGrade(g.grade)}
-                className={`px-6 py-2 rounded-xl border-2 shadow-sm font-bold transition ${
-                  isOpen
-                    ? "bg-white border-blue-800 text-blue-900"
-                    : "bg-[#f1f7f1] border-blue-800 text-blue-900 hover:bg-white"
-                }`}
-                title="Click to expand/collapse this grade"
-              >
-                {g.grade}
-                <span className="ml-2 text-sm font-semibold">
-                  {isOpen ? "▾" : "▸"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
+  
         {/* Grades -> Subjects -> Chapters (hover shows exercises, click pins) */}
         {quizData.map((gradeItem, gradeIndex) => {
           const gradeOpen = openGrades.has(gradeItem.grade);
@@ -423,17 +395,18 @@ const LandingPage = () => {
             <div key={`grade-${gradeIndex}`} className="mb-12">
               {/* If collapsed, show only title line */}
               <div className="flex items-center justify-center mb-4">
-                <div className="text-2xl font-extrabold text-green-900">
-                  {gradeItem.grade}
-                </div>
                 <button
+                  type="button"
                   onClick={() => toggleGrade(gradeItem.grade)}
-                  className="ml-3 text-sm px-3 py-1 rounded border border-green-700 text-green-800 bg-white hover:bg-green-50"
+                  className="text-2xl font-extrabold text-green-900 hover:underline cursor-pointer flex items-center gap-2"
+                  title="Click to expand/collapse"
                 >
-                  {gradeOpen ? "Collapse" : "Expand"}
+                  {gradeItem.grade}
+                  <span className="text-base font-bold">
+                    {gradeOpen ? "▾" : "▸"}
+                  </span>
                 </button>
               </div>
-
               {!gradeOpen ? null : (
                 <>
                   {gradeItem.subjects.map((subjectItem, subjectIndex) => {
@@ -470,16 +443,13 @@ const LandingPage = () => {
                         className="mb-10"
                       >
                         {/* Subject Bar */}
-                        <div className="flex justify-center">
-                          <div className="w-full max-w-[980px] bg-[#eef6ee] border-2 border-blue-800 rounded-xl px-6 py-3 text-center">
-                            <h3 className="text-2xl font-extrabold text-green-900">
-                              {subjectItem.subject}
-                            </h3>
+                        <div className="flex justify-center mb-4">
+                          <div className="text-2xl font-extrabold text-green-900">
+                            {subjectItem.subject}
                           </div>
                         </div>
-
                         {/* Chapters (left) + Exercises (right) */}
-                        <div className="mt-5 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
+                        <div className="mt-3 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
                           {/* LEFT: chapter list */}
                           <div className="space-y-4">
                             {(subjectItem.chapters || []).map((chapterItem, idx) => {
