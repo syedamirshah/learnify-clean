@@ -195,6 +195,16 @@ const LandingPage = () => {
     });
   };
 
+  const sortedChapters = (chapters) => {
+    return [...(chapters || [])].sort((a, b) => {
+      const getNum = (txt) => {
+        const m = String(txt || "").match(/Chapter\s*(\d+)/i);
+        return m ? parseInt(m[1], 10) : 999999;
+      };
+      return getNum(a.chapter) - getNum(b.chapter);
+    });
+  };
+
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
 
@@ -452,7 +462,7 @@ const LandingPage = () => {
                         <div className="mt-3 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
                           {/* LEFT: chapter list */}
                           <div className="space-y-4">
-                            {(subjectItem.chapters || []).map((chapterItem, idx) => {
+                            {sortedChapters(subjectItem.chapters).map((chapterItem, idx) => {
                               const chapterKey = getChapterKey(
                                 gradeItem.grade,
                                 subjectItem.subject,
@@ -506,7 +516,7 @@ const LandingPage = () => {
                                         return { ...prev, [subjectKey]: chapterKey };
                                       });
                                     }}
-                                    className={`flex-1 text-left rounded-xl border-2 border-blue-800 px-5 font-extrabold text-2xl transition ${
+                                    className={`flex-1 text-left rounded-xl border-2 border-blue-800 px-5 font-extrabold text-lg md:text-xl transition ${
                                       pinned
                                         ? "bg-blue-100"
                                         : "bg-[#f1f7f1] hover:bg-white"
