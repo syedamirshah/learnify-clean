@@ -516,7 +516,7 @@ const LandingPage = () => {
                                         return { ...prev, [subjectKey]: chapterKey };
                                       });
                                     }}
-                                    className={`flex-1 text-left rounded-xl border-2 border-blue-800 px-5 font-extrabold text-lg md:text-xl transition ${
+                                    className={`flex-1 text-left rounded-xl border-2 border-blue-800 px-5 font-bold text-base md:text-lg transition ${
                                       pinned
                                         ? "bg-blue-100"
                                         : "bg-[#f1f7f1] hover:bg-white"
