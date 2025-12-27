@@ -515,8 +515,8 @@ const LandingPage = () => {
                                       </div>
                                       <div className="text-xs font-semibold text-gray-800">
                                         {Array.isArray(chapterItem.quizzes)
-                                          ? `${chapterItem.quizzes.length} exercise(s)`
-                                          : "0 exercise(s)"}
+                                          ? `${chapterItem.quizzes.length} exercises`
+                                          : "0 exercises"}
                                       </div>
                                     </div>
 
@@ -572,9 +572,7 @@ const LandingPage = () => {
                                       <div className={`font-extrabold ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
                                         {quiz.title}
                                       </div>
-                                      <div className="text-xs font-semibold text-gray-700 mt-1">
-                                        Tap to attempt
-                                      </div>
+                                      
                                     </Link>
                                   ))}
                                 </div>
