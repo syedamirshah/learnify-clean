@@ -247,7 +247,7 @@ const LandingPage = () => {
           {role ? (
             <>
               {userFullName && (
-                <span className="hidden sm:inline text-sm md:text-base font-semibold text-gray-700 italic">
+                <span className="hidden sm:inline text-base md:text-lg font-semibold text-gray-700 italic">
                   Welcome, {userFullName}
                 </span>
               )}
@@ -448,9 +448,9 @@ const LandingPage = () => {
                           {/* LEFT: Chapters */}
                           <div className="rounded-2xl border border-gray-200 bg-white/60 shadow-sm p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <div className="text-sm font-semibold text-gray-800">
-                                Chapters
-                              </div>
+                            <div className="text-sm font-bold text-gray-900">
+                              Chapters
+                            </div>
                             </div>
 
                             <div className="space-y-2">
@@ -510,10 +510,10 @@ const LandingPage = () => {
                                     </div>
 
                                     <div className="min-w-0">
-                                      <div className={`font-bold text-base md:text-lg truncate ${palette.accent}`}>
+                                      <div className={`font-extrabold text-base md:text-lg truncate ${palette.accent} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.25)]`}>
                                         {chapterItem.chapter}
                                       </div>
-                                      <div className="text-xs text-gray-600">
+                                      <div className="text-xs font-semibold text-gray-800">
                                         {Array.isArray(chapterItem.quizzes)
                                           ? `${chapterItem.quizzes.length} exercise(s)`
                                           : "0 exercise(s)"}
@@ -541,10 +541,10 @@ const LandingPage = () => {
                                   ${activePalette ? activePalette.panelBorder : "border-gray-200"}
                                 `}
                               >
-                              <div className={`text-lg font-extrabold ${activePalette ? activePalette.accent : "text-green-900"}`}>
+                              <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
-                              <div className="text-sm text-gray-600 mt-1">
+                              <div className="text-sm font-semibold text-gray-800 mt-1">
                                 {activeChapterObj
                                   ? pinnedChapterBySubject[subjectKey]
                                     ? "Pinned (click the chapter again to close)."
@@ -569,10 +569,10 @@ const LandingPage = () => {
                                         ${activePalette ? "hover:opacity-90" : "hover:bg-green-50 hover:border-green-300"}
                                       `}
                                     >
-                                      <div className={`font-semibold ${activePalette ? activePalette.accent : "text-green-900"}`}>
+                                      <div className={`font-extrabold ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
                                         {quiz.title}
                                       </div>
-                                      <div className="text-xs text-gray-500 mt-1">
+                                      <div className="text-xs font-semibold text-gray-700 mt-1">
                                         Tap to attempt
                                       </div>
                                     </Link>
