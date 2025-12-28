@@ -12,7 +12,6 @@ const StudentQuizHistoryTable = () => {
     const fetchQuizHistory = async () => {
       try {
         const res = await axiosInstance.get('student/quiz-history/');
-        
         setQuizResults(res.data.results || []);
         setStudentName(res.data.full_name || '');
       } catch (err) {
@@ -26,67 +25,79 @@ const StudentQuizHistoryTable = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 px-6 py-8">
+    <div className="min-h-screen bg-[#f6fff6] px-4 py-8 text-gray-800">
       {/* Header */}
-      <header className="flex items-center gap-6 mb-6">
+      <header className="flex items-center gap-5 mb-8 max-w-6xl mx-auto">
         <Link to="/" title="Go to Home">
           <img
             src={logo}
             alt="Learnify Logo"
-            className="h-24 w-auto hover:opacity-80 transition duration-200"
+            className="h-20 hover:opacity-80 transition"
           />
         </Link>
-        <h2 className="text-3xl font-bold text-green-800">
-          Your Quiz History
-        </h2>
+        <div>
+          <h2 className="text-3xl font-extrabold text-green-900">
+            Quiz History
+          </h2>
+          {studentName && (
+            <p className="text-sm italic text-green-700">
+              {studentName}
+            </p>
+          )}
+        </div>
       </header>
 
-      {/* Quiz History Table */}
-      <div className="overflow-x-auto border border-green-200 rounded-xl shadow-sm">
-        <table className="min-w-full bg-white text-sm">
-          <thead className="bg-green-100 text-green-900 font-semibold">
-            <tr>
-              <th className="px-4 py-3 border">Quiz Title</th>
-              <th className="px-4 py-3 border">Chapter</th>
-              <th className="px-4 py-3 border">Subject</th>
-              <th className="px-4 py-3 border">Grade</th>
-              <th className="px-4 py-3 border">Score</th>
-              <th className="px-4 py-3 border">Percentage</th>
-              <th className="px-4 py-3 border">Grade</th>
-              <th className="px-4 py-3 border">Completed At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="8" className="text-center py-4 text-green-700">
-                  Loading quiz history...
-                </td>
-              </tr>
-            ) : quizResults.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="text-center py-4 text-gray-600">
-                  No quiz history available.
-                </td>
-              </tr>
-            ) : (
-              quizResults.map((result, idx) => (
-                <tr key={idx} className="text-center hover:bg-green-50 transition">
-                  <td className="border px-3 py-2">{result.quiz_title}</td>
-                  <td className="border px-3 py-2">{result.chapter}</td>
-                  <td className="border px-3 py-2">{result.subject}</td>
-                  <td className="border px-3 py-2">{result.grade}</td>
-                  <td className="border px-3 py-2">
-                    {result.marks_obtained} / {result.total_questions * result.marks_per_question}
-                  </td>
-                  <td className="border px-3 py-2">{result.percentage}%</td>
-                  <td className="border px-3 py-2">{result.grade_letter}</td>
-                  <td className="border px-3 py-2">{result.attempted_on}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* Content */}
+      <div className="max-w-6xl mx-auto space-y-4">
+        {loading ? (
+          <div className="text-center py-10 text-green-700 font-semibold">
+            Loading quiz history…
+          </div>
+        ) : quizResults.length === 0 ? (
+          <div className="text-center py-10 text-gray-600">
+            No quiz history available.
+          </div>
+        ) : (
+          quizResults.map((result, idx) => {
+            const totalMarks = result.total_questions * result.marks_per_question;
+
+            return (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl border border-green-200 shadow-sm hover:shadow-md transition p-5"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center">
+                  
+                  {/* LEFT: Quiz Info */}
+                  <div>
+                    <div className="text-lg font-extrabold text-green-900">
+                      {result.quiz_title}
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      {result.chapter} · {result.subject}
+                    </div>
+                    <div className="mt-1 text-xs italic text-gray-500">
+                      {result.grade} · {result.attempted_on}
+                    </div>
+                  </div>
+
+                  {/* RIGHT: Score Badges */}
+                  <div className="flex flex-wrap justify-center md:justify-end gap-2 text-sm font-semibold">
+                    <span className="px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-800">
+                      Score: {result.marks_obtained}/{totalMarks}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800">
+                      {result.percentage}%
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-800">
+                      Grade: {result.grade_letter}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
