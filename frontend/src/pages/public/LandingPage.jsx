@@ -270,7 +270,41 @@ const LandingPage = () => {
   // ✅ NEW: normalize quiz titles so matching is reliable
   const normalizeTitle = (t) => String(t || "").trim();
 
-    // 🎨 Kid-friendly chapter colors (Tailwind classes)
+  // 🎯 Subject-level anchor colors (Option 3)
+    const subjectPalettes = {
+      Mathematics: {
+        accent: "text-green-900",
+        panelBorder: "border-green-300",
+        panelBg: "bg-green-50",
+        softBg: "bg-green-100",
+      },
+      Science: {
+        accent: "text-sky-900",
+        panelBorder: "border-sky-300",
+        panelBg: "bg-sky-50",
+        softBg: "bg-sky-100",
+      },
+      English: {
+        accent: "text-purple-900",
+        panelBorder: "border-purple-300",
+        panelBg: "bg-purple-50",
+        softBg: "bg-purple-100",
+      },
+      Islamiat: {
+        accent: "text-emerald-900",
+        panelBorder: "border-emerald-300",
+        panelBg: "bg-emerald-50",
+        softBg: "bg-emerald-100",
+      },
+      "Social Studies": {
+        accent: "text-amber-900",
+        panelBorder: "border-amber-300",
+        panelBg: "bg-amber-50",
+        softBg: "bg-amber-100",
+      },
+    };
+  
+  // 🎨 Kid-friendly chapter colors (Tailwind classes)
   // Split background + border so we can apply them cleanly (no conflicts)
   const chapterPalettes = [
     { cardBg: "bg-rose-100",    cardBorder: "border-rose-200",    accent: "text-rose-900",    panelBg: "bg-rose-100",    panelBorder: "border-rose-200" },
@@ -510,35 +544,37 @@ const LandingPage = () => {
                     const activeChapterObj =
                       activeKey && chapterIndexMap.has(activeKey) ? chapterIndexMap.get(activeKey) : null;
 
+                      const subjectPalette =
+                      subjectPalettes[subjectItem.subject] || subjectPalettes.Mathematics;
+                    
                     const activePalette =
                       activeChapterObj ? getChapterPalette(activeChapterObj._colorIndex ?? 0) : null;
-
                     
                     return (
                       <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
                         {/* ✅ Subject styled like Grade (no big box) */}
                         <div className="flex justify-center">
-                          <div className="text-2xl font-extrabold text-green-900">
-                            {subjectItem.subject}
-                          </div>
+                        <div className={`text-2xl font-extrabold ${subjectPalette.accent}`}>
+                          {subjectItem.subject}
+                        </div>
                         </div>
 
                         {/* Modern two-panel layout */}
                         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
                           {/* LEFT: Chapters */}
-                            <div
-                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
-                                ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
-                              `}
-                            >
+                          <div
+                            className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
+                              ${subjectPalette.panelBorder}
+                            `}
+                          >
                               {/* Header bar (matches Exercises header style) */}
                               <div
                                 className={`px-5 py-4 border-b
-                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
-                                  ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
+                                  ${subjectPalette.panelBg}
+                                  ${subjectPalette.panelBorder}
                                 `}
                               >
-                                <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
+                                <div className={`text-xl font-black ${subjectPalette.accent}`}>
                                   Chapters
                                 </div>
                               </div>
@@ -621,17 +657,17 @@ const LandingPage = () => {
                             </div>
                           {/* RIGHT: Exercises */}
                           <div
-                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
-                                ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                            className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
+                              ${subjectPalette.panelBorder}
+                            `}
+                          >
+                            <div
+                              className={`px-5 py-4 border-b
+                                ${subjectPalette.panelBg}
+                                ${subjectPalette.panelBorder}
                               `}
                             >
-                            <div
-                                className={`px-5 py-4 border-b
-                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
-                                  ${activePalette ? activePalette.panelBorder : "border-gray-200"}
-                                `}
-                              >
-                              <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
+                              <div className={`text-xl font-black ${subjectPalette.accent}`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
                               
@@ -652,22 +688,15 @@ const LandingPage = () => {
                                         key={`quiz-${quiz.id}`}
                                         to={`/student/attempt-quiz/${quiz.id}`}
                                         className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md hover:brightness-95
-                                          ${
-                                            activePalette
-                                              ? `${activePalette.panelBorder} ${activePalette.panelBg}`
-                                              : "border-gray-200 bg-white"
-                                          }
+                                          ${subjectPalette.panelBorder} ${subjectPalette.softBg}
                                         `}
                                       >
                                         {/* Title */}
                                         <div
-                                          className={`font-medium ${
-                                            activePalette ? activePalette.accent : "text-green-900"
-                                          } drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}
+                                          className={`font-medium ${subjectPalette.accent} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}
                                         >
                                           {quiz.title}
                                         </div>
-
                                         {/* ✅ Score + Grade */}
                                         {role === "student" && history && (
                                           <div className="mt-1 flex items-center justify-center gap-2 text-xs font-semibold">
