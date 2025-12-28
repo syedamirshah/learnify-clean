@@ -355,9 +355,10 @@ const LandingPage = () => {
 
       {/* Navbar (unchanged) */}
       <nav
-          className="w-full sticky top-0 flex justify-evenly items-center text-center
-                    text-xl font-medium bg-[#42b72a] text-white z-50
-                    py-3 md:py-4"
+          className="w-full sticky top-0 z-50 bg-[#42b72a] text-white
+                    flex justify-evenly items-center text-center
+                    text-2xl font-semibold
+                    py-4 md:py-5 px-6 md:px-10"
         >
         <div className="py-2">
           <Link to="/why-join" className="text-white hover:underline">
@@ -369,7 +370,7 @@ const LandingPage = () => {
           {role === "student" && (
             <>
               <button className="text-white hover:underline font-normal">Assessment</button>
-              <div className="absolute left-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
+              <div className="absolute left-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
                 <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
                   Subject-wise Performance
                 </Link>
@@ -442,9 +443,9 @@ const LandingPage = () => {
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top block"
           />
-        </div>
+                </div>
       </section>
 
       {/* Content Explorer */}
