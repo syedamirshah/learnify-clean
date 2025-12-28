@@ -473,89 +473,99 @@ const LandingPage = () => {
                         {/* Modern two-panel layout */}
                         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
                           {/* LEFT: Chapters */}
-                          <div className="rounded-2xl border-2 border-[#42b72a] bg-white/60 shadow-sm p-4">
-                            <div className="flex items-center justify-between mb-3">
-                            <div className="text-sm font-bold text-gray-900">
-                              Chapters
+                            <div
+                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
+                                ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
+                              `}
+                            >
+                              {/* Header bar (matches Exercises header style) */}
+                              <div
+                                className={`px-5 py-4 border-b
+                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
+                                  ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
+                                `}
+                              >
+                                <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
+                                  {activeChapterObj ? `Chapters — ${activeChapterObj.chapter}` : "Chapters"}
+                                </div>
+                              </div>
+
+                              {/* Body */}
+                              <div className="p-4">
+                                <div className="space-y-2">
+                                  {chaptersSorted.map((chapterItem, idx) => {
+                                    const chapterKey = getChapterKey(
+                                      gradeItem.grade,
+                                      subjectItem.subject,
+                                      chapterItem
+                                    );
+
+                                    const pinned = pinnedChapterBySubject[subjectKey] === chapterKey;
+                                    const palette = getChapterPalette(chapterItem._colorIndex ?? idx);
+
+                                    return (
+                                      <button
+                                        key={`chapter-row-${chapterKey}`}
+                                        type="button"
+                                        onMouseEnter={() => {
+                                          setHoverChapterBySubject((prev) => ({
+                                            ...prev,
+                                            [subjectKey]: chapterKey,
+                                          }));
+                                        }}
+                                        onMouseLeave={() => {
+                                          setHoverChapterBySubject((prev) => {
+                                            if (pinnedChapterBySubject[subjectKey]) return prev;
+                                            const next = { ...prev };
+                                            delete next[subjectKey];
+                                            return next;
+                                          });
+                                        }}
+                                        onClick={() => {
+                                          setPinnedChapterBySubject((prev) => {
+                                            const currentlyPinned = prev[subjectKey];
+                                            if (currentlyPinned === chapterKey) {
+                                              const next = { ...prev };
+                                              delete next[subjectKey];
+                                              return next;
+                                            }
+                                            return { ...prev, [subjectKey]: chapterKey };
+                                          });
+                                        }}
+                                        className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border-2 transition shadow-sm
+                                          ${palette.cardBg} ${palette.cardBorder}
+                                          ${pinned ? "ring-2 ring-offset-2 ring-green-400" : "hover:shadow-md"}
+                                        `}
+                                        title="Hover to preview exercises • Click to keep exercises open"
+                                      >
+                                        <div
+                                          className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border-2 bg-white/70
+                                            ${palette.cardBorder} ${palette.accent}
+                                          `}
+                                        >
+                                          {idx + 1}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                          <div className={`font-extrabold text-base md:text-lg truncate ${palette.accent} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.25)]`}>
+                                            {chapterItem.chapter}
+                                          </div>
+                                          <div className="text-xs font-semibold text-gray-800">
+                                            {Array.isArray(chapterItem.quizzes)
+                                              ? `${chapterItem.quizzes.length} exercises`
+                                              : "0 exercises"}
+                                          </div>
+                                        </div>
+
+                                        <div className="ml-auto font-bold text-gray-500">
+                                          {pinned ? "📌" : "›"}
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
-                            </div>
-
-                            <div className="space-y-2">
-                            {chaptersSorted.map((chapterItem, idx) => {
-                                const chapterKey = getChapterKey(
-                                  gradeItem.grade,
-                                  subjectItem.subject,
-                                  chapterItem
-                                );
-
-                                const pinned = pinnedChapterBySubject[subjectKey] === chapterKey;
-
-                                // ✅ chapter color
-                                const palette = getChapterPalette(chapterItem._colorIndex ?? idx);
-
-                                return (
-                                  <button
-                                    key={`chapter-row-${chapterKey}`}
-                                    type="button"
-                                    onMouseEnter={() => {
-                                      setHoverChapterBySubject((prev) => ({
-                                        ...prev,
-                                        [subjectKey]: chapterKey,
-                                      }));
-                                    }}
-                                    onMouseLeave={() => {
-                                      setHoverChapterBySubject((prev) => {
-                                        if (pinnedChapterBySubject[subjectKey]) return prev;
-                                        const next = { ...prev };
-                                        delete next[subjectKey];
-                                        return next;
-                                      });
-                                    }}
-                                    onClick={() => {
-                                      setPinnedChapterBySubject((prev) => {
-                                        const currentlyPinned = prev[subjectKey];
-                                        if (currentlyPinned === chapterKey) {
-                                          const next = { ...prev };
-                                          delete next[subjectKey];
-                                          return next;
-                                        }
-                                        return { ...prev, [subjectKey]: chapterKey };
-                                      });
-                                    }}
-                                    className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border-2 transition shadow-sm
-                                      ${palette.cardBg} ${palette.cardBorder}
-                                      ${pinned ? "ring-2 ring-offset-2 ring-green-400" : "hover:shadow-md"}
-                                    `}
-                                    title="Hover to preview exercises • Click to keep exercises open"
-                                  >
-                                    <div
-                                      className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border-2 bg-white/70
-                                        ${palette.cardBorder} ${palette.accent}
-                                      `}
-                                    >
-                                      {idx + 1}
-                                    </div>
-
-                                    <div className="min-w-0">
-                                      <div className={`font-extrabold text-base md:text-lg truncate ${palette.accent} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.25)]`}>
-                                        {chapterItem.chapter}
-                                      </div>
-                                      <div className="text-xs font-semibold text-gray-800">
-                                        {Array.isArray(chapterItem.quizzes)
-                                          ? `${chapterItem.quizzes.length} exercises`
-                                          : "0 exercises"}
-                                      </div>
-                                    </div>
-
-                                    <div className="ml-auto font-bold text-gray-500">
-                                      {pinned ? "📌" : "›"}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
                           {/* RIGHT: Exercises */}
                           <div
                               className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
