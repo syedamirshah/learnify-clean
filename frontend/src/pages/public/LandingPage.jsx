@@ -20,6 +20,8 @@ const LandingPage = () => {
   const [pinnedChapterBySubject, setPinnedChapterBySubject] = useState({}); // subjectKey -> chapterKey
   const [hoverChapterBySubject, setHoverChapterBySubject] = useState({}); // subjectKey -> chapterKey
 
+  const [attemptedQuizIds, setAttemptedQuizIds] = useState(new Set());
+
   // Force full-page light-green background everywhere
   useEffect(() => {
     const prevBG = document.body.style.backgroundColor;
@@ -35,6 +37,16 @@ const LandingPage = () => {
     const storedName = localStorage.getItem("user_full_name");
     setRole(storedRole);
     setFullName(storedName);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("attempted_quiz_ids");
+      const arr = raw ? JSON.parse(raw) : [];
+      setAttemptedQuizIds(new Set(arr.map(String)));
+    } catch (e) {
+      setAttemptedQuizIds(new Set());
+    }
   }, []);
 
   // Expired user redirect
@@ -250,6 +262,7 @@ const LandingPage = () => {
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
+  const isQuizAttempted = (quizId) => attemptedQuizIds.has(String(quizId));
 
   return (
     <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
@@ -524,6 +537,7 @@ const LandingPage = () => {
                                     className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border-2 transition shadow-sm
                                       ${palette.cardBg} ${palette.cardBorder}
                                       ${pinned ? "ring-2 ring-offset-2 ring-green-400" : "hover:shadow-md"}
+                                      hover:brightness-95
                                     `}
                                     title="Hover to preview exercises • Click to keep exercises open"
                                   >
@@ -590,11 +604,17 @@ const LandingPage = () => {
                                     <Link
                                       key={`quiz-${quiz.id}`}
                                       to={`/student/attempt-quiz/${quiz.id}`}
-                                      className={`block rounded-xl border px-4 py-3 transition duration-150
+                                      className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md
                                         ${
                                           activePalette
-                                            ? `${activePalette.panelBorder} bg-white/80 hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md`
-                                            : "border-gray-200 bg-white hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md"
+                                            ? isQuizAttempted(quiz.id)
+                                              // ✅ Attempted = stays darker (same tone as header)
+                                              ? `${activePalette.panelBorder} ${activePalette.panelBg} hover:brightness-95`
+                                              // ✅ Not attempted = normal, but hover becomes header tone (NOT green)
+                                              : `${activePalette.panelBorder} bg-white/80 hover:${activePalette.panelBg} hover:brightness-95`
+                                            : isQuizAttempted(quiz.id)
+                                              ? "border-gray-200 bg-green-50 hover:brightness-95"
+                                              : "border-gray-200 bg-white hover:bg-green-50 hover:brightness-95"
                                         }
                                       `}
                                     >
