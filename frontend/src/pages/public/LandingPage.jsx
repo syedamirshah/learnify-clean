@@ -486,7 +486,7 @@ const LandingPage = () => {
                                 `}
                               >
                                 <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
-                                  {activeChapterObj ? `Chapters — ${activeChapterObj.chapter}` : "Chapters"}
+                                  Chapters
                                 </div>
                               </div>
 
@@ -603,7 +603,7 @@ const LandingPage = () => {
                                         }
                                       `}
                                     >
-                                      <div className={`font-extrabold ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
+                                      <div className={`font-medium ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
                                         {quiz.title}
                                       </div>
                                       
