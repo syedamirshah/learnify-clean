@@ -353,23 +353,25 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* Navbar (unchanged) */}
+      {/* Navbar */}
       <nav
-          className="w-full sticky top-0 z-50 bg-[#42b72a] text-white
-                    flex justify-evenly items-center text-center
-                    text-2xl font-semibold
-                    py-4 md:py-5 px-6 md:px-10"
-        >
-        <div className="py-2">
+        className="w-full bg-[#42b72a] text-white
+                  flex justify-evenly items-center text-center
+                  text-xl font-normal
+                  py-2 px-6 md:px-10"
+      >
+        <div>
           <Link to="/why-join" className="text-white hover:underline">
             Why Join Learnify?
           </Link>
         </div>
 
-        <div className="relative group py-2">
+        <div className="relative group">
           {role === "student" && (
             <>
-              <button className="text-white hover:underline font-normal">Assessment</button>
+              <button className="text-white hover:underline font-normal">
+                Assessment
+              </button>
               <div className="absolute left-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
                 <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
                   Subject-wise Performance
@@ -380,11 +382,13 @@ const LandingPage = () => {
               </div>
             </>
           )}
+
           {role === "teacher" && (
             <Link to="/teacher/assessment" className="text-white hover:underline font-normal">
               Assessment
             </Link>
           )}
+
           {!role && (
             <Link to="/assessment/public" className="text-white hover:underline font-normal">
               Assessment
@@ -392,26 +396,30 @@ const LandingPage = () => {
           )}
         </div>
 
-        <div className="py-2">
+        <div>
           <Link to="/honor-board" className="text-white hover:underline">
             Learnify Heroes
           </Link>
         </div>
-        <div className="py-2">
+
+        <div>
           <Link to="/membership" className="text-white hover:underline">
             Membership
           </Link>
         </div>
-        <div className="py-2">
+
+        <div>
           <Link to="/help-center" className="text-white hover:underline">
             Help Center
           </Link>
         </div>
 
         {role && (
-          <div className="relative group py-2">
-            <button className="text-white hover:underline font-normal">Account Settings</button>
-            <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
+          <div className="relative group">
+            <button className="text-white hover:underline font-normal">
+              Account Settings
+            </button>
+            <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
               <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
                 Make Payment
               </a>
@@ -423,9 +431,11 @@ const LandingPage = () => {
         )}
 
         {!role && (
-          <div className="relative group py-2">
-            <button className="text-white hover:underline font-normal">Sign up</button>
-            <div className="absolute right-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50">
+          <div className="relative group">
+            <button className="text-white hover:underline font-normal">
+              Sign up
+            </button>
+            <div className="absolute right-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
               <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
                 Create Account
               </Link>
@@ -439,15 +449,14 @@ const LandingPage = () => {
 
       {/* Hero Section (full width) */}
       <section className="w-full">
-        <div className="w-full overflow-hidden" style={{ height: "450px" }}>
+        <div className="w-full h-[520px] overflow-hidden">
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="w-full h-full object-cover object-top block"
+            className="w-full h-full object-cover object-center block"
           />
-                </div>
+        </div>
       </section>
-
       {/* Content Explorer */}
       <div className="mt-10 px-4 md:px-6 max-w-[1200px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => {

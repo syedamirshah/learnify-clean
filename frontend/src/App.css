@@ -1,15 +1,27 @@
+/* 🔹 Global reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* prevents horizontal scroll from full-width sections */
 }
 
+/* 🔹 Root container should NOT limit width (fixes banner + navbar issues) */
 #root {
+  width: 100%;
   max-width: none;
   margin: 0;
   padding: 0;
   text-align: left;
 }
-/* ---- existing styles below (can stay as-is) ---- */
+
+/* ---- existing styles below (kept intentionally) ---- */
 
 .logo {
   height: 6em;
@@ -17,9 +29,11 @@ html, body {
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
