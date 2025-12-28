@@ -81,8 +81,13 @@ const LandingPage = () => {
         const map = {};
 
         results.forEach((row) => {
-          // key by quiz title (matches what your public endpoint shows on cards)
-          map[row.quiz_title] = row;
+          const key = normalizeTitle(row.quiz_title);
+
+          // ✅ Add total_marks ourselves (backend doesn't send it)
+          map[key] = {
+            ...row,
+            total_marks: (row.total_questions || 0) * (row.marks_per_question || 0),
+          };
         });
 
         setHistoryMap(map);
@@ -269,6 +274,9 @@ const LandingPage = () => {
       return getNum(a.chapter) - getNum(b.chapter);
     });
   };
+
+  // ✅ NEW: normalize quiz titles so matching is reliable
+  const normalizeTitle = (t) => String(t || "").trim();
 
     // 🎨 Kid-friendly chapter colors (Tailwind classes)
   // Split background + border so we can apply them cleanly (no conflicts)
@@ -628,7 +636,7 @@ const LandingPage = () => {
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => {
-                                    const history = quizHistoryByTitle[String(quiz.title || "").trim()];
+                                    const history = historyMap[normalizeTitle(quiz.title)];
 
                                     return (
                                       <Link
@@ -651,7 +659,7 @@ const LandingPage = () => {
                                           {quiz.title}
                                         </div>
 
-                                        {/* ✅ NEW: Score + Grade (only if history exists) */}
+                                        {/* ✅ Score + Grade */}
                                         {role === "student" && history && (
                                           <div className="mt-1 flex items-center gap-2 text-xs font-semibold">
                                             <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
@@ -663,7 +671,7 @@ const LandingPage = () => {
                                           </div>
                                         )}
 
-                                        {/* Optional tiny hint while history loads */}
+                                        {/* Loading hint */}
                                         {role === "student" && !history && historyLoading && (
                                           <div className="mt-1 text-[11px] text-gray-500">Loading score…</div>
                                         )}
