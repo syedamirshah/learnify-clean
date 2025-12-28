@@ -22,15 +22,7 @@ const LandingPage = () => {
   const [pinnedChapterBySubject, setPinnedChapterBySubject] = useState({}); // subjectKey -> chapterKey
   const [hoverChapterBySubject, setHoverChapterBySubject] = useState({}); // subjectKey -> chapterKey
 
-  // Force full-page light-green background everywhere
-  useEffect(() => {
-    const prevBG = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = "#f6fff6";
-    return () => {
-      document.body.style.backgroundColor = prevBG;
-    };
-  }, []);
-
+  
   // Load role and name
   useEffect(() => {
     const storedRole = localStorage.getItem("user_role");
@@ -297,7 +289,7 @@ const LandingPage = () => {
   const brandMotto = "Learning with Responsibility";
 
   return (
-    <div className="min-h-screen font-[Nunito] text-gray-800 bg-[#f6fff6]">
+    <div className="min-h-screen font-[Nunito] text-gray-800 bg-white">
       {/* Header (same before/after login, with requested layout) */}
       <header className="flex justify-between items-center px-4 pt-4 pb-2">
         {/* Left: logo + brand + motto */}
@@ -362,7 +354,7 @@ const LandingPage = () => {
       </header>
 
       {/* Navbar (unchanged) */}
-      <nav className="flex justify-evenly items-center text-center text-lg font-normal bg-[#42b72a] text-white relative z-30">
+      <nav className="w-full flex justify-evenly items-center text-center text-lg font-normal bg-[#42b72a] text-white relative z-30">
         <div className="py-2">
           <Link to="/why-join" className="text-white hover:underline">
             Why Join Learnify?
@@ -440,17 +432,13 @@ const LandingPage = () => {
         )}
       </nav>
 
-      {/* Hero Section (unchanged) */}
-      <section className="w-full mt-10">
-        <div
-          className="w-full bg-[#f6fff6] flex justify-center items-center overflow-hidden"
-          style={{ height: "450px" }}
-        >
+      {/* Hero Section (full width) */}
+      <section className="w-full">
+        <div className="w-full overflow-hidden" style={{ height: "450px" }}>
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="h-full object-contain"
-            style={{ objectPosition: "center center" }}
+            className="w-full h-full object-cover"
           />
         </div>
       </section>
