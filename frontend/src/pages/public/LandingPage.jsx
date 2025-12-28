@@ -588,26 +588,21 @@ const LandingPage = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => (
                                     <Link
-                                    key={`quiz-${quiz.id}`}
-                                    to={`/student/attempt-quiz/${quiz.id}`}
-                                    className={`block rounded-xl border px-4 py-3 transition
-                                      ${
-                                        isQuizAttempted(quiz.id)
-                                          // ✅ Attempted = darker (same feel as header)
-                                          ? `${activePalette.panelBorder} ${activePalette.panelBg} hover:brightness-95`
-                                          // ✅ Unattempted = lighter
-                                          : `${activePalette.panelBorder} bg-white/80 hover:bg-white`
-                                      }
-                                    `}
-                                  >
-                                    <div
-                                      className={`font-extrabold ${
-                                        activePalette ? activePalette.accent : "text-green-900"
-                                      }`}
+                                      key={`quiz-${quiz.id}`}
+                                      to={`/student/attempt-quiz/${quiz.id}`}
+                                      className={`block rounded-xl border px-4 py-3 transition duration-150
+                                        ${
+                                          activePalette
+                                            ? `${activePalette.panelBorder} bg-white/80 hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md`
+                                            : "border-gray-200 bg-white hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md"
+                                        }
+                                      `}
                                     >
-                                      {quiz.title}
-                                    </div>
-                                  </Link>
+                                      <div className={`font-extrabold ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
+                                        {quiz.title}
+                                      </div>
+                                      
+                                    </Link>
                                   ))}
                                 </div>
                               )}
