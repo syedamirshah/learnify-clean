@@ -291,68 +291,71 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen font-[Nunito] text-gray-800 bg-white">
       {/* Header (same before/after login, with requested layout) */}
-      <header className="flex justify-between items-center px-4 pt-4 pb-2">
-        {/* Left: logo + brand + motto */}
-        <div className="flex items-center gap-4 min-w-0">
-          <img src={logo} alt="Learnify Pakistan Logo" className="h-20 md:h-24" />
-          <div className="min-w-0">
-            <div className="text-xl md:text-2xl font-extrabold text-green-900 leading-tight">
-              {brandTitle}
-            </div>
-            <div className="text-sm md:text-base font-semibold italic text-green-800 leading-tight">
-              {brandMotto}
+      <header className="px-6 md:px-10 pt-4 pb-2">
+        {/* ✅ Wrapper to reduce extreme left/right without centering everything */}
+        <div className="max-w-[1200px] mx-auto flex justify-between items-center">
+          {/* Left: logo + brand + motto */}
+          <div className="flex items-center gap-4 min-w-0">
+            <img src={logo} alt="Learnify Pakistan Logo" className="h-20 md:h-24" />
+            <div className="min-w-0">
+              <div className="text-xl md:text-2xl font-extrabold text-green-900 leading-tight">
+                {brandTitle}
+              </div>
+              <div className="text-sm md:text-base font-semibold italic text-green-800 leading-tight">
+                {brandMotto}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Right: user name near logout OR login form (logic unchanged) */}
-        <div className="flex items-center gap-3">
-          {role ? (
-            <>
-              {userFullName && (
-                <span className="hidden sm:inline text-base md:text-lg font-semibold text-gray-700 italic">
-                  Welcome, {userFullName}
-                </span>
-              )}
-              <button
-                onClick={handleLogout}
-                className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <input
-                type="text"
-                name="username"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="px-3 py-1 border rounded w-28 md:w-40"
-              />
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="px-3 py-1 border rounded w-28 md:w-40"
-              />
-              <button
-                onClick={handleLogin}
-                className="bg-[#42b72a] text-white px-4 py-1 rounded hover:bg-green-700"
-              >
-                Sign in
-              </button>
-              <label className="ml-1 text-sm hidden md:inline">
-                <input type="checkbox" className="mr-1" /> Remember
-              </label>
-            </>
-          )}
+  
+          {/* Right: user name near logout OR login form (logic unchanged) */}
+          <div className="flex items-center gap-3">
+            {role ? (
+              <>
+                {userFullName && (
+                  <span className="hidden sm:inline text-base md:text-lg font-semibold text-gray-700 italic">
+                    Welcome, {userFullName}
+                  </span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="px-3 py-1 border rounded w-28 md:w-40"
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="px-3 py-1 border rounded w-28 md:w-40"
+                />
+                <button
+                  onClick={handleLogin}
+                  className="bg-[#42b72a] text-white px-4 py-1 rounded hover:bg-green-700"
+                >
+                  Sign in
+                </button>
+                <label className="ml-1 text-sm hidden md:inline">
+                  <input type="checkbox" className="mr-1" /> Remember
+                </label>
+              </>
+            )}
+          </div>
         </div>
       </header>
-
+      
       {/* Navbar */}
       <nav
         className="w-full bg-[#42b72a] text-white
