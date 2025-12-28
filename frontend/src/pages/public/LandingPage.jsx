@@ -14,6 +14,8 @@ const LandingPage = () => {
   const [userFullName, setFullName] = useState("");
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
+  const [historyMap, setHistoryMap] = useState({});
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // NEW (presentation-only state)
   const [openGrades, setOpenGrades] = useState(new Set()); // collapsible grade bars
@@ -59,6 +61,40 @@ const LandingPage = () => {
         .catch((err) => console.error("❌ Error fetching quizzes:", err));
     });
   }, []);
+
+  // ✅ NEW: fetch student quiz history (for score + grade on cards)
+  useEffect(() => {
+    const r = localStorage.getItem("user_role");
+    const token = localStorage.getItem("access_token");
+
+    // Only students have this history endpoint (your backend enforces it)
+    if (r !== "student" || !token) return;
+
+    const fetchHistory = async () => {
+      try {
+        setHistoryLoading(true);
+
+        // axiosInstance baseURL already ends with /api/
+        const res = await axiosInstance.get("student/quiz-history/");
+
+        const results = res.data?.results || [];
+        const map = {};
+
+        results.forEach((row) => {
+          // key by quiz title (matches what your public endpoint shows on cards)
+          map[row.quiz_title] = row;
+        });
+
+        setHistoryMap(map);
+      } catch (err) {
+        console.error("❌ Failed to fetch quiz history for cards:", err);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [role]);
 
   // NEW: open all grades by default once data arrives (presentation-only)
   useEffect(() => {
@@ -591,24 +627,49 @@ const LandingPage = () => {
                                 </div>
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => (
-                                    <Link
-                                      key={`quiz-${quiz.id}`}
-                                      to={`/student/attempt-quiz/${quiz.id}`}
-                                      className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md hover:brightness-95
-                                        ${
-                                          activePalette
-                                            ? `${activePalette.panelBorder} ${activePalette.panelBg}`
-                                            : "border-gray-200 bg-white"
-                                        }
-                                      `}
-                                    >
-                                      <div className={`font-medium ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
-                                        {quiz.title}
-                                      </div>
-                                      
-                                    </Link>
-                                  ))}
+                                  {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => {
+                                    const history = quizHistoryByTitle[String(quiz.title || "").trim()];
+
+                                    return (
+                                      <Link
+                                        key={`quiz-${quiz.id}`}
+                                        to={`/student/attempt-quiz/${quiz.id}`}
+                                        className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md hover:brightness-95
+                                          ${
+                                            activePalette
+                                              ? `${activePalette.panelBorder} ${activePalette.panelBg}`
+                                              : "border-gray-200 bg-white"
+                                          }
+                                        `}
+                                      >
+                                        {/* Title */}
+                                        <div
+                                          className={`font-medium ${
+                                            activePalette ? activePalette.accent : "text-green-900"
+                                          } drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}
+                                        >
+                                          {quiz.title}
+                                        </div>
+
+                                        {/* ✅ NEW: Score + Grade (only if history exists) */}
+                                        {role === "student" && history && (
+                                          <div className="mt-1 flex items-center gap-2 text-xs font-semibold">
+                                            <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                              Score: {history.marks_obtained}/{history.total_marks}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                              {history.percentage}% • {history.grade_letter}
+                                            </span>
+                                          </div>
+                                        )}
+
+                                        {/* Optional tiny hint while history loads */}
+                                        {role === "student" && !history && historyLoading && (
+                                          <div className="mt-1 text-[11px] text-gray-500">Loading score…</div>
+                                        )}
+                                      </Link>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
