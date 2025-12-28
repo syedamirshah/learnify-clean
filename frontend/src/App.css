@@ -1,9 +1,19 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* 🔹 Global reset */
+html, body {
+  margin: 0;
+  padding: 0;
 }
+
+/* 🔹 Root container should NOT limit width */
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* ---- existing styles below (can stay as-is) ---- */
 
 .logo {
   height: 6em;
