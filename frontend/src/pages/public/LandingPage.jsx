@@ -281,14 +281,14 @@ const LandingPage = () => {
     // 🎨 Kid-friendly chapter colors (Tailwind classes)
   // Split background + border so we can apply them cleanly (no conflicts)
   const chapterPalettes = [
-    { cardBg: "bg-rose-50",    cardBorder: "border-rose-200",    accent: "text-rose-700",    panelBg: "bg-rose-50",    panelBorder: "border-rose-200" },
-    { cardBg: "bg-amber-50",   cardBorder: "border-amber-200",   accent: "text-amber-700",   panelBg: "bg-amber-50",   panelBorder: "border-amber-200" },
-    { cardBg: "bg-lime-50",    cardBorder: "border-lime-200",    accent: "text-lime-700",    panelBg: "bg-lime-50",    panelBorder: "border-lime-200" },
-    { cardBg: "bg-emerald-50", cardBorder: "border-emerald-200", accent: "text-emerald-700", panelBg: "bg-emerald-50", panelBorder: "border-emerald-200" },
-    { cardBg: "bg-sky-50",     cardBorder: "border-sky-200",     accent: "text-sky-700",     panelBg: "bg-sky-50",     panelBorder: "border-sky-200" },
-    { cardBg: "bg-indigo-50",  cardBorder: "border-indigo-200",  accent: "text-indigo-700",  panelBg: "bg-indigo-50",  panelBorder: "border-indigo-200" },
-    { cardBg: "bg-fuchsia-50", cardBorder: "border-fuchsia-200", accent: "text-fuchsia-700", panelBg: "bg-fuchsia-50", panelBorder: "border-fuchsia-200" },
-    { cardBg: "bg-teal-50",    cardBorder: "border-teal-200",    accent: "text-teal-700",    panelBg: "bg-teal-50",    panelBorder: "border-teal-200" },
+    { cardBg: "bg-rose-50",    cardBorder: "border-rose-200",    accent: "text-rose-900",    panelBg: "bg-rose-100",    panelBorder: "border-rose-200" },
+    { cardBg: "bg-amber-50",   cardBorder: "border-amber-200",   accent: "text-amber-900",   panelBg: "bg-amber-100",   panelBorder: "border-amber-200" },
+    { cardBg: "bg-lime-50",    cardBorder: "border-lime-200",    accent: "text-lime-900",    panelBg: "bg-lime-100",    panelBorder: "border-lime-200" },
+    { cardBg: "bg-emerald-50", cardBorder: "border-emerald-200", accent: "text-emerald-900", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200" },
+    { cardBg: "bg-sky-50",     cardBorder: "border-sky-200",     accent: "text-sky-900",     panelBg: "bg-sky-100",     panelBorder: "border-sky-200" },
+    { cardBg: "bg-indigo-50",  cardBorder: "border-indigo-200",  accent: "text-indigo-900",  panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200" },
+    { cardBg: "bg-fuchsia-50", cardBorder: "border-fuchsia-200", accent: "text-fuchsia-900", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200" },
+    { cardBg: "bg-teal-50",    cardBorder: "border-teal-200",    accent: "text-teal-900",    panelBg: "bg-teal-100",    panelBorder: "border-teal-200" },
   ];
 
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
@@ -661,7 +661,7 @@ const LandingPage = () => {
 
                                         {/* ✅ Score + Grade */}
                                         {role === "student" && history && (
-                                          <div className="mt-1 flex items-center gap-2 text-xs font-semibold">
+                                          <div className="mt-1 flex items-center justify-center gap-2 text-xs font-semibold">
                                             <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
                                               Score: {history.marks_obtained}/{history.total_marks}
                                             </span>
