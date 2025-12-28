@@ -296,7 +296,11 @@ const LandingPage = () => {
         <div className="max-w-[1200px] mx-auto flex justify-between items-center">
           {/* Left: logo + brand + motto */}
           <div className="flex items-center gap-4 min-w-0">
-            <img src={logo} alt="Learnify Pakistan Logo" className="h-20 md:h-24" />
+          <img
+              src={logo}
+              alt="Learnify Pakistan Logo"
+              className="h-20 md:h-24 -ml-2 md:-ml-4"
+            />
             <div className="min-w-0">
               <div className="text-xl md:text-2xl font-extrabold text-green-900 leading-tight">
                 {brandTitle}
@@ -318,7 +322,7 @@ const LandingPage = () => {
                 )}
                 <button
                   onClick={handleLogout}
-                  className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+                  className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 ml-3 md:ml-5"
                 >
                   Logout
                 </button>
@@ -355,7 +359,7 @@ const LandingPage = () => {
           </div>
         </div>
       </header>
-      
+
       {/* Navbar */}
       <nav
         className="w-full bg-[#42b72a] text-white
