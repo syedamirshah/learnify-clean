@@ -354,7 +354,11 @@ const LandingPage = () => {
       </header>
 
       {/* Navbar (unchanged) */}
-      <nav className="w-full flex justify-evenly items-center text-center text-lg font-normal bg-[#42b72a] text-white relative z-30">
+      <nav
+          className="w-full sticky top-0 flex justify-evenly items-center text-center
+                    text-xl font-medium bg-[#42b72a] text-white z-50
+                    py-3 md:py-4"
+        >
         <div className="py-2">
           <Link to="/why-join" className="text-white hover:underline">
             Why Join Learnify?
