@@ -571,13 +571,7 @@ const LandingPage = () => {
                               <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
-                              <div className="text-sm font-semibold text-gray-800 mt-1">
-                                {activeChapterObj
-                                  ? pinnedChapterBySubject[subjectKey]
-                                    ? "Pinned (click the chapter again to close)."
-                                    : "Preview (hovering)."
-                                  : "Hover over a chapter to preview its exercises, or click a chapter to keep them open."}
-                              </div>
+                              
                             </div>
 
                             <div className="p-5">
@@ -591,11 +585,11 @@ const LandingPage = () => {
                                     <Link
                                       key={`quiz-${quiz.id}`}
                                       to={`/student/attempt-quiz/${quiz.id}`}
-                                      className={`block rounded-xl border px-4 py-3 transition duration-150
+                                      className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md hover:brightness-95
                                         ${
                                           activePalette
-                                            ? `${activePalette.panelBorder} bg-white/80 hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md`
-                                            : "border-gray-200 bg-white hover:bg-green-50 hover:border-[#42b72a] hover:shadow-md"
+                                            ? `${activePalette.panelBorder} ${activePalette.panelBg}`
+                                            : "border-gray-200 bg-white"
                                         }
                                       `}
                                     >
