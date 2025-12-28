@@ -584,13 +584,7 @@ const LandingPage = () => {
                               <div className={`text-xl font-semibold ${activePalette ? activePalette.accent : "text-green-900"}`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
-                              <div className="text-sm font-semibold text-gray-800 mt-1">
-                                {activeChapterObj
-                                  ? pinnedChapterBySubject[subjectKey]
-                                    ? "Pinned (click the chapter again to close)."
-                                    : "Preview (hovering)."
-                                  : "Hover over a chapter to preview its exercises, or click a chapter to keep them open."}
-                              </div>
+                              
                             </div>
 
                             <div className="p-5">
