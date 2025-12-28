@@ -208,17 +208,16 @@ const LandingPage = () => {
   };
 
     // 🎨 Kid-friendly chapter colors (Tailwind classes)
-  // Split background + border so we can apply them cleanly (no conflicts)
-  const chapterPalettes = [
-    { cardBg: "bg-rose-50",    cardBorder: "border-rose-200",    accent: "text-rose-700",    panelBg: "bg-rose-50",    panelBorder: "border-rose-200" },
-    { cardBg: "bg-amber-50",   cardBorder: "border-amber-200",   accent: "text-amber-700",   panelBg: "bg-amber-50",   panelBorder: "border-amber-200" },
-    { cardBg: "bg-lime-50",    cardBorder: "border-lime-200",    accent: "text-lime-700",    panelBg: "bg-lime-50",    panelBorder: "border-lime-200" },
-    { cardBg: "bg-emerald-50", cardBorder: "border-emerald-200", accent: "text-emerald-700", panelBg: "bg-emerald-50", panelBorder: "border-emerald-200" },
-    { cardBg: "bg-sky-50",     cardBorder: "border-sky-200",     accent: "text-sky-700",     panelBg: "bg-sky-50",     panelBorder: "border-sky-200" },
-    { cardBg: "bg-indigo-50",  cardBorder: "border-indigo-200",  accent: "text-indigo-700",  panelBg: "bg-indigo-50",  panelBorder: "border-indigo-200" },
-    { cardBg: "bg-fuchsia-50", cardBorder: "border-fuchsia-200", accent: "text-fuchsia-700", panelBg: "bg-fuchsia-50", panelBorder: "border-fuchsia-200" },
-    { cardBg: "bg-teal-50",    cardBorder: "border-teal-200",    accent: "text-teal-700",    panelBg: "bg-teal-50",    panelBorder: "border-teal-200" },
-  ];
+    const chapterPalettes = [
+      { cardBg: "bg-rose-100",    cardBorder: "border-rose-400",    accent: "text-rose-900",    panelBg: "bg-rose-50",    panelBorder: "border-rose-400" },
+      { cardBg: "bg-amber-100",   cardBorder: "border-amber-400",   accent: "text-amber-900",   panelBg: "bg-amber-50",   panelBorder: "border-amber-400" },
+      { cardBg: "bg-lime-100",    cardBorder: "border-lime-400",    accent: "text-lime-900",    panelBg: "bg-lime-50",    panelBorder: "border-lime-400" },
+      { cardBg: "bg-emerald-100", cardBorder: "border-emerald-400", accent: "text-emerald-900", panelBg: "bg-emerald-50", panelBorder: "border-emerald-400" },
+      { cardBg: "bg-sky-100",     cardBorder: "border-sky-400",     accent: "text-sky-900",     panelBg: "bg-sky-50",     panelBorder: "border-sky-400" },
+      { cardBg: "bg-indigo-100",  cardBorder: "border-indigo-400",  accent: "text-indigo-900",  panelBg: "bg-indigo-50",  panelBorder: "border-indigo-400" },
+      { cardBg: "bg-fuchsia-100", cardBorder: "border-fuchsia-400", accent: "text-fuchsia-900", panelBg: "bg-fuchsia-50", panelBorder: "border-fuchsia-400" },
+      { cardBg: "bg-teal-100",    cardBorder: "border-teal-400",    accent: "text-teal-900",    panelBg: "bg-teal-50",    panelBorder: "border-teal-400" },
+    ];
 
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
 
@@ -520,7 +519,7 @@ const LandingPage = () => {
                                       </div>
                                     </div>
 
-                                    <div className="ml-auto font-bold text-gray-500">
+                                    <div className={`ml-auto font-black ${pinned ? "text-gray-900" : "text-gray-700"}`}>
                                       {pinned ? "📌" : "›"}
                                     </div>
                                   </button>
@@ -541,7 +540,7 @@ const LandingPage = () => {
                                   ${activePalette ? activePalette.panelBorder : "border-gray-200"}
                                 `}
                               >
-                              <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
+                              <div className={`text-xl font-semibold ${activePalette ? activePalette.accent : "text-green-900"}`}>
                                 {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
                               </div>
                               <div className="text-sm font-semibold text-gray-800 mt-1">
@@ -564,9 +563,8 @@ const LandingPage = () => {
                                     <Link
                                       key={`quiz-${quiz.id}`}
                                       to={`/student/attempt-quiz/${quiz.id}`}
-                                      className={`block rounded-xl border bg-white px-4 py-3 transition
-                                        ${activePalette ? activePalette.panelBorder : "border-gray-200"}
-                                        ${activePalette ? "hover:opacity-90" : "hover:bg-green-50 hover:border-green-300"}
+                                      className={`block rounded-xl border px-4 py-3 transition
+                                        ${activePalette ? `${activePalette.panelBorder} bg-white/80 hover:bg-white` : "border-gray-200 bg-white hover:bg-green-50 hover:border-green-300"}
                                       `}
                                     >
                                       <div className={`font-extrabold ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}>
