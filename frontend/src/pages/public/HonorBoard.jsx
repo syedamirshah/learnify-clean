@@ -81,16 +81,16 @@ const HonorBoard = () => {
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="bg-white text-green-900">
-                        <th className="px-4 py-3 border-b text-center font-extrabold">Rank</th>
-                        <th className="px-4 py-3 border-b text-left font-extrabold">Name</th>
-                        <th className="px-4 py-3 border-b text-left font-extrabold">School</th>
-                        <th className="px-4 py-3 border-b text-left font-extrabold">City</th>
-                        <th className="px-4 py-3 border-b text-left font-extrabold">Province</th>
-                        <th className="px-4 py-3 border-b text-center font-extrabold">Quizzes</th>
-                        <th className="px-4 py-3 border-b text-center font-extrabold">Avg. Score</th>
-                        <th className="px-4 py-3 border-b text-center font-extrabold">Total Marks</th>
-                      </tr>
+                    <tr className="bg-white text-green-900">
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Rank</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Name</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">School</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">City</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Province</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Quizzes</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Avg. Score</th>
+                      <th className="px-4 py-3 border-b text-center font-extrabold">Total Marks</th>
+                    </tr>
                     </thead>
 
                     <tbody>
