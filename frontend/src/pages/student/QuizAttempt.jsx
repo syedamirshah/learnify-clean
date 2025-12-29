@@ -313,39 +313,44 @@ const QuizAttempt = () => {
                         }}
                         dangerouslySetInnerHTML={{ __html: fixImageUrls(currentQuestion.question_text) }}
                       />
-                      {(currentQuestion.options || [])
-                        .filter(opt => !shouldHideOption(opt))                 // ✅ hide placeholder options
-                        .map((opt, index) => {
-                          const qid = currentQuestion.question_id;
-                          const isMCQ = currentQuestion.type === 'mcq';
-                          const isSelected = isMCQ
-                            ? (answers[qid] || []).includes(opt)
-                            : answers[qid] === opt;
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-3">
+                        {(currentQuestion.options || [])
+                          .filter((opt) => !shouldHideOption(opt)) // ✅ hide placeholder options
+                          .map((opt, index) => {
+                            const qid = currentQuestion.question_id;
+                            const isMCQ = currentQuestion.type === "mcq";
+                            const isSelected = isMCQ
+                              ? (answers[qid] || []).includes(opt)
+                              : answers[qid] === opt;
 
-                          return (
-                            <label key={`${qid}-${index}`} className="block">
-                              <input
-                                type={isMCQ ? 'checkbox' : 'radio'}
-                                name={`question_${qid}${isMCQ ? `_${index}` : ''}`}
-                                value={opt}
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  if (isMCQ) {
-                                    const prev = answers[qid] || [];
-                                    const updated = e.target.checked
-                                      ? [...prev, opt]
-                                      : prev.filter((o) => o !== opt);
-                                    handleOptionChange(qid, updated);
-                                  } else {
-                                    handleOptionChange(qid, opt);
-                                  }
-                                }}
-                                className="mr-2"
-                              />
-                              {opt}
-                            </label>
-                          );
-                        })}
+                            return (
+                              <label
+                                key={`${qid}-${index}`}
+                                className="flex items-start gap-2 cursor-pointer"
+                              >
+                                <input
+                                  type={isMCQ ? "checkbox" : "radio"}
+                                  name={`question_${qid}${isMCQ ? `_${index}` : ""}`}
+                                  value={opt}
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (isMCQ) {
+                                      const prev = answers[qid] || [];
+                                      const updated = e.target.checked
+                                        ? [...prev, opt]
+                                        : prev.filter((o) => o !== opt);
+                                      handleOptionChange(qid, updated);
+                                    } else {
+                                      handleOptionChange(qid, opt);
+                                    }
+                                  }}
+                                  className="mt-1"
+                                />
+                                <span className="leading-snug">{opt}</span>
+                              </label>
+                            );
+                          })}
+                      </div>
                     </div>
                   )}
     
