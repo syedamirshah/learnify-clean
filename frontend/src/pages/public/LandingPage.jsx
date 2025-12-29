@@ -380,13 +380,15 @@ const LandingPage = () => {
               <button className="text-white hover:underline font-normal">
                 Assessment
               </button>
-              <div className="absolute left-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
-                <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
-                  Subject-wise Performance
-                </Link>
-                <Link to="/student/quiz-history" className="px-4 py-2 hover:bg-gray-100">
-                  Quiz History
-                </Link>
+              <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
+                <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
+                  <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
+                    Subject-wise Performance
+                  </Link>
+                  <Link to="/student/quiz-history" className="px-4 py-2 hover:bg-gray-100">
+                    Quiz History
+                  </Link>
+                </div>
               </div>
             </>
           )}
@@ -427,13 +429,15 @@ const LandingPage = () => {
             <button className="text-white hover:underline font-normal">
               Account Settings
             </button>
-            <div className="absolute right-0 mt-2 w-56 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
-              <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
-                Make Payment
-              </a>
-              <Link to="/account/edit-profile" className="px-4 py-2 hover:bg-gray-100">
-                Edit Profile
-              </Link>
+            <div className="absolute right-0 top-full hidden group-hover:block z-50 pt-2">
+              <div className="w-56 flex flex-col bg-white text-black shadow-lg rounded text-lg">
+                <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
+                  Make Payment
+                </a>
+                <Link to="/account/edit-profile" className="px-4 py-2 hover:bg-gray-100">
+                  Edit Profile
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -443,13 +447,15 @@ const LandingPage = () => {
             <button className="text-white hover:underline font-normal">
               Sign up
             </button>
-            <div className="absolute right-0 mt-2 w-60 hidden group-hover:flex flex-col bg-white text-black shadow-lg rounded z-50 text-lg">
-              <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
-                Create Account
-              </Link>
-              <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
-                Make Payment
-              </a>
+            <div className="absolute right-0 top-full hidden group-hover:block z-50 pt-2">
+              <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
+                <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
+                  Create Account
+                </Link>
+                <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
+                  Make Payment
+                </a>
+              </div>
             </div>
           </div>
         )}
