@@ -278,16 +278,21 @@ const LandingPage = () => {
 
   
   // 🎨 Bright (full tone) chapter colors for cards
-  const chapterPalettes = [
-    { cardBg: "bg-rose-400",    cardBorder: "border-rose-600",    titleText: "text-white", panelBg: "bg-rose-100",    panelBorder: "border-rose-200",    accent: "text-rose-900" },
-    { cardBg: "bg-amber-400",   cardBorder: "border-amber-600",   titleText: "text-white", panelBg: "bg-amber-100",   panelBorder: "border-amber-200",   accent: "text-amber-900" },
-    { cardBg: "bg-lime-400",    cardBorder: "border-lime-600",    titleText: "text-white", panelBg: "bg-lime-100",    panelBorder: "border-lime-200",    accent: "text-lime-900" },
-    { cardBg: "bg-emerald-400", cardBorder: "border-emerald-600", titleText: "text-white", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200", accent: "text-emerald-900" },
-    { cardBg: "bg-sky-400",     cardBorder: "border-sky-600",     titleText: "text-white", panelBg: "bg-sky-100",     panelBorder: "border-sky-200",     accent: "text-sky-900" },
-    { cardBg: "bg-indigo-400",  cardBorder: "border-indigo-600",  titleText: "text-white", panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200",  accent: "text-indigo-900" },
-    { cardBg: "bg-fuchsia-400", cardBorder: "border-fuchsia-600", titleText: "text-white", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200", accent: "text-fuchsia-900" },
-    { cardBg: "bg-teal-400",    cardBorder: "border-teal-600",    titleText: "text-white", panelBg: "bg-teal-100",    panelBorder: "border-teal-200",    accent: "text-teal-900" },
-  ];
+const chapterPalettes = [
+  // 1️⃣ Calm & learning-friendly (best for first chapters)
+  { cardBg: "bg-sky-400",     cardBorder: "border-sky-600",     titleText: "text-white", panelBg: "bg-sky-100",     panelBorder: "border-sky-200",     accent: "text-sky-900" },
+  { cardBg: "bg-emerald-400", cardBorder: "border-emerald-600", titleText: "text-white", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200", accent: "text-emerald-900" },
+  { cardBg: "bg-teal-400",    cardBorder: "border-teal-600",    titleText: "text-white", panelBg: "bg-teal-100",    panelBorder: "border-teal-200",    accent: "text-teal-900" },
+
+  // 2️⃣ Friendly warm energy (middle chapters)
+  { cardBg: "bg-lime-400",    cardBorder: "border-lime-600",    titleText: "text-white", panelBg: "bg-lime-100",    panelBorder: "border-lime-200",    accent: "text-lime-900" },
+  { cardBg: "bg-amber-400",   cardBorder: "border-amber-600",   titleText: "text-white", panelBg: "bg-amber-100",   panelBorder: "border-amber-200",   accent: "text-amber-900" },
+  { cardBg: "bg-rose-400",    cardBorder: "border-rose-600",    titleText: "text-white", panelBg: "bg-rose-100",    panelBorder: "border-rose-200",    accent: "text-rose-900" },
+
+  // 3️⃣ Special / advanced / highlight chapters
+  { cardBg: "bg-indigo-400",  cardBorder: "border-indigo-600",  titleText: "text-white", panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200",  accent: "text-indigo-900" },
+  { cardBg: "bg-fuchsia-400", cardBorder: "border-fuchsia-600", titleText: "text-white", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200", accent: "text-fuchsia-900" },
+];
 
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
 
