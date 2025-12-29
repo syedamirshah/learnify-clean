@@ -326,11 +326,11 @@ const QuizAttempt = () => {
                             return (
                               <label
                                 key={`${qid}-${index}`}
-                                className="flex items-start gap-2 cursor-pointer"
+                                className="flex items-center gap-3"
                               >
                                 <input
-                                  type={isMCQ ? "checkbox" : "radio"}
-                                  name={`question_${qid}${isMCQ ? `_${index}` : ""}`}
+                                  type={isMCQ ? 'checkbox' : 'radio'}
+                                  name={`question_${qid}`}
                                   value={opt}
                                   checked={isSelected}
                                   onChange={(e) => {
@@ -344,9 +344,10 @@ const QuizAttempt = () => {
                                       handleOptionChange(qid, opt);
                                     }
                                   }}
-                                  className="mt-1"
                                 />
-                                <span className="leading-snug">{opt}</span>
+                                <span className="leading-none">
+                                  {opt}
+                                </span>
                               </label>
                             );
                           })}
