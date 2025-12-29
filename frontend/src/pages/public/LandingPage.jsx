@@ -271,17 +271,16 @@ const LandingPage = () => {
   const normalizeTitle = (t) => String(t || "").trim();
 
   
-  // 🎨 Kid-friendly chapter colors (Tailwind classes)
-  // Split background + border so we can apply them cleanly (no conflicts)
+  // 🎨 Bright (full tone) chapter colors for cards
   const chapterPalettes = [
-    { cardBg: "bg-rose-100",    cardBorder: "border-rose-200",    accent: "text-rose-900",    panelBg: "bg-rose-100",    panelBorder: "border-rose-200" },
-    { cardBg: "bg-amber-100",   cardBorder: "border-amber-200",   accent: "text-amber-900",   panelBg: "bg-amber-100",   panelBorder: "border-amber-200" },
-    { cardBg: "bg-lime-100",    cardBorder: "border-lime-200",    accent: "text-lime-900",    panelBg: "bg-lime-100",    panelBorder: "border-lime-200" },
-    { cardBg: "bg-emerald-100", cardBorder: "border-emerald-200", accent: "text-emerald-900", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200" },
-    { cardBg: "bg-sky-100",     cardBorder: "border-sky-200",     accent: "text-sky-900",     panelBg: "bg-sky-100",     panelBorder: "border-sky-200" },
-    { cardBg: "bg-indigo-100",  cardBorder: "border-indigo-200",  accent: "text-indigo-900",  panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200" },
-    { cardBg: "bg-fuchsia-100", cardBorder: "border-fuchsia-200", accent: "text-fuchsia-900", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200" },
-    { cardBg: "bg-teal-100",    cardBorder: "border-teal-200",    accent: "text-teal-900",    panelBg: "bg-teal-100",    panelBorder: "border-teal-200" },
+    { cardBg: "bg-rose-500",    cardBorder: "border-rose-600",    titleText: "text-white", panelBg: "bg-rose-100",    panelBorder: "border-rose-200",    accent: "text-rose-900" },
+    { cardBg: "bg-amber-500",   cardBorder: "border-amber-600",   titleText: "text-white", panelBg: "bg-amber-100",   panelBorder: "border-amber-200",   accent: "text-amber-900" },
+    { cardBg: "bg-lime-500",    cardBorder: "border-lime-600",    titleText: "text-white", panelBg: "bg-lime-100",    panelBorder: "border-lime-200",    accent: "text-lime-900" },
+    { cardBg: "bg-emerald-500", cardBorder: "border-emerald-600", titleText: "text-white", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200", accent: "text-emerald-900" },
+    { cardBg: "bg-sky-500",     cardBorder: "border-sky-600",     titleText: "text-white", panelBg: "bg-sky-100",     panelBorder: "border-sky-200",     accent: "text-sky-900" },
+    { cardBg: "bg-indigo-500",  cardBorder: "border-indigo-600",  titleText: "text-white", panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200",  accent: "text-indigo-900" },
+    { cardBg: "bg-fuchsia-500", cardBorder: "border-fuchsia-600", titleText: "text-white", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200", accent: "text-fuchsia-900" },
+    { cardBg: "bg-teal-500",    cardBorder: "border-teal-600",    titleText: "text-white", panelBg: "bg-teal-100",    panelBorder: "border-teal-200",    accent: "text-teal-900" },
   ];
 
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
@@ -600,17 +599,17 @@ const LandingPage = () => {
                                       >
                                         <div
                                           className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border-2 bg-white/70
-                                            ${palette.cardBorder} ${palette.accent}
+                                            ${palette.cardBorder} text-gray-900
                                           `}
                                         >
                                           {idx + 1}
                                         </div>
 
                                         <div className="min-w-0">
-                                          <div className={`font-extrabold text-base md:text-lg truncate ${palette.accent} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.25)]`}>
+                                          <div className={`font-extrabold text-base md:text-lg truncate ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
                                             {chapterItem.chapter}
                                           </div>
-                                          <div className="text-xs font-semibold text-gray-800">
+                                          <div className="mt-1 inline-block text-xs font-semibold text-gray-900 bg-white/80 px-2 py-0.5 rounded">
                                             {Array.isArray(chapterItem.quizzes)
                                               ? `${chapterItem.quizzes.length} exercises`
                                               : "0 exercises"}
