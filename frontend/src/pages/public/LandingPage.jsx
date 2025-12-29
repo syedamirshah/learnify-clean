@@ -479,15 +479,18 @@ const LandingPage = () => {
             <div key={`grade-${gradeIndex}`} className="mb-12">
               {/* ✅ Grade itself is the toggle (no extra expand/collapse button) */}
               <div className="flex justify-center">
-                <button
+              <button
                   type="button"
                   onClick={() => toggleGrade(gradeItem.grade)}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-green-200 bg-white/70 shadow-sm hover:shadow transition
-                             text-2xl font-extrabold text-green-900"
+                  className="inline-flex items-center gap-3 px-7 py-3 rounded-full
+                            border-2 border-green-200 bg-white shadow-sm
+                            hover:shadow-md hover:-translate-y-[1px] transition
+                            text-2xl font-extrabold text-green-900"
                   title="Click to expand/collapse"
                 >
-                  {gradeItem.grade}
-                  <span className="text-base font-bold">{gradeOpen ? "▾" : "▸"}</span>
+                  <span className="text-xl">📘</span>
+                  <span>{gradeItem.grade}</span>
+                  <span className="text-base font-bold opacity-70">{gradeOpen ? "▾" : "▸"}</span>
                 </button>
               </div>
 
@@ -524,11 +527,15 @@ const LandingPage = () => {
                       <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
                         {/* ✅ Subject styled like Grade (no big box) */}
                         <div className="flex justify-center">
-                          <div className="text-2xl font-extrabold text-green-900">
-                            {subjectItem.subject}
+                          <div className="flex items-center gap-4">
+                            <span className="hidden md:block h-[2px] w-24 bg-green-200 rounded-full" />
+                            <div className="px-6 py-2 rounded-full bg-green-50 border border-green-200 shadow-sm
+                                            text-3xl font-extrabold text-green-900">
+                              {subjectItem.subject}
+                            </div>
+                            <span className="hidden md:block h-[2px] w-24 bg-green-200 rounded-full" />
                           </div>
                         </div>
-
                         {/* Modern two-panel layout */}
                         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
                           {/* LEFT: Chapters */}
