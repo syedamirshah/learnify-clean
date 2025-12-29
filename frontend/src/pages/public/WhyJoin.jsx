@@ -35,15 +35,16 @@ const WhyJoinLearnify = () => {
         <h2 className="text-4xl font-extrabold text-green-700 mb-4">
           Why Join Learnify Pakistan?
         </h2>
+
         <p className="text-lg text-gray-700 mb-12">
-          Learnify Pakistan is more than just a quiz app — it's a joyful journey
-          of discovery, designed for primary students, teachers, and parents.
-          Grounded in Pakistan’s National Curriculum, we blend innovation,
-          simplicity, and inclusivity to make learning unforgettable.
+          Learnify Pakistan is more than a quiz app — it’s a joyful learning journey
+          for primary students, supportive for parents, and practical for teachers.
+          Built around Pakistan’s National Curriculum, Learnify blends simplicity,
+          smart practice, and meaningful feedback to help every child grow with confidence.
         </p>
 
         <div className="space-y-12 text-left">
-          {/* Existing 6 features unchanged */}
+          {/* 1) Curriculum Alignment */}
           <div className="flex items-start space-x-4">
             <FaBookOpen className="text-green-600 text-2xl mt-1" />
             <div>
@@ -51,25 +52,26 @@ const WhyJoinLearnify = () => {
                 Aligned with National Curriculum
               </h3>
               <p className="text-gray-700">
-                Every quiz, topic, and explanation is 100% aligned with
-                Pakistan’s official curriculum for Grades 1–5 — ensuring you're
-                always on track.
+                Every quiz is mapped to nationally and provincially approved textbooks
+                for Grades 1–5, so students practice exactly what they learn in class —
+                in the right sequence, with the right concepts.
               </p>
             </div>
           </div>
 
+          {/* 2) Smart Pedagogy */}
           <div className="flex items-start space-x-4">
             <FaBrain className="text-pink-500 text-2xl mt-1" />
             <div>
               <h3 className="text-xl font-bold text-pink-600">Smart Pedagogy</h3>
               <p className="text-gray-700">
-                Learn through real-life examples, visual aids, and interactive
-                practice — from easy to advanced levels — crafted to build deep
-                understanding.
+                Learn through real-life examples, simple explanations, and engaging practice —
+                from basic to advanced — designed to build strong understanding step by step.
               </p>
             </div>
           </div>
 
+          {/* 3) Evaluation Modes */}
           <div className="flex items-start space-x-4">
             <FaChartBar className="text-blue-600 text-2xl mt-1" />
             <div>
@@ -78,21 +80,22 @@ const WhyJoinLearnify = () => {
               </h3>
               <ul className="list-disc ml-5 text-gray-700">
                 <li>
-                  <strong>Instant Feedback:</strong> Get right/wrong answers
-                  instantly with explanations.
+                  <strong>Instant Feedback:</strong> See correct/incorrect answers immediately
+                  (with guidance where needed).
                 </li>
                 <li>
-                  <strong>Progress Tracking:</strong> Monitor your learning across
-                  subjects over time.
+                  <strong>Progress Tracking:</strong> Monitor improvement across topics and subjects
+                  over time.
                 </li>
                 <li>
-                  <strong>Percentile Ranking:</strong> See how you perform compared
-                  to other students nationwide.
+                  <strong>Percentile Ranking:</strong> Understand performance compared to other
+                  students nationwide.
                 </li>
               </ul>
             </div>
           </div>
 
+          {/* 4) Unlimited Attempts */}
           <div className="flex items-start space-x-4">
             <FaRedo className="text-purple-500 text-2xl mt-1" />
             <div>
@@ -100,12 +103,14 @@ const WhyJoinLearnify = () => {
                 Unlimited Quiz Attempts
               </h3>
               <p className="text-gray-700">
-                Practice as much as you want. Every attempt gives you fresh
-                questions, so learning never gets boring.
+                Practice as much as you want — and it won’t feel repetitive. Each new attempt
+                can serve fresh questions instead of repeating the same ones, so students keep
+                learning with interest.
               </p>
             </div>
           </div>
 
+          {/* 5) Inclusive */}
           <div className="flex items-start space-x-4">
             <FaUserFriends className="text-yellow-600 text-2xl mt-1" />
             <div>
@@ -113,12 +118,13 @@ const WhyJoinLearnify = () => {
                 Inclusive for Everyone
               </h3>
               <p className="text-gray-700">
-                Whether you're in school or studying at home, Learnify is made for
-                you — accessible, inclusive, and full of opportunities to shine.
+                Whether a child studies in school or at home, Learnify supports all learners —
+                giving every student a fair chance to practice, improve, and shine.
               </p>
             </div>
           </div>
 
+          {/* 6) Low cost */}
           <div className="flex items-start space-x-4">
             <FaMoneyBillWave className="text-green-500 text-2xl mt-1" />
             <div>
@@ -126,13 +132,13 @@ const WhyJoinLearnify = () => {
                 Low-Cost, High-Impact
               </h3>
               <p className="text-gray-700">
-                Premium learning at a price every household can afford. We believe
-                quality education should be within reach of every child.
+                Premium learning at a price families can afford. Learnify is built on the belief
+                that quality education should be within reach of every child.
               </p>
             </div>
           </div>
 
-          {/* ✅ New Feature 1: Teacher Empowerment */}
+          {/* 7) Teachers */}
           <div className="flex items-start space-x-4">
             <FaChalkboardTeacher className="text-indigo-600 text-2xl mt-1" />
             <div>
@@ -140,38 +146,43 @@ const WhyJoinLearnify = () => {
                 Empowering Teachers with Real-Time Insight
               </h3>
               <p className="text-gray-700">
-                Teachers can instantly access students' assignments and quiz results — no need to check piles of homework manually. This streamlines classroom management, reduces workload, and enables educators to focus more on lesson planning and improving instructional quality.
+                Teachers can instantly view assignments and quiz results — without checking piles
+                of notebooks. This saves time, improves classroom planning, and helps teachers focus
+                on targeted support where students need it most.
               </p>
             </div>
           </div>
 
-        {/* ✅ New Feature 3: Helping Parents Make Better School Choices */}
-        <div className="flex items-start space-x-4">
-        <FaChartBar className="text-emerald-600 text-2xl mt-1" />
-        <div>
-            <h3 className="text-xl font-bold text-emerald-700">
-            Helping Parents Make Better School Choices
-            </h3>
-            <p className="text-gray-700">
-            Learnify’s real-time student performance insights empower parents to compare school-level academic outcomes. This transparency helps families make more informed decisions about their child’s education.
-            </p>
-        </div>
-        </div>
+          {/* 8) Parents */}
+          <div className="flex items-start space-x-4">
+            <FaChartBar className="text-emerald-600 text-2xl mt-1" />
+            <div>
+              <h3 className="text-xl font-bold text-emerald-700">
+                Helping Parents Make Better School Choices
+              </h3>
+              <p className="text-gray-700">
+                Learnify’s learning insights help parents understand academic progress more clearly.
+                Over time, families can compare outcomes across schools and make more informed decisions
+                for their child’s education.
+              </p>
+            </div>
+          </div>
 
-        {/* ✅ New Feature 4: Inspiring School-Wide Academic Competition */}
-        <div className="flex items-start space-x-4">
-        <FaChartBar className="text-cyan-700 text-2xl mt-1" />
-        <div>
-            <h3 className="text-xl font-bold text-cyan-800">
-            Inspiring School-Wide Academic Competition
-            </h3>
-            <p className="text-gray-700">
-            By tracking and showcasing school-level performance, Learnify motivates schools to continuously improve the quality of teaching and learning — creating a healthy, nationwide spirit of academic excellence.
-            </p>
-        </div>
-        </div>
+          {/* 9) Healthy competition */}
+          <div className="flex items-start space-x-4">
+            <FaChartBar className="text-cyan-700 text-2xl mt-1" />
+            <div>
+              <h3 className="text-xl font-bold text-cyan-800">
+                Inspiring School-Wide Academic Competition
+              </h3>
+              <p className="text-gray-700">
+                When learning progress becomes visible, schools feel motivated to improve teaching quality
+                and student outcomes — creating a healthy nationwide culture of academic excellence.
+              </p>
+            </div>
+          </div>
 
-          {/* ✅ New Feature 2: National Research Insights */}
+          {/* 10) Research */}
           <div className="flex items-start space-x-4">
             <FaGlobeAsia className="text-red-600 text-2xl mt-1" />
             <div>
@@ -179,11 +190,12 @@ const WhyJoinLearnify = () => {
                 Driving National-Level Educational Research
               </h3>
               <p className="text-gray-700">
-                Learnify collects anonymized learning data across cities, regions, genders, sectors, and language groups — providing a powerful tool for education researchers and policymakers to understand national trends and design more equitable learning interventions.
+                Learnify can generate anonymized learning insights across regions, genders, schooling modes,
+                and language groups — supporting researchers and policymakers to identify gaps and design
+                more equitable learning interventions.
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>
