@@ -479,20 +479,27 @@ const LandingPage = () => {
             <div key={`grade-${gradeIndex}`} className="mb-12">
               {/* ✅ Grade itself is the toggle (no extra expand/collapse button) */}
               <div className="flex justify-center">
-              <button
-                  type="button"
-                  onClick={() => toggleGrade(gradeItem.grade)}
-                  className="inline-flex items-center gap-3 px-7 py-3 rounded-full
-                            border-2 border-green-200 bg-white shadow-sm
-                            hover:shadow-md hover:-translate-y-[1px] transition
-                            text-2xl font-extrabold text-green-900"
-                  title="Click to expand/collapse"
-                >
-                  <span className="text-xl">📘</span>
-                  <span>{gradeItem.grade}</span>
-                  <span className="text-base font-bold opacity-70">{gradeOpen ? "▾" : "▸"}</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGrade(gradeItem.grade)}
+                    className="inline-flex items-center gap-3 px-7 py-3.5
+                              rounded-3xl border-2 border-green-300
+                              bg-white shadow-md hover:shadow-lg transition
+                              text-3xl font-black text-green-900"
+                    title="Click to expand/collapse"
+                  >
+                    <span className="text-[11px] md:text-xs font-extrabold tracking-widest
+                                    text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                      GRADE
+                    </span>
+
+                    {gradeItem.grade}
+
+                    <span className="text-lg font-bold">
+                      {gradeOpen ? "▾" : "▸"}
+                    </span>
+                  </button>
+                </div>
 
               {!gradeOpen ? null : (
                 <div className="mt-6 space-y-10">
