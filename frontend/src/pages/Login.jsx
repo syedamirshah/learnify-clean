@@ -1,6 +1,8 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import logo from "../assets/logo.png";
+import { Link } from "react-router-dom";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -26,10 +28,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const res = await axiosInstance.post("token/", {
-        username,
-        password,
-      });
+      const res = await axiosInstance.post("token/", { username, password });
 
       const access = res.data.access;
       const refresh = res.data.refresh;
@@ -38,6 +37,8 @@ const Login = () => {
 
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
+
+      // ✅ Keep your existing keys (do NOT remove)
       localStorage.setItem("role", roleFromToken);
       localStorage.setItem("account_status", statusFromToken);
 
@@ -52,7 +53,6 @@ const Login = () => {
         return;
       }
 
-      // axiosInstance already attaches Authorization, but keeping it is fine too.
       const userRes = await axiosInstance.get("user/me/", {
         headers: { Authorization: `Bearer ${access}` },
       });
@@ -83,7 +83,7 @@ const Login = () => {
         return;
       }
 
-      // ✅ Standard practice: go back to where user was (next) or home
+      // ✅ Go back to where user was (next) or home
       const nextPath = getNextPath();
       window.location.href = nextPath || "/";
     } catch (err) {
@@ -96,16 +96,24 @@ const Login = () => {
     }
   };
 
+  const nextPath = getNextPath();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-50">
+    <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
       <div className="w-full max-w-md p-8 rounded-2xl shadow-xl bg-white border border-green-200">
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <img src={logo} alt="Learnify Logo" className="h-16" />
         </div>
 
-        <h2 className="text-2xl font-bold text-center text-green-800 mb-6">
+        <h2 className="text-2xl font-bold text-center text-green-800 mb-2">
           Welcome to Learnify
         </h2>
+
+        {/* ✅ shows user where they’ll go after login */}
+        <p className="text-center text-sm text-gray-500 mb-6">
+          After login, you’ll continue to:{" "}
+          <span className="font-semibold text-gray-700">{nextPath}</span>
+        </p>
 
         <input
           type="text"
@@ -129,6 +137,21 @@ const Login = () => {
         >
           Login
         </button>
+
+        {/* ✅ IMPORTANT: user should never be trapped */}
+        <div className="mt-5 flex items-center justify-between text-sm">
+          <Link to="/" className="text-green-700 hover:underline font-semibold">
+            ← Continue as Guest
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="text-gray-600 hover:underline"
+          >
+            Back
+          </button>
+        </div>
       </div>
     </div>
   );

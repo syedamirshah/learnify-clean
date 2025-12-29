@@ -168,16 +168,22 @@ const LandingPage = () => {
   };
 
   const handleLogout = () => {
+    // Clear ALL auth keys (you currently leave "role" behind)
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
     localStorage.removeItem("user_full_name");
     localStorage.removeItem("account_status");
+    localStorage.removeItem("role"); // ✅ important (you set this on login)
+  
+    // Reset UI state
     setRole(null);
     setFullName("");
-    window.location.href = "/";
+  
+    // ✅ No hard refresh. Also blocks back-navigation to old page.
+    navigate("/", { replace: true });
   };
-
+  
   // ====== existing helpers (unchanged, kept as-is even if not used) ======
   const chapterWeight = (ch) =>
     1 + (Array.isArray(ch.quizzes) ? ch.quizzes.length : 0);
