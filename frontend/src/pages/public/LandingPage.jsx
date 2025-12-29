@@ -606,7 +606,7 @@ const LandingPage = () => {
                                         </div>
 
                                         <div className="min-w-0">
-                                          <div className={`font-normal text-[18px] md:text-[22px] truncate ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
+                                          <div className={`font-normal text-[18px] md:text-[20px] truncate ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
                                             {chapterItem.chapter}
                                           </div>
                                           <div className="mt-1 inline-block text-xs font-semibold text-gray-900 bg-white/80 px-2 py-0.5 rounded">
