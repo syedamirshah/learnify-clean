@@ -471,34 +471,42 @@ const LandingPage = () => {
         </div>
       </section>
       {/* Content Explorer */}
-      <div className="mt-10 px-4 md:px-6 max-w-[1200px] mx-auto">
+      <div className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => {
           const gradeOpen = openGrades.has(gradeItem.grade);
 
           return (
             <div key={`grade-${gradeIndex}`} className="mb-12">
               {/* ✅ Grade itself is the toggle (no extra expand/collapse button) */}
-              <div className="flex justify-center">
+              {/* ===== Grade Header ===== */}
+                <div className="flex items-center justify-center gap-6 mt-4 mb-6">
+                  {/* Left line (longer than subject) */}
+                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+
+                  {/* Grade Button */}
                   <button
                     type="button"
                     onClick={() => toggleGrade(gradeItem.grade)}
-                    className="inline-flex items-center gap-3 px-7 py-3.5
-                              rounded-3xl border-2 border-green-300
-                              bg-white shadow-md hover:shadow-lg transition
-                              text-3xl font-black text-green-900"
-                    title="Click to expand/collapse"
+                    className="
+                      flex items-center gap-3
+                      px-10 py-4
+                      rounded-full
+                      border-2 border-green-300
+                      bg-green-100
+                      shadow-md
+                      hover:shadow-lg
+                      transition
+                      text-3xl
+                      font-extrabold
+                      text-green-900
+                    "
                   >
-                    <span className="text-[11px] md:text-xs font-extrabold tracking-widest
-                                    text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                      GRADE
-                    </span>
-
                     {gradeItem.grade}
-
-                    <span className="text-lg font-bold">
-                      {gradeOpen ? "▾" : "▸"}
-                    </span>
+                    <span className="text-xl">▾</span>
                   </button>
+
+                  {/* Right line */}
+                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
                 </div>
 
               {!gradeOpen ? null : (
