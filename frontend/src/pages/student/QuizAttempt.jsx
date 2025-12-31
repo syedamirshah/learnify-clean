@@ -358,7 +358,7 @@ const QuizAttempt = () => {
                       {currentQuestion.type === 'fib' && (() => {
                     // Keep image URLs absolute
                     const raw = fixImageUrls(currentQuestion.question_text) || '';
-
+                    const fibLineHeight = 1.15;
                     // Split first paragraph as instruction; keep INNER paragraph breaks for the series
                     const splitOnPara = raw.split(/<\/p>\s*<p>/i);
                     let instruction = '';
@@ -405,7 +405,13 @@ const QuizAttempt = () => {
                         )}
 
                         {/* series rendered, respecting <br> before blanks */}
-                        <div style={{ whiteSpace: 'normal' }}>
+                        <div
+                          style={{
+                            whiteSpace: 'normal',
+                            lineHeight: fibLineHeight,      // ✅ fixes huge vertical gap
+                            marginTop: '6px',               // ✅ keeps it close to question
+                          }}
+                        >
                           {parts.map((part, index) => {
                             const isInput = index % 2 === 1;
 
@@ -444,7 +450,7 @@ const QuizAttempt = () => {
 
                               return (
                                 <>
-                                  {needsNewLine && <br />}
+                                  {needsNewLine && <br style={{ lineHeight: fibLineHeight }} />}
                                   <span
                                     key={`wrap-${index}`}
                                     className="inline-block mx-1"
