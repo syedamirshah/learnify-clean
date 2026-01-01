@@ -300,7 +300,7 @@ const QuizAttempt = () => {
           <div className="p-6 max-w-6xl mx-auto bg-white font-[calibri]">
             <div className="flex justify-between items-start">
               {/* Question Block */}
-              <div className="w-3/4 pr-6">
+              <div className="flex-1 pr-6 min-w-0">
                 <div
                   className="mb-4 text-gray-900"
                   style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
@@ -468,31 +468,29 @@ const QuizAttempt = () => {
                 </div>
               </div>
     
-              {/* Timer Block */}
-              <div className="w-1/4 flex justify-end">
-                {/* Fixed-width column so button centers UNDER the clock,
-                    while the whole block stays at FAR RIGHT */}
-                <div className="flex flex-col items-center" style={{ width: 220 }}>
+                            {/* Timer Block */}
+                            <div className="flex-shrink-0 flex justify-end" style={{ width: 260 }}>
+                <div className="flex flex-col items-center">
                   <ElapsedTimer startTime={startTime} />
 
-                  {/* a little more space between clock and button */}
-                  <div className="h-5" />
+                  {/* More space between clock and button */}
+                  <div className="mt-6" />
 
                   <button
                     type="button"
                     onClick={() => setShowRoughWork(true)}
                     title="Open Scratch Pad"
                     className="
-                      w-full
-                      flex items-center justify-center gap-2
-                      px-5 py-3
+                      inline-flex items-center justify-center gap-2
+                      w-[200px]
+                      px-6 py-3
                       rounded-full
-                      bg-green-600 text-white
-                      font-normal 
-                      shadow-md
-                      hover:bg-green-700
+                      bg-[#5CC245] text-white
+                      shadow-lg
+                      hover:bg-[#4fb83b]
                       active:scale-[0.99]
                       transition
+                      font-normal
                     "
                     style={{ fontFamily: "calibri" }}
                   >
