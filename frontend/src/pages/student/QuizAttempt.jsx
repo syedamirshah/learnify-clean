@@ -468,34 +468,25 @@ const QuizAttempt = () => {
                 </div>
               </div>
     
-                            {/* Timer Block */}
-                            <div className="flex-shrink-0 flex justify-end" style={{ width: 260 }}>
+              {/* Timer Block */}
+              <div className="w-1/4 flex justify-end">
+                {/* Keep timer at far right, and center button UNDER the clock
+                    WITHOUT increasing the column width */}
                 <div className="flex flex-col items-center">
                   <ElapsedTimer startTime={startTime} />
 
-                  {/* More space between clock and button */}
+                  {/* more space between clock and button */}
                   <div className="mt-6" />
 
                   <button
                     type="button"
                     onClick={() => setShowRoughWork(true)}
                     title="Open Scratch Pad"
-                    className="
-                      inline-flex items-center justify-center gap-2
-                      w-[200px]
-                      px-6 py-3
-                      rounded-full
-                      bg-[#5CC245] text-white
-                      shadow-lg
-                      hover:bg-[#4fb83b]
-                      active:scale-[0.99]
-                      transition
-                      font-normal
-                    "
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-600 text-white shadow-md hover:bg-green-700 transition"
                     style={{ fontFamily: "calibri" }}
                   >
                     <span className="text-lg">✏️</span>
-                    <span>Scratch Pad</span>
+                    <span className="font-semibold">Scratch Pad</span>
                   </button>
                 </div>
               </div>
