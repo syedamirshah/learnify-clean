@@ -469,17 +469,28 @@ const QuizAttempt = () => {
               </div>
     
               {/* Timer Block */}
-              <div className="w-1/4 flex flex-col items-end gap-3">
+              <div className="w-1/4 flex flex-col items-center gap-6">
                 <ElapsedTimer startTime={startTime} />
 
                 <button
                   type="button"
                   onClick={() => setShowRoughWork(true)}
-                  className="px-4 py-2 rounded-md bg-white border shadow-sm hover:bg-gray-50 text-gray-800 font-semibold"
-                  style={{ fontFamily: "calibri" }}
                   title="Open Scratch Pad"
+                  style={{ fontFamily: "calibri" }}
+                  className="
+                    flex items-center gap-2
+                    px-5 py-2.5
+                    rounded-xl
+                    bg-[#5CC245] text-white
+                    font-semibold
+                    shadow-md
+                    hover:bg-[#4eb23a]
+                    active:scale-[0.98]
+                    transition
+                  "
                 >
-                  📝 Scratch Pad
+                  <span className="text-lg">✏️</span>
+                  <span>Scratch Pad</span>
                 </button>
               </div>
             </div>
