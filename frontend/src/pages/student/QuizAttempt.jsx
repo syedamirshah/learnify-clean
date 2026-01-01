@@ -296,7 +296,7 @@ const QuizAttempt = () => {
           <div className="text-center mt-8 text-green-700 font-semibold">Loading quiz...</div>
         ) : (
           <div className="p-6 max-w-6xl mx-auto bg-white font-[calibri]">
-            <div className="flex justify-between items-start">
+            <div className="flex items-start gap-6 min-h-[520px]">
               {/* Question Block */}
               <div className="w-3/4 pr-6">
                 <div
@@ -479,7 +479,8 @@ const QuizAttempt = () => {
                   position: "sticky",
                   top: "16px",
                   alignSelf: "flex-start",
-                  maxHeight: "calc(100vh - 120px)",  // keeps it inside screen
+                  maxHeight: "calc(100vh - 120px)",
+                  minWidth: "320px",          // ✅ makes it stable, not squeezed
                 }}
               >
                 <ElapsedTimer startTime={startTime} />
@@ -488,9 +489,10 @@ const QuizAttempt = () => {
                 <div
                   className="w-full mt-4"
                   style={{
-                    height: "360px",          // IMPORTANT: fixed height so it won’t push buttons down
-                    overflow: "hidden",       // no page growth
+                    height: "420px",
+                    overflow: "hidden",
                     borderRadius: "10px",
+                    display: "flex",
                   }}
                 >
                   <RoughWorkBoard />
