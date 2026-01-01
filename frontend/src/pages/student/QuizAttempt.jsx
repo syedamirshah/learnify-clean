@@ -17,6 +17,7 @@ const shouldHideOption = (opt) => {
   return HIDE_OPTION_MARKERS.has(s) || HIDE_OPTION_MARKERS.has(s.toLowerCase());
 };
 
+
 const QuizAttempt = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const QuizAttempt = () => {
   const [attemptId, setAttemptId] = useState(null);
   const [quizMeta, setQuizMeta] = useState({});
   const [previewMode, setPreviewMode] = useState(false);
+  const [showRoughWork, setShowRoughWork] = useState(false);
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const totalQuestions = questions.length > 0 ? (quizMeta.total_expected_questions || questions.length) : 0;
@@ -296,7 +298,7 @@ const QuizAttempt = () => {
           <div className="text-center mt-8 text-green-700 font-semibold">Loading quiz...</div>
         ) : (
           <div className="p-6 max-w-6xl mx-auto bg-white font-[calibri]">
-            <div className="flex items-start gap-6 min-h-[520px]">
+            <div className="flex justify-between items-start">
               {/* Question Block */}
               <div className="w-3/4 pr-6">
                 <div
@@ -314,45 +316,39 @@ const QuizAttempt = () => {
                         }}
                         dangerouslySetInnerHTML={{ __html: fixImageUrls(currentQuestion.question_text) }}
                       />
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-3">
-                        {(currentQuestion.options || [])
-                          .filter((opt) => !shouldHideOption(opt)) // ✅ hide placeholder options
-                          .map((opt, index) => {
-                            const qid = currentQuestion.question_id;
-                            const isMCQ = currentQuestion.type === "mcq";
-                            const isSelected = isMCQ
-                              ? (answers[qid] || []).includes(opt)
-                              : answers[qid] === opt;
+                      {(currentQuestion.options || [])
+                        .filter(opt => !shouldHideOption(opt))                 // ✅ hide placeholder options
+                        .map((opt, index) => {
+                          const qid = currentQuestion.question_id;
+                          const isMCQ = currentQuestion.type === 'mcq';
+                          const isSelected = isMCQ
+                            ? (answers[qid] || []).includes(opt)
+                            : answers[qid] === opt;
 
-                            return (
-                              <label
-                                key={`${qid}-${index}`}
-                                className="flex items-center gap-3"
-                              >
-                                <input
-                                  type={isMCQ ? 'checkbox' : 'radio'}
-                                  name={`question_${qid}`}
-                                  value={opt}
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    if (isMCQ) {
-                                      const prev = answers[qid] || [];
-                                      const updated = e.target.checked
-                                        ? [...prev, opt]
-                                        : prev.filter((o) => o !== opt);
-                                      handleOptionChange(qid, updated);
-                                    } else {
-                                      handleOptionChange(qid, opt);
-                                    }
-                                  }}
-                                />
-                                <span className="leading-none">
-                                  {opt}
-                                </span>
-                              </label>
-                            );
-                          })}
-                      </div>
+                          return (
+                            <label key={`${qid}-${index}`} className="block">
+                              <input
+                                type={isMCQ ? 'checkbox' : 'radio'}
+                                name={`question_${qid}${isMCQ ? `_${index}` : ''}`}
+                                value={opt}
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (isMCQ) {
+                                    const prev = answers[qid] || [];
+                                    const updated = e.target.checked
+                                      ? [...prev, opt]
+                                      : prev.filter((o) => o !== opt);
+                                    handleOptionChange(qid, updated);
+                                  } else {
+                                    handleOptionChange(qid, opt);
+                                  }
+                                }}
+                                className="mr-2"
+                              />
+                              {opt}
+                            </label>
+                          );
+                        })}
                     </div>
                   )}
     
@@ -472,31 +468,19 @@ const QuizAttempt = () => {
                 </div>
               </div>
     
-              {/* Timer Block + Rough Work */}
-              <div
-                className="w-1/4 flex flex-col items-end"
-                style={{
-                  position: "sticky",
-                  top: "16px",
-                  alignSelf: "flex-start",
-                  maxHeight: "calc(100vh - 120px)",
-                  minWidth: "320px",          // ✅ makes it stable, not squeezed
-                }}
-              >
+              {/* Timer Block */}
+              <div className="w-1/4 flex flex-col items-end gap-3">
                 <ElapsedTimer startTime={startTime} />
 
-                {/* Rough Work Board (below the clock) */}
-                <div
-                  className="w-full mt-4"
-                  style={{
-                    height: "420px",
-                    overflow: "hidden",
-                    borderRadius: "10px",
-                    display: "flex",
-                  }}
+                <button
+                  type="button"
+                  onClick={() => setShowRoughWork(true)}
+                  className="px-4 py-2 rounded-md bg-white border shadow-sm hover:bg-gray-50 text-gray-800 font-semibold"
+                  style={{ fontFamily: "calibri" }}
+                  title="Open Scratch Pad"
                 >
-                  <RoughWorkBoard />
-                </div>
+                  📝 Scratch Pad
+                </button>
               </div>
             </div>
     
@@ -591,6 +575,37 @@ const QuizAttempt = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+        {/* Scratch Pad Popup */}
+        {showRoughWork && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.35)" }}
+            onClick={() => setShowRoughWork(false)}
+          >
+            <div
+              className="bg-white rounded-xl shadow-2xl w-[92vw] max-w-3xl"
+              style={{ fontFamily: "calibri" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <div className="font-semibold text-gray-800">📝 Scratch Pad</div>
+                <button
+                  type="button"
+                  className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold"
+                  onClick={() => setShowRoughWork(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-3" style={{ maxHeight: "75vh", overflow: "auto" }}>
+                <RoughWorkBoard />
+              </div>
             </div>
           </div>
         )}

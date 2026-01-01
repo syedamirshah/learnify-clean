@@ -95,18 +95,17 @@ const RoughWorkBoard = () => {
 
       {/* Canvas */}
       <div className="p-2">
-        <ReactSketchCanvas
-          ref={canvasRef}
-          width="100%"
-          height="100%"
-          strokeWidth={strokeWidth}
-          strokeColor={strokeColor}
-          canvasColor="#ffffff"
-          style={{
-            borderRadius: "12px",
-            height: "100%",
-          }}
-        />
+      <ReactSketchCanvas
+        ref={canvasRef}
+        width="100%"
+        height="420px"
+        strokeWidth={strokeWidth}
+        strokeColor={strokeColor}
+        canvasColor="#ffffff"
+        style={{
+          borderRadius: "12px",
+        }}
+      />
       </div>
     </div>
   );
