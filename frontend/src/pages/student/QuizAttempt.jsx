@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../utils/axiosInstance';
 import logo from '../../assets/logo.png'; 
 import ElapsedTimer from "../../components/ElapsedTimer.jsx";
+import RoughWorkBoard from "../../components/RoughWorkBoard.jsx";
 
 // Options with these values will be hidden in UI
 const HIDE_OPTION_MARKERS = new Set([
@@ -471,9 +472,14 @@ const QuizAttempt = () => {
                 </div>
               </div>
     
-              {/* Timer Block */}
-              <div className="w-1/4 flex justify-end">
+              {/* Timer Block + Rough Work */}
+              <div className="w-1/4 flex flex-col items-end">
                 <ElapsedTimer startTime={startTime} />
+
+                {/* Rough Work Board (below the clock) */}
+                <div className="w-full mt-4">
+                  <RoughWorkBoard />
+                </div>
               </div>
             </div>
     
