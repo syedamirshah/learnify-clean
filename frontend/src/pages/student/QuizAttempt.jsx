@@ -469,29 +469,37 @@ const QuizAttempt = () => {
               </div>
     
               {/* Timer Block */}
-              <div className="w-1/4 flex flex-col items-center gap-6">
-                <ElapsedTimer startTime={startTime} />
+              <div className="w-1/4 flex justify-end">
+                {/* Fixed-width column so button centers UNDER the clock,
+                    while the whole block stays at FAR RIGHT */}
+                <div className="flex flex-col items-center" style={{ width: 220 }}>
+                  <ElapsedTimer startTime={startTime} />
 
-                <button
-                  type="button"
-                  onClick={() => setShowRoughWork(true)}
-                  title="Open Scratch Pad"
-                  style={{ fontFamily: "calibri" }}
-                  className="
-                    flex items-center gap-2
-                    px-5 py-2.5
-                    rounded-xl
-                    bg-[#5CC245] text-white
-                    font-semibold
-                    shadow-md
-                    hover:bg-[#4eb23a]
-                    active:scale-[0.98]
-                    transition
-                  "
-                >
-                  <span className="text-lg">✏️</span>
-                  <span>Scratch Pad</span>
-                </button>
+                  {/* a little more space between clock and button */}
+                  <div className="h-5" />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowRoughWork(true)}
+                    title="Open Scratch Pad"
+                    className="
+                      w-full
+                      flex items-center justify-center gap-2
+                      px-5 py-3
+                      rounded-full
+                      bg-green-600 text-white
+                      font-normal 
+                      shadow-md
+                      hover:bg-green-700
+                      active:scale-[0.99]
+                      transition
+                    "
+                    style={{ fontFamily: "calibri" }}
+                  >
+                    <span className="text-lg">✏️</span>
+                    <span>Scratch Pad</span>
+                  </button>
+                </div>
               </div>
             </div>
     
