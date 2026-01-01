@@ -473,11 +473,26 @@ const QuizAttempt = () => {
               </div>
     
               {/* Timer Block + Rough Work */}
-              <div className="w-1/4 flex flex-col items-end">
+              <div
+                className="w-1/4 flex flex-col items-end"
+                style={{
+                  position: "sticky",
+                  top: "16px",
+                  alignSelf: "flex-start",
+                  maxHeight: "calc(100vh - 120px)",  // keeps it inside screen
+                }}
+              >
                 <ElapsedTimer startTime={startTime} />
 
                 {/* Rough Work Board (below the clock) */}
-                <div className="w-full mt-4">
+                <div
+                  className="w-full mt-4"
+                  style={{
+                    height: "360px",          // IMPORTANT: fixed height so it won’t push buttons down
+                    overflow: "hidden",       // no page growth
+                    borderRadius: "10px",
+                  }}
+                >
                   <RoughWorkBoard />
                 </div>
               </div>

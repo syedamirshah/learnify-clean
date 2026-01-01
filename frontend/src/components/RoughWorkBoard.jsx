@@ -3,16 +3,22 @@ import { ReactSketchCanvas } from "react-sketch-canvas";
 
 const RoughWorkBoard = () => {
   const canvasRef = useRef(null);
-  const [strokeWidth, setStrokeWidth] = useState(3);
-  const [eraserMode, setEraserMode] = useState(false);
+
+  // Modes: "pen" | "highlighter" | "eraser"
+  const [mode, setMode] = useState("pen");
 
   const setPen = () => {
-    setEraserMode(false);
+    setMode("pen");
+    canvasRef.current?.eraseMode(false);
+  };
+
+  const setHighlighter = () => {
+    setMode("highlighter");
     canvasRef.current?.eraseMode(false);
   };
 
   const setEraser = () => {
-    setEraserMode(true);
+    setMode("eraser");
     canvasRef.current?.eraseMode(true);
   };
 
@@ -20,62 +26,56 @@ const RoughWorkBoard = () => {
     canvasRef.current?.clearCanvas();
   };
 
-  const undo = () => {
-    canvasRef.current?.undo();
-  };
+  // ✅ Fixed settings (no options)
+  const strokeWidth = mode === "highlighter" ? 10 : 4; // medium pen; thicker highlighter
+  const strokeColor = mode === "highlighter" ? "rgba(255, 214, 0, 0.45)" : "#111827";
 
-  const redo = () => {
-    canvasRef.current?.redo();
-  };
+  const iconBtnBase =
+    "w-9 h-9 flex items-center justify-center rounded-md select-none";
+  const activeStyle = "bg-green-600 text-white";
+  const inactiveStyle = "bg-gray-100 text-gray-800 hover:bg-gray-200";
 
   return (
-    <div className="mt-4 border rounded-lg bg-white shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b">
-        <div className="font-semibold text-gray-800">📝 Rough Work</div>
-
+    <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+      {/* Header (icons only) */}
+      <div className="flex items-center justify-between px-2 py-2 border-b">
         <div className="flex items-center gap-2">
           <button
-            className={`px-3 py-1 rounded text-sm ${
-              !eraserMode ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"
-            }`}
-            onClick={setPen}
             type="button"
+            title="Pen"
+            onClick={setPen}
+            className={`${iconBtnBase} ${mode === "pen" ? activeStyle : inactiveStyle}`}
           >
-            Pen
+            ✍️
           </button>
 
           <button
-            className={`px-3 py-1 rounded text-sm ${
-              eraserMode ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"
-            }`}
-            onClick={setEraser}
             type="button"
+            title="Highlighter"
+            onClick={setHighlighter}
+            className={`${iconBtnBase} ${mode === "highlighter" ? activeStyle : inactiveStyle}`}
           >
-            Eraser
+            🖍️
           </button>
 
-          <select
-            className="border rounded px-2 py-1 text-sm"
-            value={strokeWidth}
-            onChange={(e) => setStrokeWidth(Number(e.target.value))}
+          <button
+            type="button"
+            title="Eraser"
+            onClick={setEraser}
+            className={`${iconBtnBase} ${mode === "eraser" ? activeStyle : inactiveStyle}`}
           >
-            <option value={2}>Thin</option>
-            <option value={3}>Medium</option>
-            <option value={5}>Thick</option>
-            <option value={8}>Extra</option>
-          </select>
-
-          <button className="px-3 py-1 rounded text-sm bg-gray-200" onClick={undo} type="button">
-            Undo
-          </button>
-          <button className="px-3 py-1 rounded text-sm bg-gray-200" onClick={redo} type="button">
-            Redo
-          </button>
-          <button className="px-3 py-1 rounded text-sm bg-red-100 text-red-700" onClick={clear} type="button">
-            Clear
+            🧽
           </button>
         </div>
+
+        <button
+          type="button"
+          title="Clear"
+          onClick={clear}
+          className={`${iconBtnBase} bg-red-100 text-red-700 hover:bg-red-200`}
+        >
+          🗑️
+        </button>
       </div>
 
       {/* Canvas */}
@@ -83,9 +83,9 @@ const RoughWorkBoard = () => {
         <ReactSketchCanvas
           ref={canvasRef}
           width="100%"
-          height="320px"
+          height="300px"
           strokeWidth={strokeWidth}
-          strokeColor="#111827"
+          strokeColor={strokeColor}
           canvasColor="#ffffff"
           style={{ borderRadius: "8px" }}
         />
