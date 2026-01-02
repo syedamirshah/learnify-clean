@@ -26,39 +26,31 @@ export default function TeacherAssignTask() {
   const [ok, setOk] = useState("");
 
   // ✅ load grades list from landing/quizzes (no new backend endpoint needed)
-  useEffect(() => {
-    const loadGrades = async () => {
-      try {
-        setLoadingGrades(true);
-        setErr("");
-
-        // Your LandingPage uses API = VITE_API_BASE_URL and calls landing/quizzes/
-        // But axiosInstance baseURL is /api/, so we can call it here safely:
-        const res = await axiosInstance.get("landing/quizzes/");
-        const data = res.data || [];
-
-        // Expecting array like: [{ grade: "Grade 1", grade_id: 1, subjects: [...] }, ...]
-        // If backend doesn't provide grade_id, we fallback to grade name (but your teacher/quizzes needs grade_id)
-        const gradeItems = Array.isArray(data) ? data : [];
-
-        const normalized = gradeItems
-          .map((g) => ({
-            label: g.grade,
-            id: g.grade_id || g.id || "", // try common keys
-          }))
-          .filter((g) => g.label);
-
-        setGrades(normalized);
-      } catch (e) {
-        console.error(e);
-        setErr("Failed to load grades for task assignment.");
-      } finally {
-        setLoadingGrades(false);
-      }
-    };
-
-    loadGrades();
-  }, []);
+  // ✅ CORRECT: load grades with real IDs
+    // ✅ CORRECT: load grades with real IDs
+    useEffect(() => {
+        const loadGrades = async () => {
+        try {
+            setLoadingGrades(true);
+            setErr("");
+    
+            const res = await axiosInstance.get("grades/"); // ✅ REAL IDs
+            setGrades(
+            (res.data || []).map(g => ({
+                id: g.id,
+                label: g.name,
+            }))
+            );
+        } catch (e) {
+            console.error(e);
+            setErr("Failed to load grades.");
+        } finally {
+            setLoadingGrades(false);
+        }
+        };
+    
+        loadGrades();
+    }, []);
 
   // ✅ fetch quizzes when gradeId changes
   useEffect(() => {
@@ -289,9 +281,9 @@ export default function TeacherAssignTask() {
               >
                 <option value="">-- Select --</option>
                 {grades.map((g) => (
-                  <option key={g.label} value={g.id}>
-                    {g.label} {g.id ? "" : "(no id)"}
-                  </option>
+                  <option key={g.id} value={g.id}>
+                    {g.label}
+                    </option>
                 ))}
               </select>
 
