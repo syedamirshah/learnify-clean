@@ -484,7 +484,7 @@ const QuizAttempt = () => {
                     title="Open Scratch Pad"
                     className="
                       inline-flex items-center justify-center
-                      px-3 py-3
+                      w-36 py-3
                       rounded
                       text-white
                       shadow-md
