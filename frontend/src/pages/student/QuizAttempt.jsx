@@ -482,11 +482,11 @@ const QuizAttempt = () => {
                     type="button"
                     onClick={() => setShowRoughWork(true)}
                     title="Open Scratch Pad"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-600 text-white shadow-md hover:bg-green-700 transition"
+                    className="inline-flex items-center justify-center gap-4 px-6 py-3 rounded bg-green-500 text-white shadow-md hover:bg-green-600 transition"
                     style={{ fontFamily: "calibri" }}
                   >
                     <span className="text-lg">✏️</span>
-                    <span className="font-semibold">Scratch Pad</span>
+                    <span className="font-normal">Scratch Pad</span>
                   </button>
                 </div>
               </div>
