@@ -33,6 +33,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/student/quiz-result/:attemptId/" element={<IndividualQuizResult />} />
           <Route path="/student/attempt-quiz/:quizId" element={<QuizAttempt />} />
+          <Route path="/student/quiz/:quizId/start" element={<QuizAttempt />} />
           <Route path="/honor-roll" element={<HonorBoard />} />
           <Route path="/honor-board" element={<HonorBoard />} />
           <Route path="/" element={<LandingPage />} />

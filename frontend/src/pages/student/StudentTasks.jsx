@@ -90,7 +90,7 @@ export default function StudentTasks() {
   }, [tasks, filter]);
 
   const handleAttempt = (quizId) => {
-    navigate(QUIZ_ATTEMPT_ROUTE(quizId));
+    navigate(`/student/attempt-quiz/${quiz.quiz_id}`);
   };
 
   return (
