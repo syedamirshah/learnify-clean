@@ -482,13 +482,25 @@ const QuizAttempt = () => {
                     type="button"
                     onClick={() => setShowRoughWork(true)}
                     title="Open Scratch Pad"
-                    className="inline-flex items-center justify-center gap-4 px-6 py-3 rounded bg-green-500 text-white shadow-md hover:bg-green-600 transition"
-                    style={{ fontFamily: "calibri" }}
+                    className="
+                      inline-flex items-center justify-center
+                      px-6 py-3
+                      rounded
+                      text-white
+                      shadow-md
+                      transition
+                      hover:opacity-95
+                      active:scale-[0.99]
+                    "
+                    style={{
+                      fontFamily: "calibri",
+                      backgroundColor: "#5CC245",   // ✅ exact same as header
+                      width: "210px",              // ✅ prevents widening the right column (no quiz space loss)
+                    }}
                   >
-                    <span className="text-lg">✏️</span>
                     <span className="font-normal">Scratch Pad</span>
                   </button>
-                </div>
+                </div> 
               </div>
             </div>
     
