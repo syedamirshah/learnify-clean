@@ -52,6 +52,9 @@ from core.utils import normalize_text
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 from core.emails import send_password_change_email, send_welcome_email
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+from core.models import TeacherTask, TeacherTaskQuiz
 
 
 # Define the Pakistan time zone once
@@ -1644,32 +1647,222 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+# ================================
+# Teacher Tasks / Recommendations
+# ================================
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def teacher_quizzes_by_grade(request):
+    """
+    GET /api/teacher/quizzes/?grade=<grade_id>
+    Returns quizzes filtered by grade (simple + safe).
+    """
     user = request.user
-
-    # Only teachers allowed
     if user.role != 'teacher':
         return Response({'error': 'Only teachers can access this endpoint.'}, status=403)
 
     grade_id = request.GET.get('grade')
-
     if not grade_id:
-        return Response({'error': 'grade parameter is required.'}, status=400)
+        return Response({'error': 'grade query param is required.'}, status=400)
 
-    try:
-        grade = Grade.objects.get(id=grade_id)
-    except Grade.DoesNotExist:
-        return Response({'error': 'Invalid grade.'}, status=404)
+    quizzes = Quiz.objects.filter(grade_id=grade_id).select_related('grade', 'subject', 'chapter').order_by('title')
 
-    quizzes = (
-        Quiz.objects
-        .filter(grade=grade)
-        .select_related('grade', 'subject', 'chapter')
-        .prefetch_related('assignments__question_bank')
-        .order_by('subject__name', 'chapter__name', 'title')
+    data = []
+    for q in quizzes:
+        data.append({
+            'id': q.id,
+            'title': q.title,
+            'grade': q.grade.name if q.grade else "",
+            'subject': q.subject.name if q.subject else "",
+            'chapter': q.chapter.name if q.chapter else "",
+        })
+
+    return Response(data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def teacher_create_task(request):
+    """
+    POST /api/teacher/tasks/create/
+    Payload (JSON):
+    {
+      "message": "Do these quizzes",
+      "due_date": "2026-01-10",
+      "target_grade": 3,              # optional
+      "target_students": ["u1","u2"],  # optional (usernames)
+      "quizzes": [12, 15, 22]
+    }
+
+    Rule:
+    - Must provide EITHER target_grade OR target_students (not both empty).
+    - If target_students provided -> must be within teacher's school+city.
+    """
+    user = request.user
+    if user.role != 'teacher':
+        return Response({'error': 'Only teachers can create tasks.'}, status=403)
+
+    payload = request.data or {}
+
+    message = (payload.get('message') or "").strip()
+    due_date_raw = payload.get('due_date')
+    target_grade_id = payload.get('target_grade')
+    target_students = payload.get('target_students') or []
+    quizzes = payload.get('quizzes') or []
+
+    if not message:
+        return Response({'error': 'message is required.'}, status=400)
+
+    due_date = parse_date(due_date_raw) if isinstance(due_date_raw, str) else None
+    if not due_date:
+        return Response({'error': 'Valid due_date (YYYY-MM-DD) is required.'}, status=400)
+
+    if not quizzes or not isinstance(quizzes, list):
+        return Response({'error': 'quizzes must be a non-empty list of quiz IDs.'}, status=400)
+
+    if not target_grade_id and not target_students:
+        return Response({'error': 'Provide target_grade OR target_students.'}, status=400)
+
+    # Create task
+    task = TeacherTask.objects.create(
+        teacher=user,
+        message=message,
+        due_date=due_date,
+        target_grade_id=target_grade_id if target_grade_id else None,
+        is_active=True
     )
 
-    serializer = QuizListSerializer(quizzes, many=True)
-    return Response(serializer.data, status=200)
+    # If selected students were provided: validate teacher scope (school + city)
+    if target_students:
+        if not isinstance(target_students, list):
+            task.delete()
+            return Response({'error': 'target_students must be a list of usernames.'}, status=400)
+
+        teacher_city = (user.city or "").strip()
+        teacher_school = (user.school_name or "").strip()
+
+        qs = User.objects.filter(role='student', username__in=target_students)
+
+        # enforce city
+        if teacher_city:
+            qs = qs.filter(city__iexact=teacher_city)
+        else:
+            task.delete()
+            return Response({'error': 'Teacher city is missing; cannot assign student-specific tasks.'}, status=400)
+
+        # enforce school (only if teacher has it)
+        if teacher_school:
+            qs = qs.filter(school_name__iexact=teacher_school)
+
+        allowed_students = list(qs)
+
+        if not allowed_students:
+            task.delete()
+            return Response({'error': 'No valid students found in your school/city.'}, status=400)
+
+        task.target_students.set(allowed_students)
+
+    # Attach quizzes (many per task)
+    quiz_objs = Quiz.objects.filter(id__in=quizzes)
+    if not quiz_objs.exists():
+        task.delete()
+        return Response({'error': 'No valid quizzes found.'}, status=400)
+
+    TeacherTaskQuiz.objects.bulk_create([
+        TeacherTaskQuiz(task=task, quiz=q) for q in quiz_objs
+    ])
+
+    return Response({'success': True, 'task_id': task.id}, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def teacher_tasks_list(request):
+    """
+    Optional:
+    GET /api/teacher/tasks/
+    Returns tasks created by this teacher.
+    """
+    user = request.user
+    if user.role != 'teacher':
+        return Response({'error': 'Only teachers can access this endpoint.'}, status=403)
+
+    tasks = (
+        TeacherTask.objects
+        .filter(teacher=user)
+        .prefetch_related('task_quizzes__quiz', 'target_students', 'target_grade')
+        .order_by('-created_at')
+    )
+
+    data = []
+    for t in tasks:
+        quizzes = [x.quiz.title for x in t.task_quizzes.all()]
+        data.append({
+            'id': t.id,
+            'message': t.message,
+            'due_date': t.due_date,
+            'is_active': t.is_active,
+            'target_grade': t.target_grade.name if t.target_grade else None,
+            'target_students_count': t.target_students.count(),
+            'quizzes': quizzes,
+        })
+
+    return Response(data, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def student_tasks_list(request):
+    """
+    GET /api/student/tasks/
+    Returns tasks assigned to this student + Attempted/Not Attempted per quiz.
+    Active task definition:
+    - is_active=True
+    (You can later add due_date filtering if you want.)
+    """
+    user = request.user
+    if user.role != 'student':
+        return Response({'error': 'Only students can access this endpoint.'}, status=403)
+
+    # assigned if:
+    # - target_grade == student's grade
+    # OR - student is explicitly in target_students
+    tasks = (
+        TeacherTask.objects
+        .filter(is_active=True)
+        .filter(Q(target_grade=user.grade) | Q(target_students=user))
+        .prefetch_related('task_quizzes__quiz')
+        .order_by('due_date', '-created_at')
+        .distinct()
+    )
+
+    output = []
+    for t in tasks:
+        quizzes_data = []
+        for tq in t.task_quizzes.all():
+            quiz = tq.quiz
+
+            attempted = StudentQuizAttempt.objects.filter(
+                student=user,
+                quiz=quiz,
+                completed_at__isnull=False
+            ).exists()
+
+            quizzes_data.append({
+                'quiz_id': quiz.id,
+                'quiz_title': quiz.title,
+                'attempted': attempted
+            })
+
+        output.append({
+            'task_id': t.id,
+            'message': t.message,
+            'due_date': t.due_date,
+            'quizzes': quizzes_data
+        })
+
+    return Response({
+        'count': len(output),
+        'tasks': output
+    }, status=200)
