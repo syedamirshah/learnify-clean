@@ -49,6 +49,7 @@ from .views import (
     student_quiz_history_view,
     get_all_grades,
 )
+from core.views import teacher_quizzes_by_grade
 
 urlpatterns = [
 
@@ -144,4 +145,6 @@ urlpatterns = [
 
     # ---------- Default redirect ----------
     path('', lambda request: redirect('/admin/', permanent=False)),
+
+    path('api/teacher/quizzes/', teacher_quizzes_by_grade, name='teacher-quizzes-by-grade'),
 ]

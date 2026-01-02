@@ -1642,3 +1642,34 @@ def csrf_view(request):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def teacher_quizzes_by_grade(request):
+    user = request.user
+
+    # Only teachers allowed
+    if user.role != 'teacher':
+        return Response({'error': 'Only teachers can access this endpoint.'}, status=403)
+
+    grade_id = request.GET.get('grade')
+
+    if not grade_id:
+        return Response({'error': 'grade parameter is required.'}, status=400)
+
+    try:
+        grade = Grade.objects.get(id=grade_id)
+    except Grade.DoesNotExist:
+        return Response({'error': 'Invalid grade.'}, status=404)
+
+    quizzes = (
+        Quiz.objects
+        .filter(grade=grade)
+        .select_related('grade', 'subject', 'chapter')
+        .prefetch_related('assignments__question_bank')
+        .order_by('subject__name', 'chapter__name', 'title')
+    )
+
+    serializer = QuizListSerializer(quizzes, many=True)
+    return Response(serializer.data, status=200)

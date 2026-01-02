@@ -313,3 +313,55 @@ class QuizAttempt(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}"
+
+class TeacherTask(models.Model):
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name='created_tasks'
+    )
+
+    message = models.TextField()
+    due_date = models.DateField()
+
+    # Targeting
+    target_grade = models.ForeignKey(
+        Grade,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tasks'
+    )
+
+    target_students = models.ManyToManyField(
+        User,
+        blank=True,
+        related_name='assigned_tasks',
+        limit_choices_to={'role': 'student'}
+    )
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Task by {self.teacher.username} (due {self.due_date})"
+
+
+class TeacherTaskQuiz(models.Model):
+    task = models.ForeignKey(
+        TeacherTask,
+        on_delete=models.CASCADE,
+        related_name='task_quizzes'
+    )
+
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = ('task', 'quiz')
+
+    def __str__(self):
+        return f"{self.task.id} → {self.quiz.title}"
