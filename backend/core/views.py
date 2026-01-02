@@ -1814,55 +1814,69 @@ def teacher_tasks_list(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def student_tasks_list(request):
-    """
-    GET /api/student/tasks/
-    Returns tasks assigned to this student + Attempted/Not Attempted per quiz.
-    Active task definition:
-    - is_active=True
-    (You can later add due_date filtering if you want.)
-    """
     user = request.user
+
     if user.role != 'student':
-        return Response({'error': 'Only students can access this endpoint.'}, status=403)
+        return Response({'error': 'Only students can access tasks.'}, status=403)
 
-    # assigned if:
-    # - target_grade == student's grade
-    # OR - student is explicitly in target_students
-    tasks = (
-        TeacherTask.objects
-        .filter(is_active=True)
-        .filter(Q(target_grade=user.grade) | Q(target_students=user))
-        .prefetch_related('task_quizzes__quiz')
-        .order_by('due_date', '-created_at')
-        .distinct()
-    )
+    # If student has no grade, they can still receive "target_students" tasks
+    student_grade = user.grade  # can be None
 
-    output = []
-    for t in tasks:
-        quizzes_data = []
-        for tq in t.task_quizzes.all():
-            quiz = tq.quiz
+    # Tasks that match either:
+    # - grade-wide task for student's grade
+    # - task explicitly assigned to this student
+    qs = TeacherTask.objects.filter(is_active=True).filter(
+        models.Q(target_students=user) |
+        models.Q(target_grade=student_grade)
+    ).distinct().select_related('teacher', 'target_grade').prefetch_related('quizzes')
 
+    tasks_out = []
+    pending_quiz_count = 0
+
+    for task in qs.order_by('-created_at'):
+        quizzes_out = []
+
+        for quiz in task.quizzes.all():
             attempted = StudentQuizAttempt.objects.filter(
                 student=user,
                 quiz=quiz,
                 completed_at__isnull=False
             ).exists()
 
-            quizzes_data.append({
-                'quiz_id': quiz.id,
-                'quiz_title': quiz.title,
-                'attempted': attempted
+            if not attempted:
+                pending_quiz_count += 1
+
+            quizzes_out.append({
+                "quiz_id": quiz.id,
+                "title": quiz.title,
+                "grade": quiz.grade.name if quiz.grade else "",
+                "subject": quiz.subject.name if quiz.subject else "",
+                "chapter": quiz.chapter.name if quiz.chapter else "",
+                "attempted": attempted,
             })
 
-        output.append({
-            'task_id': t.id,
-            'message': t.message,
-            'due_date': t.due_date,
-            'quizzes': quizzes_data
+        tasks_out.append({
+            "task_id": task.id,
+            "message": task.message,
+            "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+            "teacher": {
+                "username": task.teacher.username,
+                "full_name": getattr(task.teacher, "full_name", "") or "",
+                "school_name": getattr(task.teacher, "school_name", "") or "",
+                "city": getattr(task.teacher, "city", "") or "",
+            },
+            "assigned_to": {
+                "target_grade": task.target_grade.id if task.target_grade else None,
+                "target_grade_name": task.target_grade.name if task.target_grade else None,
+                "is_grade_wide": bool(task.target_grade_id),
+            },
+            "quizzes": quizzes_out,
         })
 
     return Response({
-        'count': len(output),
-        'tasks': output
+        "tasks": tasks_out,
+        "summary": {
+            "tasks_count": len(tasks_out),
+            "pending_quiz_count": pending_quiz_count,
+        }
     }, status=200)
