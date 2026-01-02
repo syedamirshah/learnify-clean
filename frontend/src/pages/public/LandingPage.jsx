@@ -398,6 +398,9 @@ const chapterPalettes = [
                   <Link to="/student/quiz-history" className="px-4 py-2 hover:bg-gray-100">
                     Quiz History
                   </Link>
+                  <Link to="/student/tasks" className="px-4 py-2 hover:bg-gray-100">
+                    Tasks
+                  </Link>
                 </div>
               </div>
             </>
