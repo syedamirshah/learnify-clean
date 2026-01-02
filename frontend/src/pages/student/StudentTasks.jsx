@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 
 /**
@@ -7,16 +7,12 @@ import axiosInstance from "../../utils/axiosInstance";
  * - Fetches: GET /api/student/tasks/
  * - Shows tasks + quizzes (attempted / pending)
  *
- * Assumes axiosInstance.baseURL ends with `/api/`
- * so we call: axiosInstance.get("student/tasks/")
- *
- * If your quiz attempt route differs, adjust QUIZ_ATTEMPT_ROUTE below.
+ * Frontend route that EXISTS in App.jsx:
+ *   /student/attempt-quiz/:quizId
  */
 
-// ✅ Adjust this if your frontend route is different
-const QUIZ_ATTEMPT_ROUTE = (quizId) => `/student/quiz/${quizId}/start`; 
-// alternative some projects use: (quizId) => `/quiz/${quizId}/attempt`;
-// alternative backend direct start: `/student/quiz/${quizId}/start` (frontend route)
+// ✅ Must match App.jsx route
+const QUIZ_ATTEMPT_ROUTE = (quizId) => `/student/attempt-quiz/${quizId}`;
 
 export default function StudentTasks() {
   const navigate = useNavigate();
@@ -34,7 +30,7 @@ export default function StudentTasks() {
     setLoading(true);
     setErr("");
     try {
-      const res = await axiosInstance.get("student/tasks/"); // ✅ because baseURL = .../api/
+      const res = await axiosInstance.get("student/tasks/"); // baseURL ends with /api/
       const data = res.data || {};
       setTasks(Array.isArray(data.tasks) ? data.tasks : []);
       setSummary(data.summary || { tasks_count: 0, pending_quiz_count: 0 });
@@ -89,8 +85,10 @@ export default function StudentTasks() {
     return { items, filtered };
   }, [tasks, filter]);
 
+  // ✅ FIXED: use quizId parameter correctly + correct route
   const handleAttempt = (quizId) => {
-    navigate(`/student/attempt-quiz/${quiz.quiz_id}`);
+    if (!quizId) return;
+    navigate(QUIZ_ATTEMPT_ROUTE(quizId));
   };
 
   return (
@@ -102,6 +100,16 @@ export default function StudentTasks() {
           <p className="text-sm text-gray-600 mt-1">
             Tasks assigned by your teacher (grade-wide or specifically to you).
           </p>
+
+          {/* ✅ Back to Home */}
+          <div className="mt-3">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:underline"
+            >
+              ← Back to Home
+            </Link>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -272,9 +280,21 @@ export default function StudentTasks() {
                             </div>
 
                             <div className="text-sm text-gray-600 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                              {q.grade && <span><span className="font-medium">Grade:</span> {q.grade}</span>}
-                              {q.subject && <span><span className="font-medium">Subject:</span> {q.subject}</span>}
-                              {q.chapter && <span><span className="font-medium">Chapter:</span> {q.chapter}</span>}
+                              {q.grade && (
+                                <span>
+                                  <span className="font-medium">Grade:</span> {q.grade}
+                                </span>
+                              )}
+                              {q.subject && (
+                                <span>
+                                  <span className="font-medium">Subject:</span> {q.subject}
+                                </span>
+                              )}
+                              {q.chapter && (
+                                <span>
+                                  <span className="font-medium">Chapter:</span> {q.chapter}
+                                </span>
+                              )}
                             </div>
                           </div>
 
