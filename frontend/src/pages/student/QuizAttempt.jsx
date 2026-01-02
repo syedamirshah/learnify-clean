@@ -484,7 +484,7 @@ const QuizAttempt = () => {
                     title="Open Scratch Pad"
                     className="
                       inline-flex items-center justify-center
-                      w-36 py-3
+                      w-[170px] py-3
                       rounded
                       text-white
                       shadow-md
@@ -494,8 +494,7 @@ const QuizAttempt = () => {
                     "
                     style={{
                       fontFamily: "calibri",
-                      backgroundColor: "#5CC245",   // ✅ exact same as header
-                      width: "210px",              // ✅ prevents widening the right column (no quiz space loss)
+                      backgroundColor: "#5CC245",
                     }}
                   >
                     <span className="font-normal">Scratch Pad</span>
