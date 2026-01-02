@@ -1811,6 +1811,7 @@ def teacher_tasks_list(request):
     return Response(data, status=200)
 
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def student_tasks_list(request):
@@ -1819,24 +1820,36 @@ def student_tasks_list(request):
     if user.role != 'student':
         return Response({'error': 'Only students can access tasks.'}, status=403)
 
-    # If student has no grade, they can still receive "target_students" tasks
     student_grade = user.grade  # can be None
 
-    # Tasks that match either:
-    # - grade-wide task for student's grade
-    # - task explicitly assigned to this student
-    qs = TeacherTask.objects.filter(is_active=True).filter(
-        models.Q(target_students=user) |
-        models.Q(target_grade=student_grade)
-    ).distinct().select_related('teacher', 'target_grade').prefetch_related('quizzes')
+    # Base: active tasks
+    qs = TeacherTask.objects.filter(is_active=True)
+
+    # Build safe filters
+    filters = Q(target_students=user)
+    if student_grade is not None:
+        filters |= Q(target_grade=student_grade)
+
+    qs = (
+        qs.filter(filters)
+        .distinct()
+        .select_related('teacher', 'target_grade')
+        .prefetch_related('task_quizzes__quiz')
+        .order_by('-created_at')
+    )
 
     tasks_out = []
     pending_quiz_count = 0
 
-    for task in qs.order_by('-created_at'):
+    for task in qs:
         quizzes_out = []
 
-        for quiz in task.quizzes.all():
+        # IMPORTANT: quizzes are through TeacherTaskQuiz
+        for tq in task.task_quizzes.all():
+            quiz = tq.quiz
+            if not quiz:
+                continue
+
             attempted = StudentQuizAttempt.objects.filter(
                 student=user,
                 quiz=quiz,
