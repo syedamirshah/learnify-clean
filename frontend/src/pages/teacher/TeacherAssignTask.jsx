@@ -167,6 +167,58 @@ export default function TeacherAssignTask() {
     }
   };
 
+  // ✅ Helpers for clean sorting/grouping
+const getQuizNumber = (title = "") => {
+    const m = String(title).trim().match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : 999999;
+  };
+  
+  const getChapterNumber = (chapter = "") => {
+    const m = String(chapter).match(/Chapter\s*(\d+)/i);
+    return m ? parseInt(m[1], 10) : 999999;
+  };
+  
+  // ✅ Group quizzes: Subject → Chapter → [quizzes]
+  const groupedQuizzes = React.useMemo(() => {
+    const bySubject = {};
+  
+    (quizzes || []).forEach((q) => {
+      const subject = q.subject || "Other";
+      const chapter = q.chapter || "Other";
+  
+      if (!bySubject[subject]) bySubject[subject] = {};
+      if (!bySubject[subject][chapter]) bySubject[subject][chapter] = [];
+  
+      bySubject[subject][chapter].push(q);
+    });
+  
+    // sort subjects A-Z, chapters by number, quizzes by quiz number then title
+    const subjectNames = Object.keys(bySubject).sort((a, b) => a.localeCompare(b));
+  
+    return subjectNames.map((subject) => {
+      const chaptersObj = bySubject[subject];
+      const chapterNames = Object.keys(chaptersObj).sort((a, b) => {
+        const na = getChapterNumber(a);
+        const nb = getChapterNumber(b);
+        if (na !== nb) return na - nb;
+        return a.localeCompare(b);
+      });
+  
+      const chapters = chapterNames.map((chapter) => {
+        const list = chaptersObj[chapter].slice().sort((a, b) => {
+          const na = getQuizNumber(a.title);
+          const nb = getQuizNumber(b.title);
+          if (na !== nb) return na - nb;
+          return String(a.title || "").localeCompare(String(b.title || ""));
+        });
+  
+        return { chapter, quizzes: list };
+      });
+  
+      return { subject, chapters };
+    });
+  }, [quizzes]);
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
       {/* Top bar */}
