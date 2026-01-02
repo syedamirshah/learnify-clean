@@ -416,31 +416,58 @@ const getQuizNumber = (title = "") => {
           )}
 
           {!loadingQuizzes && quizzes.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {quizzes.map((q) => {
-                const checked = selectedQuizIds.includes(q.id);
-                return (
-                  <button
-                    type="button"
-                    key={q.id}
-                    onClick={() => toggleQuiz(q.id)}
-                    className={`text-left rounded-xl border p-3 hover:bg-gray-50 transition ${
-                      checked ? "border-green-400 bg-green-50" : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-gray-900">{q.title}</div>
-                      <div className="text-sm">{checked ? "✅" : "⬜"}</div>
+            <div className="space-y-6 mt-4">
+            {groupedQuizzes.map((sub) => (
+              <div key={sub.subject} className="rounded-xl border bg-white overflow-hidden">
+                {/* Subject */}
+                <div className="px-4 py-3 bg-gray-50 border-b">
+                  <div className="text-lg font-bold text-gray-900">
+                    {sub.subject}
+                  </div>
+                </div>
+          
+                {/* Chapters */}
+                <div className="p-4 space-y-5">
+                  {sub.chapters.map((ch) => (
+                    <div key={ch.chapter}>
+                      <div className="text-sm font-semibold text-gray-700 mb-2">
+                        {ch.chapter}
+                      </div>
+          
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {ch.quizzes.map((q) => {
+                          const checked = selectedQuizIds.includes(q.id);
+          
+                          return (
+                            <label
+                              key={q.id}
+                              className="flex items-start gap-3 rounded-xl border p-4 cursor-pointer hover:bg-gray-50"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4"
+                                checked={checked}
+                                onChange={() => toggleQuiz(q.id)}
+                              />
+          
+                              <div className="min-w-0">
+                                <div className="font-semibold text-gray-900">
+                                  {q.title}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Grade: {q.grade} • Chapter: {q.chapter}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      {q.grade ? `Grade: ${q.grade}` : ""}
-                      {q.subject ? ` • Subject: ${q.subject}` : ""}
-                      {q.chapter ? ` • Chapter: ${q.chapter}` : ""}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
           )}
         </div>
 
