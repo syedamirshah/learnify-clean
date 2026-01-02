@@ -407,16 +407,34 @@ const chapterPalettes = [
           )}
 
           {role === "teacher" && (
-            <Link to="/teacher/assessment" className="text-white hover:underline font-normal">
-              Assessment
-            </Link>
+            <>
+              <button className="text-white hover:underline font-normal">
+                Assessment
+              </button>
+
+              <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
+                <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
+                  <Link to="/teacher/assessment" className="px-4 py-2 hover:bg-gray-100">
+                    Student Results
+                  </Link>
+
+                  <Link to="/teacher/tasks" className="px-4 py-2 hover:bg-gray-100">
+                    My Tasks
+                  </Link>
+
+                  <Link to="/teacher/assign-task" className="px-4 py-2 hover:bg-gray-100">
+                    Assign Task
+                  </Link>
+                </div>
+              </div>
+            </>
           )}
 
           {!role && (
             <Link to="/assessment/public" className="text-white hover:underline font-normal">
               Assessment
             </Link>
-          )}
+          )}        
         </div>
 
         <div>
