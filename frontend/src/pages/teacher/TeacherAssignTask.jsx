@@ -18,6 +18,10 @@ export default function TeacherAssignTask() {
   const [grades, setGrades] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
 
+  // ✅ Filters
+const [subjectFilter, setSubjectFilter] = useState("");
+const [chapterFilter, setChapterFilter] = useState("");
+
   // ui states
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
@@ -58,6 +62,8 @@ export default function TeacherAssignTask() {
       if (!gradeId) {
         setQuizzes([]);
         setSelectedQuizIds([]);
+        setSubjectFilter("");
+        setChapterFilter("");
         return;
       }
 
@@ -69,6 +75,8 @@ export default function TeacherAssignTask() {
         const res = await axiosInstance.get(`teacher/quizzes/?grade=${gradeId}`);
         setQuizzes(Array.isArray(res.data) ? res.data : []);
         setSelectedQuizIds([]);
+        setSubjectFilter("");
+        setChapterFilter("");
       } catch (e) {
         console.error(e);
         const msg =
@@ -101,7 +109,17 @@ export default function TeacherAssignTask() {
     });
   };
 
-  const selectAll = () => setSelectedQuizIds(quizzes.map((q) => q.id));
+  const selectAll = () => {
+    const visibleIds = (quizzes || [])
+      .filter((q) => {
+        if (subjectFilter && q.subject !== subjectFilter) return false;
+        if (chapterFilter && q.chapter !== chapterFilter) return false;
+        return true;
+      })
+      .map((q) => q.id);
+  
+    setSelectedQuizIds(visibleIds);
+  };
   const clearAll = () => setSelectedQuizIds([]);
 
   const validate = () => {
@@ -182,7 +200,13 @@ const getQuizNumber = (title = "") => {
   const groupedQuizzes = React.useMemo(() => {
     const bySubject = {};
   
-    (quizzes || []).forEach((q) => {
+    const filteredBase = (quizzes || []).filter((q) => {
+        if (subjectFilter && q.subject !== subjectFilter) return false;
+        if (chapterFilter && q.chapter !== chapterFilter) return false;
+        return true;
+      });
+      
+      filteredBase.forEach((q) => {
       const subject = q.subject || "Other";
       const chapter = q.chapter || "Other";
   
@@ -217,7 +241,7 @@ const getQuizNumber = (title = "") => {
   
       return { subject, chapters };
     });
-  }, [quizzes]);
+    }, [quizzes, subjectFilter, chapterFilter]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
@@ -404,6 +428,62 @@ const getQuizNumber = (title = "") => {
               </button>
             </div>
           </div>
+
+            {/* ✅ Filters: Subject + Chapter */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Subject Filter */}
+            <div>
+                <label className="text-sm font-semibold text-gray-700">Filter by Subject</label>
+                <select
+                value={subjectFilter}
+                onChange={(e) => {
+                    setSubjectFilter(e.target.value);
+                    setChapterFilter(""); // reset chapter when subject changes
+                }}
+                className="mt-1 w-full px-3 py-2 border rounded-lg bg-white"
+                disabled={quizzes.length === 0}
+                >
+                <option value="">All Subjects</option>
+                {[...new Set((quizzes || []).map((q) => q.subject).filter(Boolean))]
+                    .sort((a, b) => a.localeCompare(b))
+                    .map((subj) => (
+                    <option key={subj} value={subj}>
+                        {subj}
+                    </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Chapter Filter */}
+            <div>
+                <label className="text-sm font-semibold text-gray-700">Filter by Chapter</label>
+                <select
+                value={chapterFilter}
+                onChange={(e) => setChapterFilter(e.target.value)}
+                className="mt-1 w-full px-3 py-2 border rounded-lg bg-white"
+                disabled={quizzes.length === 0}
+                >
+                <option value="">All Chapters</option>
+                {[...new Set(
+                    (quizzes || [])
+                    .filter((q) => !subjectFilter || q.subject === subjectFilter)
+                    .map((q) => q.chapter)
+                    .filter(Boolean)
+                )]
+                    .sort((a, b) => {
+                    const na = getChapterNumber(a);
+                    const nb = getChapterNumber(b);
+                    if (na !== nb) return na - nb;
+                    return a.localeCompare(b);
+                    })
+                    .map((ch) => (
+                    <option key={ch} value={ch}>
+                        {ch}
+                    </option>
+                    ))}
+                </select>
+            </div>
+            </div>
 
           {loadingQuizzes && (
             <div className="mt-3 text-sm text-gray-600">Loading quizzes…</div>
