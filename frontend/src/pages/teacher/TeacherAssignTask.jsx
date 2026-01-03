@@ -127,7 +127,7 @@ const [chapterFilter, setChapterFilter] = useState("");
     if (!dueDate) return "Due date is required.";
     if (!Array.isArray(selectedQuizIds) || selectedQuizIds.length === 0)
       return "Please select at least 1 quiz.";
-    if (mode === "grade" && !gradeId) return "Please choose a grade.";
+    if (!gradeId) return "Please choose a grade to load quizzes.";
     if (mode === "students" && studentsList.length === 0)
       return "Please enter at least 1 student username.";
     return "";
@@ -344,37 +344,44 @@ const getQuizNumber = (title = "") => {
             </button>
           </div>
 
-          {/* Grade selector */}
-          {mode === "grade" && (
+          {/* Grade selector (used to load quizzes in BOTH modes) */}
             <div className="mt-3">
-              <label className="text-sm font-medium text-gray-700">
-                Select Grade
-              </label>
-              <select
+            <label className="text-sm font-medium text-gray-700">
+                Select Grade (to load quizzes)
+            </label>
+
+            <select
                 value={gradeId}
                 onChange={(e) => setGradeId(e.target.value)}
                 className="mt-1 w-full px-3 py-2 border rounded-lg bg-white"
-              >
+            >
                 <option value="">-- Select --</option>
-                {grades.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
-                    </option>
-                ))}
-              </select>
 
-              {loadingGrades && (
+                {grades.map((g) => (
+                <option key={g.id} value={g.id}>
+                    {g.label}
+                </option>
+                ))}
+            </select>
+
+            {loadingGrades && (
                 <div className="text-sm text-gray-500 mt-2">
-                  Loading grades...
+                Loading grades...
                 </div>
-              )}
-              {!loadingGrades && grades.length === 0 && (
+            )}
+
+            {!loadingGrades && grades.length === 0 && (
                 <div className="text-sm text-gray-500 mt-2">
-                  No grades found from landing/quizzes.
+                No grades found.
                 </div>
-              )}
+            )}
+
+            {mode === "students" && (
+                <div className="text-xs text-gray-500 mt-2">
+                Select a grade to load quizzes, then assign them to specific students.
+                </div>
+            )}
             </div>
-          )}
 
           {/* Students input */}
           {mode === "students" && (
