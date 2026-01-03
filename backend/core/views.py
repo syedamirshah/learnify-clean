@@ -1806,6 +1806,7 @@ def teacher_tasks_list(request):
             'target_grade': t.target_grade.name if t.target_grade else None,
             'target_students_count': t.target_students.count(),
             'quizzes': quizzes,
+            'created_at': t.created_at.strftime('%Y-%m-%d') if t.created_at else None,
         })
 
     return Response(data, status=200)
@@ -1872,6 +1873,7 @@ def student_tasks_list(request):
             "task_id": task.id,
             "message": task.message,
             "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+            "created_at": task.created_at.strftime('%Y-%m-%d') if task.created_at else None,
             "teacher": {
                 "username": task.teacher.username,
                 "full_name": getattr(task.teacher, "full_name", "") or "",

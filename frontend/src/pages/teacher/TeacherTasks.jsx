@@ -138,6 +138,11 @@ export default function TeacherTasks() {
                   {t.due_date ? String(t.due_date) : "N/A"}
                 </div>
 
+                <div className="mt-1 text-sm text-gray-600">
+                <span className="font-medium">Created:</span>{" "}
+                {t.created_at ? String(t.created_at) : "N/A"}
+                </div>
+
                 {/* quizzes */}
                 <div className="mt-4">
                   <div className="text-sm font-semibold text-gray-700 mb-2">

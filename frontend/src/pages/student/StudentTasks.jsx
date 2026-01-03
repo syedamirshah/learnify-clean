@@ -219,26 +219,31 @@ export default function StudentTasks() {
 
                   <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
                     <div>
-                      <span className="font-medium">Due:</span>{" "}
-                      <span>{task.due_date || "N/A"}</span>
+                        <span className="font-medium">Due:</span>{" "}
+                        <span>{task.due_date || "N/A"}</span>
                     </div>
 
                     <div>
-                      <span className="font-medium">Teacher:</span>{" "}
-                      <span>
+                        <span className="font-medium">Created:</span>{" "}
+                        <span>{task.created_at || "N/A"}</span>
+                    </div>
+
+                    <div>
+                        <span className="font-medium">Teacher:</span>{" "}
+                        <span>
                         {teacher.full_name || teacher.username || "N/A"}
                         {teacher.school_name ? ` • ${teacher.school_name}` : ""}
                         {teacher.city ? ` • ${teacher.city}` : ""}
-                      </span>
+                        </span>
                     </div>
 
                     {assigned?.target_grade_name && (
-                      <div>
+                        <div>
                         <span className="font-medium">Grade:</span>{" "}
                         <span>{assigned.target_grade_name}</span>
-                      </div>
+                        </div>
                     )}
-                  </div>
+                    </div>
                 </div>
 
                 <div className="flex gap-2 md:justify-end">
