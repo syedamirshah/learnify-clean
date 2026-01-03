@@ -306,67 +306,79 @@ const QuizAttempt = () => {
         style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
       >
         {(currentQuestion.type === "scq" || currentQuestion.type === "mcq") && (
-          <div className="mt-2">
-            {/* Question Text */}
-            <div
-              className="text-gray-900 mb-4 font-normal"
+  <div className="mt-2">
+    {/* Question text */}
+    <div
+      className="text-gray-900 mb-3 font-normal"
+      style={{
+        fontSize: `${fontSize}px`,
+        lineHeight: lineSpacing,
+        textAlign: alignment,
+      }}
+      dangerouslySetInnerHTML={{
+        __html: fixImageUrls(currentQuestion.question_text),
+      }}
+    />
+
+    {/* ✅ OPTIONS: 2 columns + aligned */}
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 gap-x-14 gap-y-6"
+      style={{
+        fontSize: `${fontSize}px`,
+        lineHeight: lineSpacing,
+        textAlign: alignment,
+      }}
+    >
+      {(currentQuestion.options || [])
+        .filter((opt) => !shouldHideOption(opt))
+        .map((opt, index) => {
+          const qid = currentQuestion.question_id;
+          const isMCQ = currentQuestion.type === "mcq";
+
+          const isSelected = isMCQ
+            ? (answers[qid] || []).includes(opt)
+            : answers[qid] === opt;
+
+          return (
+            <label
+              key={`${qid}-${index}`}
+              className="flex items-center gap-3 cursor-pointer"
               style={{
                 fontSize: `${fontSize}px`,
                 lineHeight: lineSpacing,
                 textAlign: alignment,
               }}
-              dangerouslySetInnerHTML={{
-                __html: fixImageUrls(currentQuestion.question_text),
-              }}
-            />
+            >
+              <input
+                type={isMCQ ? "checkbox" : "radio"}
+                name={`question_${qid}`} // ✅ keep same name for radio group
+                value={opt}
+                checked={isSelected}
+                onChange={(e) => {
+                  if (isMCQ) {
+                    const prev = answers[qid] || [];
+                    const updated = e.target.checked
+                      ? [...prev, opt]
+                      : prev.filter((o) => o !== opt);
+                    handleOptionChange(qid, updated);
+                  } else {
+                    handleOptionChange(qid, opt);
+                  }
+                }}
+                className="h-5 w-5 shrink-0"
+                style={{
+                  margin: 0,
+                  accentColor: "#5CC245", // optional: matches theme; remove if you want default
+                }}
+              />
 
-            {/* ✅ Options in TWO columns */}
-            <div className="grid grid-cols-2 gap-x-10 gap-y-4">
-              {(currentQuestion.options || [])
-                .filter((opt) => !shouldHideOption(opt))
-                .map((opt, index) => {
-                  const qid = currentQuestion.question_id;
-                  const isMCQ = currentQuestion.type === "mcq";
-                  const isSelected = isMCQ
-                    ? (answers[qid] || []).includes(opt)
-                    : answers[qid] === opt;
-
-                  return (
-                    <label
-                      key={`${qid}-${index}`}
-                      className="flex items-start gap-2 cursor-pointer"
-                      style={{
-                        fontSize: `${fontSize}px`,
-                        lineHeight: lineSpacing,
-                        textAlign: alignment,
-                      }}
-                    >
-                      <input
-                        type={isMCQ ? "checkbox" : "radio"}
-                        name={`question_${qid}${isMCQ ? `_${index}` : ""}`}
-                        value={opt}
-                        checked={isSelected}
-                        onChange={(e) => {
-                          if (isMCQ) {
-                            const prev = answers[qid] || [];
-                            const updated = e.target.checked
-                              ? [...prev, opt]
-                              : prev.filter((o) => o !== opt);
-                            handleOptionChange(qid, updated);
-                          } else {
-                            handleOptionChange(qid, opt);
-                          }
-                        }}
-                        className="mt-1"
-                      />
-
-                      <span className="break-words">{opt}</span>
-                    </label>
-                  );
-                })}
-            </div>
-          </div>
-        )}
+              <span className="min-w-0 break-words">{opt}</span>
+            </label>
+          );
+        })}
+    </div>
+  </div>
+)}
     
                       {currentQuestion.type === 'fib' && (() => {
                     // Keep image URLs absolute
