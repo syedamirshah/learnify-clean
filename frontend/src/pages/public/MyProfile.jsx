@@ -38,8 +38,7 @@ const MyProfile = () => {
     try {
       setUploadingPic(true);
   
-      // ✅ IMPORTANT: override JSON header for FormData upload
-      await axiosInstance.put("edit-profile/", fd, {
+      await axiosInstance.put("user/edit-profile/", fd, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -55,7 +54,7 @@ const MyProfile = () => {
       e.target.value = "";
     }
   };
-
+  
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
