@@ -100,15 +100,15 @@ const MyProfile = () => {
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="relative w-16 h-16">
+            <div className="relative w-20 h-20">
             {getProfilePicUrl(me.profile_picture) ? (
                 <img
                 src={getProfilePicUrl(me.profile_picture)}
                 alt="Profile"
-                className="w-16 h-16 rounded-full object-cover border"
+                className="w-20 h-20 rounded-full object-cover border"
                 />
             ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-green-900 font-bold text-xl border">
+                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-green-900 font-bold text-2xl border">
                 {(me.full_name || me.username || "U").trim()[0].toUpperCase()}
                 </div>
             )}
@@ -180,7 +180,7 @@ const MyProfile = () => {
             <Field label="Province" value={me.province || "-"} />
             <Field label="School Name" value={me.school_name || "-"} />
             <Field label="Schooling Status" value={me.schooling_status || "-"} />
-            <Field label="Grade" value={me.grade || "-"} />
+            <Field label="Grade" value={me.grade_name || "-"} />
             <Field label="Account Status" value={me.account_status || "-"} />
             <Field label="Subscription Plan" value={me.subscription_plan || "-"} />
             <Field label="Expiry Date" value={me.subscription_expiry ? formatPkDate(me.subscription_expiry) : "-"} />
