@@ -22,7 +22,8 @@ const LandingPage = () => {
   const [pinnedChapterBySubject, setPinnedChapterBySubject] = useState({}); // subjectKey -> chapterKey
   const [hoverChapterBySubject, setHoverChapterBySubject] = useState({}); // subjectKey -> chapterKey
 
-  
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
   // Load role and name
   useEffect(() => {
     const storedRole = localStorage.getItem("user_role");
@@ -326,10 +327,29 @@ const chapterPalettes = [
             {role ? (
               <>
                 {userFullName && (
-                  <span className="hidden sm:inline text-base md:text-lg font-semibold text-gray-700 italic">
-                    Welcome, {userFullName}
-                  </span>
-                )}
+                    <div
+                      className="relative hidden sm:block"
+                      onMouseEnter={() => setProfileMenuOpen(true)}
+                      onMouseLeave={() => setProfileMenuOpen(false)}
+                    >
+                      <button
+                        type="button"
+                        className="text-base md:text-lg font-semibold text-gray-700 italic hover:underline"
+                      >
+                        Welcome, {userFullName}
+                      </button>
+
+                      {profileMenuOpen && (
+                        <div className="absolute right-0 top-full z-50 pt-2">
+                          <div className="w-44 flex flex-col bg-white text-black shadow-lg rounded text-lg border">
+                            <Link to="/my-profile" className="px-4 py-2 hover:bg-gray-100">
+                              My Profile
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 <button
                   onClick={handleLogout}
                   className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 ml-3 md:ml-5"
@@ -454,23 +474,6 @@ const chapterPalettes = [
           </Link>
         </div>
 
-        {role && (
-          <div className="relative group">
-            <button className="text-white hover:underline font-normal">
-              Account Settings
-            </button>
-            <div className="absolute right-0 top-full hidden group-hover:block z-50 pt-2">
-              <div className="w-56 flex flex-col bg-white text-black shadow-lg rounded text-lg">
-                <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
-                  Make Payment
-                </a>
-                <Link to="/account/edit-profile" className="px-4 py-2 hover:bg-gray-100">
-                  Edit Profile
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
 
         {!role && (
           <div className="relative group">

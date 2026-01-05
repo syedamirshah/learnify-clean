@@ -20,7 +20,7 @@ import PaymentResult from "./pages/public/PaymentResult";
 import StudentTasks from "./pages/student/StudentTasks";
 import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
-
+import MyProfile from "./pages/public/MyProfile";
 
 
 
@@ -53,6 +53,7 @@ function App() {
           <Route path="/student/tasks" element={<StudentTasks />} />
           <Route path="/teacher/assign-task" element={<TeacherAssignTask />} />
           <Route path="/teacher/tasks" element={<TeacherTasks />} />
+          <Route path="/my-profile" element={<MyProfile />} />
         </Routes>
       </div>
     </Router>
