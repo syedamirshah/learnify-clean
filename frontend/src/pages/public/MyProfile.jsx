@@ -139,43 +139,33 @@ const MyProfile = () => {
         </div>
 
         <div className="flex gap-3">
-            <a
-            href={`${API}payments/choose/`}
-            className="bg-[#42b72a] text-white px-4 py-2 rounded hover:bg-green-700"
+            <Link
+                to="/"
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
             >
-            Make Payment
+                Home
+            </Link>
+
+            <a
+                href={`${API}payments/choose/`}
+                className="bg-[#42b72a] text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+                Make Payment
             </a>
 
             <Link
-            to="/account/edit-profile"
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                to="/account/edit-profile"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
-            Edit Profile
+                Edit Profile
             </Link>
-        </div>
+            </div>
         </div>
 
         <div className="rounded-xl border shadow-sm p-6 bg-gray-50">
           
         <div className="flex items-center gap-4 mb-6">
-        <div className="w-20 h-20 rounded-full overflow-hidden border bg-white flex items-center justify-center">
-            {getProfilePicUrl(me.profile_picture) ? (
-                <img
-                src={getProfilePicUrl(me.profile_picture)}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                />
-            ) : (
-                <span className="text-2xl font-bold text-green-800">
-                {(me.full_name || me.username || "U").slice(0, 1).toUpperCase()}
-                </span>
-            )}
-            </div>
-
-            <div>
-                <div className="text-lg font-bold text-gray-900">{me.full_name || "-"}</div>
-                <div className="text-sm text-gray-600">@{me.username || "-"}</div>
-            </div>
+        
             </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
