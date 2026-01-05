@@ -3,10 +3,54 @@ import axiosInstance from "../../utils/axiosInstance";
 import { Link } from "react-router-dom";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
+// Backend origin for media files (turns https://api.xxx.com/api/ into https://api.xxx.com/)
+const BACKEND_ORIGIN = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, "");
+
+// Build safe absolute image URL
+const getProfilePicUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BACKEND_ORIGIN}${path}`; // path usually starts with /media/...
+};
 
 const MyProfile = () => {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [uploadingPic, setUploadingPic] = useState(false);
+
+  const handlePictureChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const fd = new FormData();
+
+    // IMPORTANT: field name must match backend serializer/model field
+    // If your backend uses `profile_picture`, keep it as below:
+    fd.append("profile_picture", file);
+
+    try {
+      setUploadingPic(true);
+
+      // Uses your existing edit profile endpoint
+      await axiosInstance.put("edit-profile/", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Reload user data so new picture appears instantly
+      const res = await axiosInstance.get("user/me/");
+      setMe(res.data);
+    } catch (err) {
+      console.error("Profile picture upload failed:", err);
+      alert("Failed to upload picture. Please try again.");
+    } finally {
+      setUploadingPic(false);
+      e.target.value = ""; // allow selecting same file again
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -40,34 +84,91 @@ const MyProfile = () => {
     );
   }
 
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    try {
+      const formData = new FormData();
+      formData.append("profile_picture", file);
+  
+      // IMPORTANT: use the SAME endpoint your EditProfile page uses
+      // Example below assumes it's: PUT user/edit-profile/
+      await axiosInstance.put("user/edit-profile/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+  
+      // Refresh profile
+      const res = await axiosInstance.get("user/me/");
+      setMe(res.data);
+    } catch (err) {
+      console.error("Profile picture upload failed:", err);
+      alert("Failed to upload picture.");
+    } finally {
+      // allow re-selecting same file again
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-800 px-4 md:px-10 py-8">
       <div className="max-w-[900px] mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-extrabold text-green-900">My Profile</h1>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative w-16 h-16">
+            {getProfilePicUrl(me.profile_picture) ? (
+                <img
+                src={getProfilePicUrl(me.profile_picture)}
+                alt="Profile"
+                className="w-16 h-16 rounded-full object-cover border"
+                />
+            ) : (
+                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-green-900 font-bold text-xl border">
+                {(me.full_name || me.username || "U").trim()[0].toUpperCase()}
+                </div>
+            )}
 
-          <div className="flex gap-3">
-            <Link
-                to="/"
-                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-                >
-                ← Home
-            </Link>
-
-            <a
-              href={`${API}payments/choose/`}
-              className="bg-[#42b72a] text-white px-4 py-2 rounded hover:bg-green-700"
+            {/* Small edit button on avatar */}
+            <button
+                type="button"
+                onClick={() => document.getElementById("profilePicInput").click()}
+                className="absolute -bottom-1 -right-1 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow hover:bg-green-700"
+                title="Change picture"
             >
-              Make Payment
+                ✎
+            </button>
+
+            <input
+                id="profilePicInput"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleProfilePicChange(e)}
+            />
+            </div>
+
+            <div>
+            <h1 className="text-3xl font-extrabold text-green-900">My Profile</h1>
+            <div className="text-gray-600 text-sm">@{me.username}</div>
+            </div>
+        </div>
+
+        <div className="flex gap-3">
+            <a
+            href={`${API}payments/choose/`}
+            className="bg-[#42b72a] text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+            Make Payment
             </a>
 
             <Link
-              to="/account/edit-profile"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            to="/account/edit-profile"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
-              Edit Profile
+            Edit Profile
             </Link>
-          </div>
+        </div>
         </div>
 
         <div className="rounded-xl border shadow-sm p-6 bg-gray-50">
@@ -106,7 +207,7 @@ const MyProfile = () => {
             <Field label="Grade" value={me.grade || "-"} />
             <Field label="Account Status" value={me.account_status || "-"} />
             <Field label="Subscription Plan" value={me.subscription_plan || "-"} />
-            <Field label="Expiry Date" value={me.subscription_expiry || me.subscription_expiry_date || me.expiry_date || "-"} />
+            <Field label="Expiry Date" value={me.subscription_expiry ? formatPkDate(me.subscription_expiry) : "-"} />
 
           </div>
         </div>
