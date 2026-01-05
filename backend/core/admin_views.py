@@ -567,34 +567,31 @@ def admin_list_quizzes_view(request):
 @staff_member_required
 def list_backups(request):
     """
-    GET  -> Show any backups already on disk (if any).
-    POST -> Create a fresh JSON backup and download it directly (no file saved on server).
+    GET  -> Show backups on disk.
+    POST -> Create a fresh JSON backup ON DISK and stream-download it (no memory blowup).
     """
     backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     os.makedirs(backup_dir, exist_ok=True)
 
     if request.method == "POST":
-        # Create a filename for the download
         timestamp = timezone.localtime(timezone.now()).strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"backup_{timestamp}.json"
+        filepath = os.path.join(backup_dir, filename)
 
-        # Dump database to an in-memory buffer (no server file)
-        buf = io.StringIO()
-        call_command(
-            'dumpdata',
-            '--natural-primary', '--natural-foreign',
-            '--indent=2',
-            stdout=buf
-        )
-        data = buf.getvalue()
-        buf.close()
+        # ✅ Dump straight to disk (NOT in memory)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            call_command(
+                'dumpdata',
+                '--natural-primary', '--natural-foreign',
+                # ✅ REMOVE indent to keep file smaller & faster
+                stdout=f
+            )
 
-        # Send it to the browser as a download
-        resp = HttpResponse(data, content_type='application/json')
-        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # ✅ Stream file to browser (fast, safe)
+        resp = FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
+        resp['Content-Type'] = 'application/json'
         return resp
 
-    # Show backups that might already exist on disk (from older behavior)
     backup_files = [f for f in os.listdir(backup_dir) if f.endswith('.json')]
     backup_files.sort(reverse=True)
 
@@ -606,11 +603,15 @@ def list_backups(request):
 @staff_member_required
 def download_backup(request, filename):
     """
-    Download a backup that exists on the server (if any).
+    Stream-download an existing backup file.
     """
     backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     filepath = os.path.join(backup_dir, filename)
-    return FileResponse(open(filepath, 'rb'), as_attachment=True)
+
+    if not os.path.exists(filepath):
+        raise Http404("Backup file not found.")
+
+    return FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
 
 
 @user_passes_test(lambda u: u.is_superuser)
