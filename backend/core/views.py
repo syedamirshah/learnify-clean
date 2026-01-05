@@ -495,7 +495,6 @@ def list_student_quiz_results(request):
 
         results.append({
             'attempt_id': str(attempt.id),
-            'quiz_id': quiz.id,
             'quiz_title': quiz.title,
             'chapter': quiz.chapter.name if quiz.chapter else "",
             'subject': quiz.subject.name if quiz.subject else "",
