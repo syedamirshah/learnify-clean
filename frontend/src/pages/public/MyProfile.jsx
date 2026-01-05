@@ -13,6 +13,15 @@ const getProfilePicUrl = (path) => {
   return `${BACKEND_ORIGIN}${path}`; // path usually starts with /media/...
 };
 
+// Pakistan date format: DD/MM/YYYY
+const formatPkDate = (dateStr) => {
+    if (!dateStr) return "-";
+    // dateStr expected like "2026-01-10"
+    const [y, m, d] = String(dateStr).split("-");
+    if (!y || !m || !d) return dateStr;
+    return `${d}/${m}/${y}`;
+  };
+
 const MyProfile = () => {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,32 +93,7 @@ const MyProfile = () => {
     );
   }
 
-  const handleProfilePicChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
   
-    try {
-      const formData = new FormData();
-      formData.append("profile_picture", file);
-  
-      // IMPORTANT: use the SAME endpoint your EditProfile page uses
-      // Example below assumes it's: PUT user/edit-profile/
-      await axiosInstance.put("user/edit-profile/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-  
-      // Refresh profile
-      const res = await axiosInstance.get("user/me/");
-      setMe(res.data);
-    } catch (err) {
-      console.error("Profile picture upload failed:", err);
-      alert("Failed to upload picture.");
-    } finally {
-      // allow re-selecting same file again
-      e.target.value = "";
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white text-gray-800 px-4 md:px-10 py-8">
       <div className="max-w-[900px] mx-auto">
@@ -144,7 +128,7 @@ const MyProfile = () => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleProfilePicChange(e)}
+                onChange={handlePictureChange}
             />
             </div>
 
@@ -174,18 +158,18 @@ const MyProfile = () => {
         <div className="rounded-xl border shadow-sm p-6 bg-gray-50">
           
         <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border bg-white flex items-center justify-center">
-                {me.profile_picture_url ? (
+        <div className="w-20 h-20 rounded-full overflow-hidden border bg-white flex items-center justify-center">
+            {getProfilePicUrl(me.profile_picture) ? (
                 <img
-                    src={me.profile_picture_url}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
+                src={getProfilePicUrl(me.profile_picture)}
+                alt="Profile"
+                className="w-full h-full object-cover"
                 />
-                ) : (
+            ) : (
                 <span className="text-2xl font-bold text-green-800">
-                    {(me.full_name || me.username || "U").slice(0, 1).toUpperCase()}
+                {(me.full_name || me.username || "U").slice(0, 1).toUpperCase()}
                 </span>
-                )}
+            )}
             </div>
 
             <div>
