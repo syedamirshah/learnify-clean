@@ -45,9 +45,7 @@ const MyProfile = () => {
       setUploadingPic(true);
 
       // Uses your existing edit profile endpoint
-      await axiosInstance.put("edit-profile/", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axiosInstance.put("edit-profile/", fd);
 
       // Reload user data so new picture appears instantly
       const res = await axiosInstance.get("user/me/");
