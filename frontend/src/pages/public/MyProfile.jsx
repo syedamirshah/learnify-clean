@@ -29,32 +29,32 @@ const MyProfile = () => {
   const [uploadingPic, setUploadingPic] = useState(false);
 
   const handlePictureChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-  
-    const fd = new FormData();
-    fd.append("profile_picture", file);
-  
-    try {
-      setUploadingPic(true);
-  
-      await axiosInstance.put("user/edit-profile/", fd, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
-      const res = await axiosInstance.get("user/me/");
-      setMe(res.data);
-    } catch (err) {
-      console.error("Profile picture upload failed:", err?.response?.data || err);
-      alert("Failed to upload picture. Please try again.");
-    } finally {
-      setUploadingPic(false);
-      e.target.value = "";
-    }
-  };
-  
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const fd = new FormData();
+  fd.append("profile_picture", file);
+
+  try {
+    setUploadingPic(true);
+
+    await axiosInstance.put("user/edit-profile/", fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const res = await axiosInstance.get("user/me/");
+    setMe(res.data);
+  } catch (err) {
+    console.error("Profile picture upload failed:", err?.response?.data || err);
+    alert("Failed to upload picture. Please try again.");
+  } finally {
+    setUploadingPic(false);
+    e.target.value = "";
+  }
+};
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
