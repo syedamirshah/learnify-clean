@@ -1573,6 +1573,7 @@ def student_quiz_history_view(request):
 
         results.append({
             'quiz_title': quiz.title,
+            'quiz_id': quiz.id,
             'chapter': quiz.chapter.name if quiz.chapter else "",
             'subject': quiz.subject.name if quiz.subject else "",
             'grade': quiz.grade.name if quiz.grade else "",
