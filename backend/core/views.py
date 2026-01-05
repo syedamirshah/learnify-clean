@@ -55,7 +55,8 @@ from core.emails import send_password_change_email, send_welcome_email
 from django.db.models import Q
 from django.utils.dateparse import parse_date
 from core.models import TeacherTask, TeacherTaskQuiz
-
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 # Define the Pakistan time zone once
 pk_timezone = pytz.timezone('Asia/Karachi')
@@ -1240,19 +1241,36 @@ def admin_student_quiz_history(request, student_id):
 def get_current_user(request):
     user = request.user
 
-    # ‚Äö√Ñ√∂‚àö‚à´‚àö√± Check if expired
+    # mark expired if past expiry
     today = timezone.now().date()
     if user.subscription_expiry and user.subscription_expiry < today:
         if user.account_status != 'expired':
             user.account_status = 'expired'
-            user.save()
+            user.save(update_fields=["account_status"])
 
     return Response({
+        "id": user.id,
         "username": user.username,
         "role": user.role,
         "full_name": user.full_name,
         "email": user.email,
+
+        "gender": user.gender,
+        "language_used_at_home": user.language_used_at_home,
+        "schooling_status": user.schooling_status,
+
+        "grade": user.grade.id if user.grade else None,
+        "grade_name": user.grade.name if user.grade else "",
+
+        "school_name": user.school_name,
+        "city": user.city,
+        "province": user.province,
+
+        "subscription_plan": user.subscription_plan,
+        "subscription_expiry": user.subscription_expiry.strftime("%Y-%m-%d") if user.subscription_expiry else None,
         "account_status": user.account_status,
+
+        "profile_picture": user.profile_picture.url if user.profile_picture else None,
     })
 
 @api_view(['POST'])
@@ -1328,8 +1346,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 @parser_classes([MultiPartParser, FormParser])
 def edit_profile_view(request):
     user = request.user
-    old_grade = user.grade
-    new_grade = request.data.get('grade')
+    old_grade_id = user.grade_id
+    new_grade_id = request.data.get('grade')
 
     today = timezone.now().date()
     current_year = today.year
@@ -1340,7 +1358,11 @@ def edit_profile_view(request):
         user.last_grade_reset = today
 
     # Check if grade is changing and limit applies
-    if new_grade and new_grade != old_grade:
+    old_grade_id = user.grade_id  # integer or None
+    new_grade_id = request.data.get('grade')  # usually "3" or 3 or None
+
+    # Check if grade is changing and limit applies
+    if new_grade_id and str(new_grade_id) != str(old_grade_id):
         if user.grade_change_count >= 2:
             return Response({
                 'error': 'Grade change limit (2 per year) reached.',
@@ -1359,8 +1381,6 @@ def edit_profile_view(request):
     return Response(serializer.errors, status=400)
 
 # core/views.py
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
