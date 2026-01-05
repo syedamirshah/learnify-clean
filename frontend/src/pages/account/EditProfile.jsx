@@ -42,7 +42,7 @@ const EditProfile = () => {
       try {
         const res = await axiosInstance.get("grades/");
         const data = res.data;
-  
+
         // Normalize any backend shape to: [{label, value}]
         const normalized = Array.isArray(data)
           ? data.map((g) => {
@@ -50,7 +50,7 @@ const EditProfile = () => {
               if (typeof g === "string") {
                 return { label: g, value: g };
               }
-  
+
               // If API returns objects like {id, name} or {value, label}
               return {
                 label: g.label ?? g.name ?? g.title ?? g.grade_name ?? String(g.value ?? g.id ?? ""),
@@ -58,14 +58,14 @@ const EditProfile = () => {
               };
             })
           : [];
-  
+
         setGrades(normalized);
       } catch (error) {
         console.error("Failed to fetch grades:", error);
         setGrades([]);
       }
     };
-  
+
     fetchGrades();
   }, []);
 
@@ -95,8 +95,8 @@ const EditProfile = () => {
 
     try {
       await axiosInstance.put('user/edit-profile/', payload, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       alert('Profile updated successfully.');
     } catch (err) {
       console.error(err);
@@ -143,70 +143,89 @@ const EditProfile = () => {
 
       {/* White outer container to eliminate gray */}
       <div className="bg-white py-10">
-        {/* Green inner card */}
-        <div className="max-w-2xl mx-auto px-6 py-8 bg-green-50 border border-green-300 rounded-xl shadow-sm">
-          <h2 className="text-2xl font-bold text-green-700 mb-6">Edit Profile</h2>
+        {/* Center wrapper so header + card align */}
+        <div className="max-w-2xl mx-auto px-6">
+          {/* Profile Header */}
+          <div className="flex items-center gap-6 mb-6 bg-white p-6 rounded-xl shadow">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-3xl font-bold text-green-700">
+              {formData.full_name?.[0] || formData.username?.[0] || "U"}
+            </div>
 
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            {/* Read-only Fields */}
-            {([
-              { label: 'Username', value: formData.username },
-              { label: 'Role', value: formData.role },
-              { label: 'Language Used at Home', value: formData.language_used_at_home }
-            ]).map((field, idx) => (
-              <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                <input type="text" value={field.value} disabled className="w-full p-2 border rounded bg-gray-100" />
+            <div>
+              <div className="text-2xl font-bold text-gray-800">
+                {formData.full_name || "Your Name"}
               </div>
-            ))}
+              <div className="text-gray-500">@{formData.username}</div>
+              <span className="inline-block mt-2 px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">
+                {formData.role}
+              </span>
+            </div>
+          </div>
 
-            {/* Editable Fields */}
-            {[
-              { label: 'Full Name', name: 'full_name', type: 'text' },
-              { label: 'Email', name: 'email', type: 'email' },
-              { label: 'School Name', name: 'school_name', type: 'text' },
-              { label: 'City', name: 'city', type: 'text' },
-            ].map((field, idx) => (
-              <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            ))}
+          {/* Green inner card */}
+          <div className="px-6 py-8 bg-green-50 border border-green-300 rounded-xl shadow-sm">
+            <h2 className="text-2xl font-bold text-green-700 mb-6">Edit Profile</h2>
 
-            {/* Select Fields */}
-            {[
-              {
-                label: 'Schooling Status',
-                name: 'schooling_status',
-                options: ['', 'Public school', 'Private school', 'Homeschool', 'Madrassah', 'I am teacher'],
-              },
-              {
-                label: 'Province',
-                name: 'province',
-                options: ['', 'Balochistan', 'Gilgit-Baltistan', 'Azad Kashmir', 'Khyber-Pakhtunkhwa', 'Punjab', 'Sindh', 'Federal Territory'],
-              },
-              {
-                label: 'Grade',
-                name: 'grade',
-                options: grades,
-              }
-            ].map((field, idx) => (
-              <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                <select
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                >
-                  {field.options.length > 0 && typeof field.options[0] === 'object'
-                    ? (
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              {/* Read-only Fields */}
+              {([
+                { label: 'Username', value: formData.username },
+                { label: 'Role', value: formData.role },
+                { label: 'Language Used at Home', value: formData.language_used_at_home }
+              ]).map((field, idx) => (
+                <div key={idx} className="bg-white p-4 rounded shadow-sm">
+                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
+                  <input type="text" value={field.value} disabled className="w-full p-2 border rounded bg-gray-100" />
+                </div>
+              ))}
+
+              {/* Editable Fields */}
+              {[
+                { label: 'Full Name', name: 'full_name', type: 'text' },
+                { label: 'Email', name: 'email', type: 'email' },
+                { label: 'School Name', name: 'school_name', type: 'text' },
+                { label: 'City', name: 'city', type: 'text' },
+              ].map((field, idx) => (
+                <div key={idx} className="bg-white p-4 rounded shadow-sm">
+                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+              ))}
+
+              {/* Select Fields */}
+              {[
+                {
+                  label: 'Schooling Status',
+                  name: 'schooling_status',
+                  options: ['', 'Public school', 'Private school', 'Homeschool', 'Madrassah', 'I am teacher'],
+                },
+                {
+                  label: 'Province',
+                  name: 'province',
+                  options: ['', 'Balochistan', 'Gilgit-Baltistan', 'Azad Kashmir', 'Khyber-Pakhtunkhwa', 'Punjab', 'Sindh', 'Federal Territory'],
+                },
+                {
+                  label: 'Grade',
+                  name: 'grade',
+                  options: grades,
+                }
+              ].map((field, idx) => (
+                <div key={idx} className="bg-white p-4 rounded shadow-sm">
+                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
+                  <select
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                  >
+                    {field.options.length > 0 && typeof field.options[0] === 'object'
+                      ? (
                         <>
                           <option value="">Select {field.label}</option>
                           {field.options.map((opt, i) => (
@@ -214,53 +233,54 @@ const EditProfile = () => {
                           ))}
                         </>
                       )
-                    : (
+                      : (
                         field.options.map((opt, i) => (
                           <option key={i} value={opt}>{opt || `Select ${field.label}`}</option>
                         ))
                       )}
-                </select>
+                  </select>
+                </div>
+              ))}
+
+              {/* Profile Picture Upload */}
+              <div className="bg-white p-4 rounded shadow-sm">
+                <label className="block text-gray-700 font-semibold mb-1">Update Profile Picture</label>
+                <input type="file" name="profile_picture" onChange={handleChange} className="w-full p-2 border rounded" />
               </div>
-            ))}
 
-            {/* Profile Picture Upload */}
-            <div className="bg-white p-4 rounded shadow-sm">
-              <label className="block text-gray-700 font-semibold mb-1">Update Profile Picture</label>
-              <input type="file" name="profile_picture" onChange={handleChange} className="w-full p-2 border rounded" />
-            </div>
+              <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                Save Changes
+              </button>
+            </form>
 
-            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-              Save Changes
-            </button>
-          </form>
+            <hr className="my-6" />
 
-          <hr className="my-6" />
+            {/* Change Password */}
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <h3 className="text-xl font-bold text-green-700">Change Password</h3>
 
-          {/* Change Password */}
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <h3 className="text-xl font-bold text-green-700">Change Password</h3>
+              {([
+                { label: 'Old Password', name: 'old_password' },
+                { label: 'New Password', name: 'new_password' },
+                { label: 'Confirm New Password', name: 'confirm_password' },
+              ]).map((field, idx) => (
+                <div key={idx} className="bg-white p-4 rounded shadow-sm">
+                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
+                  <input
+                    type="password"
+                    name={field.name}
+                    value={passwordData[field.name]}
+                    onChange={handlePasswordChange}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+              ))}
 
-            {([
-              { label: 'Old Password', name: 'old_password' },
-              { label: 'New Password', name: 'new_password' },
-              { label: 'Confirm New Password', name: 'confirm_password' },
-            ]).map((field, idx) => (
-              <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                <input
-                  type="password"
-                  name={field.name}
-                  value={passwordData[field.name]}
-                  onChange={handlePasswordChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            ))}
-
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-              Change Password
-            </button>
-          </form>
+              <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                Change Password
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </>
