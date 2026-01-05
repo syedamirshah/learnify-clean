@@ -67,20 +67,15 @@ const LandingPage = () => {
         setHistoryLoading(true);
 
         // axiosInstance baseURL already ends with /api/
-        const res = await axiosInstance.get("student/quiz-history/");
+        const res = await axiosInstance.get("student/results/");
 
         const results = res.data?.results || [];
         const map = {};
 
         results.forEach((row) => {
-          const key = normalizeTitle(row.quiz_title);
-
-          // ✅ Add total_marks ourselves (backend doesn't send it)
-          map[key] = {
-            ...row,
-            total_marks: (row.total_questions || 0) * (row.marks_per_question || 0),
-          };
-        });
+          const key = String(row.quiz_id);
+          map[key] = { ...row, total_marks: (row.total_questions || 0) * (row.marks_per_question || 0) };
+                  });
 
         setHistoryMap(map);
       } catch (err) {
@@ -705,7 +700,7 @@ const chapterPalettes = [
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => {
-                                    const history = historyMap[normalizeTitle(quiz.title)];
+                                    const history = historyMap[String(quiz.id)];
 
                                     return (
                                       <Link
