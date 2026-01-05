@@ -27,25 +27,46 @@ const EditProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem('access_token');
-      const res = await axiosInstance.get('user/me/')
-      setFormData({
-        ...formData,
+      const res = await axiosInstance.get("user/me/");
+      setFormData((prev) => ({
+        ...prev,
         ...res.data,
         profile_picture: null,
-      });
+      }));
     };
     fetchProfile();
   }, []);
 
   useEffect(() => {
-    axiosInstance.get('grades/')
-      .then((response) => {
-        setGrades(response.data);
-      })
-      .catch((error) => {
+    const fetchGrades = async () => {
+      try {
+        const res = await axiosInstance.get("grades/");
+        const data = res.data;
+  
+        // Normalize any backend shape to: [{label, value}]
+        const normalized = Array.isArray(data)
+          ? data.map((g) => {
+              // If API returns strings like ["Grade 1", "Grade 2"]
+              if (typeof g === "string") {
+                return { label: g, value: g };
+              }
+  
+              // If API returns objects like {id, name} or {value, label}
+              return {
+                label: g.label ?? g.name ?? g.title ?? g.grade_name ?? String(g.value ?? g.id ?? ""),
+                value: g.value ?? g.id ?? g.code ?? g.slug ?? g.name ?? g.label ?? "",
+              };
+            })
+          : [];
+  
+        setGrades(normalized);
+      } catch (error) {
         console.error("Failed to fetch grades:", error);
-      });
+        setGrades([]);
+      }
+    };
+  
+    fetchGrades();
   }, []);
 
   const handleChange = (e) => {
@@ -173,7 +194,7 @@ const EditProfile = () => {
               {
                 label: 'Grade',
                 name: 'grade',
-                options: grades.map((grade) => ({ label: grade.label, value: grade.value })),
+                options: grades,
               }
             ].map((field, idx) => (
               <div key={idx} className="bg-white p-4 rounded shadow-sm">
