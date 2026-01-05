@@ -47,6 +47,13 @@ const MyProfile = () => {
           <h1 className="text-3xl font-extrabold text-green-900">My Profile</h1>
 
           <div className="flex gap-3">
+            <Link
+                to="/"
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+                >
+                ← Home
+            </Link>
+
             <a
               href={`${API}payments/choose/`}
               className="bg-[#42b72a] text-white px-4 py-2 rounded hover:bg-green-700"
@@ -64,6 +71,28 @@ const MyProfile = () => {
         </div>
 
         <div className="rounded-xl border shadow-sm p-6 bg-gray-50">
+          
+        <div className="flex items-center gap-4 mb-6">
+            <div className="w-20 h-20 rounded-full overflow-hidden border bg-white flex items-center justify-center">
+                {me.profile_picture_url ? (
+                <img
+                    src={me.profile_picture_url}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                />
+                ) : (
+                <span className="text-2xl font-bold text-green-800">
+                    {(me.full_name || me.username || "U").slice(0, 1).toUpperCase()}
+                </span>
+                )}
+            </div>
+
+            <div>
+                <div className="text-lg font-bold text-gray-900">{me.full_name || "-"}</div>
+                <div className="text-sm text-gray-600">@{me.username || "-"}</div>
+            </div>
+            </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <Field label="Full Name" value={me.full_name || "-"} />
@@ -77,7 +106,7 @@ const MyProfile = () => {
             <Field label="Grade" value={me.grade || "-"} />
             <Field label="Account Status" value={me.account_status || "-"} />
             <Field label="Subscription Plan" value={me.subscription_plan || "-"} />
-            <Field label="Expiry Date" value={me.subscription_expiry_date || me.expiry_date || "-"} />
+            <Field label="Expiry Date" value={me.subscription_expiry || me.subscription_expiry_date || me.expiry_date || "-"} />
 
           </div>
         </div>
