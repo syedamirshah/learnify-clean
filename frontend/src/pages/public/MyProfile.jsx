@@ -133,7 +133,7 @@ const MyProfile = () => {
             </div>
 
             <div>
-            <h1 className="text-3xl font-extrabold text-green-900">
+            <h1 className="text-3xl font-semibold text-green-900"> 
                 {me.full_name || "My Profile"}
             </h1>
             <div className="text-gray-600 text-sm">@{me.username}</div>
