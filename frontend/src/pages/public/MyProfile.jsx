@@ -31,31 +31,29 @@ const MyProfile = () => {
   const handlePictureChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
-
+  
     const fd = new FormData();
-
-    // IMPORTANT: field name must match backend serializer/model field
-    // If your backend uses `profile_picture`, keep it as below:
-    fd.append("profile_picture", file);
-
+    fd.append("profile_picture", file); // must match backend field
+  
     try {
       setUploadingPic(true);
-
-      // Uses your existing edit profile endpoint
-      await axiosInstance.put("edit-profile/", fd);
-
-      // Reload user data so new picture appears instantly
+  
+      // ✅ CORRECT backend endpoint
+      await axiosInstance.put("user/edit-profile/", fd);
+  
+      // Refresh profile so new picture appears immediately
       const res = await axiosInstance.get("user/me/");
       setMe(res.data);
     } catch (err) {
-      console.error("Profile picture upload failed:", err);
+      console.error(
+        "Profile picture upload failed:",
+        err?.response?.status,
+        err?.response?.data
+      );
       alert("Failed to upload picture. Please try again.");
     } finally {
       setUploadingPic(false);
-      e.target.value = ""; // allow selecting same file again
+      e.target.value = ""; // allow re-selecting same file
     }
   };
 
