@@ -73,8 +73,9 @@ const LandingPage = () => {
         const map = {};
 
         results.forEach((row) => {
-          const key = String(row.quiz_id);
+          const key = normalizeTitle(row.quiz_title);
 
+          // ✅ Add total_marks ourselves (backend doesn't send it)
           map[key] = {
             ...row,
             total_marks: (row.total_questions || 0) * (row.marks_per_question || 0),
@@ -704,7 +705,7 @@ const chapterPalettes = [
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => {
-                                    const history = historyMap[String(quiz.id)];
+                                    const history = historyMap[normalizeTitle(quiz.title)];
 
                                     return (
                                       <Link
