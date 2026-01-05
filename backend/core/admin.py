@@ -393,11 +393,12 @@ class QuizAdmin(admin.ModelAdmin):
     )
 
     def response_change(self, request, obj):
-        next_url = request.GET.get('next')
-        if next_url:
-            return HttpResponseRedirect(next_url)
-        return super().response_change(request, obj)
+        # ✅ after editing a quiz, always go back to the quiz list page
+        if "_addanother" not in request.POST and "_continue" not in request.POST:
+            return HttpResponseRedirect(reverse('admin-list-quizzes'))
 
+        return super().response_change(request, obj)
+ 
     def response_delete(self, request, obj_display, obj_id):
         return HttpResponseRedirect(reverse('admin-list-quizzes'))
 
