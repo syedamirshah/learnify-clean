@@ -33,27 +33,26 @@ const MyProfile = () => {
     if (!file) return;
   
     const fd = new FormData();
-    fd.append("profile_picture", file); // must match backend field
+    fd.append("profile_picture", file);
   
     try {
       setUploadingPic(true);
   
-      // ✅ CORRECT backend endpoint
-      await axiosInstance.put("user/edit-profile/", fd);
+      // ✅ IMPORTANT: override JSON header for FormData upload
+      await axiosInstance.put("edit-profile/", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
   
-      // Refresh profile so new picture appears immediately
       const res = await axiosInstance.get("user/me/");
       setMe(res.data);
     } catch (err) {
-      console.error(
-        "Profile picture upload failed:",
-        err?.response?.status,
-        err?.response?.data
-      );
+      console.error("Profile picture upload failed:", err?.response?.data || err);
       alert("Failed to upload picture. Please try again.");
     } finally {
       setUploadingPic(false);
-      e.target.value = ""; // allow re-selecting same file
+      e.target.value = "";
     }
   };
 
