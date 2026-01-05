@@ -99,13 +99,13 @@ const MembershipPage = () => {
               </div>
               <div className="mt-3 space-y-3">
                 <Bullet title="Learning & Assessment">
-                  Quizzes (SCQ/MCQ/FIB), one-question flow, and meaningful results.
+                  Quizzes (Single Choice / Multiple Choice / Fill-in-blank), one-question flow, and meaningful results.
                 </Bullet>
                 <Bullet title="Performance Tracking">
                   Subject-level insights + grade-level progress overview.
                 </Bullet>
                 <Bullet title="Honors & Recognition">
-                  Shining Stars, National Heroes, and medals (Gold/Silver/Bronze).
+                  Recognition of Hardwork and Dedication - Shining Stars and National Heroes.
                 </Bullet>
                 <Bullet title="Responsible Experience">
                   No ads inside quizzes. No humiliation ranking. Privacy protected.
@@ -115,8 +115,7 @@ const MembershipPage = () => {
               <div className="mt-6 p-4 rounded-xl bg-green-50 border border-green-200">
                 <div className="font-bold text-green-900">Good to know</div>
                 <div className="text-sm text-green-900/80 mt-1">
-                  Visitors can try the first quiz as a guest. From the second quiz
-                  attempt, they will be asked to join/subscribe.
+                  Visitors can try first 3 questions of any quiz to get the experience and know the quality of content.
                 </div>
               </div>
             </div>
@@ -134,7 +133,7 @@ const MembershipPage = () => {
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <Card title="Students (Grades 1–5)">
             Curriculum-aligned quizzes, instant feedback, progress tracking, and
-            motivation through honors and medals.
+            motivation through honors and recognition.
           </Card>
 
           <Card title="Teachers">
