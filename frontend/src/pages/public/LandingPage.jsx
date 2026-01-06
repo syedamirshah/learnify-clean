@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from "../../utils/axiosInstance";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
@@ -14,6 +14,15 @@ const LandingPage = () => {
   const [userFullName, setFullName] = useState("");
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
+
+const isActive = (paths = []) => {
+  const p = location.pathname;
+  return paths.some((x) => p === x || p.startsWith(x + "/"));
+};
+
+const navLinkClass = (active) =>
+  `text-white hover:underline ${active ? "underline font-semibold" : ""}`;
   const [historyMap, setHistoryMap] = useState({});
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -397,18 +406,27 @@ const chapterPalettes = [
                   text-xl font-normal
                   py-2 px-6 md:px-10"
       >
+        {/* ✅ NEW: Home */}
         <div>
-          <Link to="/why-join" className="text-white hover:underline">
+          <Link to="/" className={navLinkClass(isActive(["/"]))}>
+            Home
+          </Link>
+        </div>
+
+        <div>
+          <Link to="/why-join" className={navLinkClass(isActive(["/why-join"]))}>
             Why Join Learnify?
           </Link>
         </div>
 
-        <div className="relative group">
-          {role === "student" && (
-            <>
-              <button className="text-white hover:underline font-normal">
-                Assessment
-              </button>
+        {/* ✅ Assessment ONLY for logged-in student/teacher */}
+        {(role === "student" || role === "teacher") && (
+          <div className="relative group">
+            <button className={navLinkClass(isActive(["/student", "/teacher"]))}>
+              Assessment
+            </button>
+
+            {role === "student" && (
               <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
                 <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
                   <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
@@ -422,58 +440,44 @@ const chapterPalettes = [
                   </Link>
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          {role === "teacher" && (
-            <>
-              <button className="text-white hover:underline font-normal">
-                Assessment
-              </button>
-
+            {role === "teacher" && (
               <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
                 <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
                   <Link to="/teacher/assessment" className="px-4 py-2 hover:bg-gray-100">
                     Student Results
                   </Link>
-
                   <Link to="/teacher/tasks" className="px-4 py-2 hover:bg-gray-100">
                     My Tasks
                   </Link>
-
                   <Link to="/teacher/assign-task" className="px-4 py-2 hover:bg-gray-100">
                     Assign Task
                   </Link>
                 </div>
               </div>
-            </>
-          )}
+            )}
+          </div>
+        )}
 
-          {!role && (
-            <Link to="/assessment/public" className="text-white hover:underline font-normal">
-              Assessment
-            </Link>
-          )}        
-        </div>
-
+        {/* ✅ Renamed */}
         <div>
-          <Link to="/honor-board" className="text-white hover:underline">
-            Learnify Heroes
+          <Link to="/honor-board" className={navLinkClass(isActive(["/honor-board"]))}>
+            Honor Board
           </Link>
         </div>
 
         <div>
-          <Link to="/membership" className="text-white hover:underline">
+          <Link to="/membership" className={navLinkClass(isActive(["/membership"]))}>
             Membership
           </Link>
         </div>
 
         <div>
-          <Link to="/help-center" className="text-white hover:underline">
+          <Link to="/help-center" className={navLinkClass(isActive(["/help-center"]))}>
             Help Center
           </Link>
         </div>
-
 
         {!role && (
           <div className="relative group">
@@ -763,6 +767,26 @@ const chapterPalettes = [
           );
         })}
       </div>
+      {/* Footer */}
+      <footer className="mt-16 border-t bg-gray-50">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-2 text-sm text-gray-600">
+          <div>
+            © {new Date().getFullYear()} Learnify Pakistan
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link to="/help-center" className="text-gray-700 hover:underline">
+              Help Center
+            </Link>
+            <a
+              href="mailto:support@learnifypakistan.com"
+              className="text-gray-700 hover:underline"
+            >
+              Contact Support
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
