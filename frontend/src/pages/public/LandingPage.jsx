@@ -21,8 +21,8 @@ const isActive = (paths = []) => {
   return paths.some((x) => p === x || p.startsWith(x + "/"));
 };
 
-const navLinkClass = (active) =>
-  `text-white hover:underline ${active ? "underline font-semibold" : ""}`;
+const navLinkClass = () =>
+  "text-white hover:underline font-normal";
   const [historyMap, setHistoryMap] = useState({});
   const [historyLoading, setHistoryLoading] = useState(false);
 
