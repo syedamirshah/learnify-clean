@@ -12,6 +12,7 @@ const LandingPage = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(null);
   const [userFullName, setFullName] = useState("");
+  const [userGrade, setUserGrade] = useState(localStorage.getItem("user_grade") || "");
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,12 +34,15 @@ const navLinkClass = () =>
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  // Load role and name
+  // Load role, name, and grade
   useEffect(() => {
     const storedRole = localStorage.getItem("user_role");
     const storedName = localStorage.getItem("user_full_name");
+    const storedGrade = localStorage.getItem("user_grade");
+
     setRole(storedRole);
     setFullName(storedName);
+    setUserGrade(storedGrade || "");
   }, []);
 
   // Expired user redirect
@@ -102,39 +106,54 @@ const navLinkClass = () =>
     fetchHistory();
   }, [role]);
 
-  // NEW: open all grades by default once data arrives (presentation-only)
+  // NEW: role-based default grade expansion (presentation-only)
   useEffect(() => {
     if (!Array.isArray(quizData) || quizData.length === 0) return;
-  
-    // open all grades by default
-    setOpenGrades(new Set(quizData.map((g) => g.grade)));
-  
+
+    // ✅ Guests + Teachers => all grades expanded
+    if (!role || role === "teacher") {
+      setOpenGrades(new Set(quizData.map((g) => g.grade)));
+    }
+
+    // ✅ Students => ONLY their grade expanded by default
+    else if (role === "student") {
+      const g = (userGrade || "").trim();
+
+      const found = quizData.find((x) => String(x.grade).trim() === g);
+
+      if (found) {
+        setOpenGrades(new Set([found.grade]));
+      } else {
+        // fallback if grade not found (still allow manual expand)
+        setOpenGrades(new Set());
+      }
+    }
+
     // ✅ default pin: first chapter of each subject (only if not already pinned)
     setPinnedChapterBySubject((prev) => {
       if (prev && Object.keys(prev).length > 0) return prev;
-  
+
       const next = {};
-  
+
       quizData.forEach((gradeItem) => {
         (gradeItem.subjects || []).forEach((subjectItem) => {
           const subjectKey = getSubjectKey(gradeItem.grade, subjectItem.subject);
-  
+
           const chaptersSorted = sortedChapters(subjectItem.chapters || []);
           const firstChapter = chaptersSorted[0];
-  
+
           if (firstChapter) {
             const chapterKey = getChapterKey(gradeItem.grade, subjectItem.subject, firstChapter);
             next[subjectKey] = chapterKey;
           }
         });
       });
-  
+
       return next;
     });
-  
-    // (optional) clear hover state so pinned always wins initially
+
     setHoverChapterBySubject({});
-  }, [quizData]);
+  }, [quizData, role, userGrade]);
 
   const handleLogin = async () => {
     try {
@@ -149,6 +168,9 @@ const navLinkClass = () =>
       const role = me.data.role;
       const fullName = me.data.full_name || me.data.username;
       const status = me.data.account_status;
+      // ✅ NEW: grab student grade from API (use the correct field your backend returns)
+      const gradeFromAPI =
+       me.data.grade || me.data.student_grade || me.data.grade_name || me.data.grade_level || "";
 
       if (role === "admin" || role === "manager") {
         alert("Admins and Managers must login from the backend.");
@@ -158,8 +180,13 @@ const navLinkClass = () =>
       localStorage.setItem("user_role", role);
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("account_status", status);
+
+      // ✅ NEW: store grade too
+      localStorage.setItem("user_grade", gradeFromAPI);
+
       setRole(role);
       setFullName(fullName);
+      setUserGrade(gradeFromAPI);
 
       if ((role === "student" || role === "teacher") && status === "expired") {
         window.location.href = `${API}payments/choose/`;
@@ -184,10 +211,12 @@ const navLinkClass = () =>
     localStorage.removeItem("user_full_name");
     localStorage.removeItem("account_status");
     localStorage.removeItem("role"); // ✅ important (you set this on login)
+    localStorage.removeItem("user_grade");
   
     // Reset UI state
     setRole(null);
     setFullName("");
+    setUserGrade("");
   
     // ✅ No hard refresh. Also blocks back-navigation to old page.
     navigate("/", { replace: true });
