@@ -4,19 +4,56 @@
   <meta charset="utf-8">
   <title>Make Payment</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:24px}
-    .box{max-width:560px;margin:40px auto;border:1px solid #ddd;border-radius:8px;padding:24px}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      padding:24px;
+      background:#fafafa;
+    }
+    .box{
+      max-width:560px;
+      margin:40px auto;
+      border:1px solid #ddd;
+      border-radius:8px;
+      padding:24px;
+      background:#fff;
+    }
+    .topbar{
+      margin-bottom:12px;
+    }
     .row{margin:12px 0}
-    button{padding:10px 16px;border:0;border-radius:6px;background:#2e7d32;color:#fff;cursor:pointer}
-    input,select{padding:10px;border:1px solid #bbb;border-radius:6px;width:100%}
+    button{
+      padding:10px 16px;
+      border:0;
+      border-radius:6px;
+      background:#2e7d32;
+      color:#fff;
+      cursor:pointer
+    }
+    input,select{
+      padding:10px;
+      border:1px solid #bbb;
+      border-radius:6px;
+      width:100%
+    }
     .muted{color:#666;font-size:14px}
-    .error{color:#b00020;margin-top:6px}
-    .link{color:#2563eb;text-decoration:none}
+    .error{color:#b00020;margin-bottom:12px}
+    .link{
+      color:#2563eb;
+      text-decoration:none;
+      font-size:14px;
+    }
     .link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
+
   <div class="box">
+
+    <!-- 🔙 HOME LINK -->
+    <div class="topbar">
+      <a href="/" class="link">← Back to Home</a>
+    </div>
+
     <h2>Make Payment</h2>
 
     {% if error %}
@@ -24,6 +61,8 @@
     {% endif %}
 
     {% if user_obj %}
+      <!-- STEP 2: CONFIRM USER + PLAN -->
+
       <p class="muted">Confirming user:</p>
       <p>
         <b>
@@ -36,11 +75,11 @@
         ({{ user_obj.username }})
       </p>
 
-      {# Submit plan as GET; include token as hidden so it survives and no CSRF is needed #}
       <form method="get">
         {% if request.GET.token %}
           <input type="hidden" name="token" value="{{ request.GET.token }}">
         {% endif %}
+
         <div class="row">
           <label for="plan">Select Plan</label>
           <select id="plan" name="plan" required>
@@ -48,6 +87,7 @@
             <option value="yearly">Annual — PKR 1800 (25% OFF)</option>
           </select>
         </div>
+
         <button type="submit">Proceed to Easypay</button>
       </form>
 
@@ -61,18 +101,28 @@
       </p>
 
     {% else %}
+      <!-- STEP 1: ENTER USER ID -->
+
       <p>Enter your <b>User ID</b> to continue.</p>
-      <!-- Step-1 is GET so it works without CSRF and from other origins -->
+
       <form method="get">
         <div class="row">
-          <input type="text" name="username" placeholder="e.g. student2" value="{{ username_entered }}" required>
+          <input
+            type="text"
+            name="username"
+            placeholder="e.g. student2"
+            value="{{ username_entered }}"
+            required
+          >
         </div>
         <button type="submit">Continue</button>
       </form>
+
       <p class="muted" style="margin-top:12px">
         We’ll confirm your account and then show plan options.
       </p>
     {% endif %}
+
   </div>
 </body>
 </html>

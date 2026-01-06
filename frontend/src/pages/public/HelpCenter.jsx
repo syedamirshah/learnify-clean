@@ -126,7 +126,7 @@ const HelpCenter = () => {
       },
       {
         q: "Can students retake quizzes?",
-        a: "Yes. Students can retake exercises for learning and practice. Retakes help improvement, and the system typically keeps the latest result for reporting (as per current settings).",
+        a: "Yes. Students can retake exercises for learning and practice. Retakes help improvement, and the system typically keeps the latest result for reporting.",
       },
       {
         q: "What do Shining Stars and National Heroes mean?",
