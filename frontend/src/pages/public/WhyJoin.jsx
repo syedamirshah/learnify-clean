@@ -19,7 +19,6 @@ const WhyJoinLearnify = () => {
       title: "Aligned with National Curriculum",
       icon: <FaBookOpen className="text-green-700 text-xl" />,
       accent: "border-green-200",
-      pill: "bg-green-50 text-green-800",
       description:
         "Every quiz is mapped to nationally and provincially approved textbooks for Grades 1–5, so students practice exactly what they learn in class — in the right sequence, with the right concepts.",
     },
@@ -27,7 +26,6 @@ const WhyJoinLearnify = () => {
       title: "Smart Pedagogy",
       icon: <FaBrain className="text-pink-600 text-xl" />,
       accent: "border-pink-200",
-      pill: "bg-pink-50 text-pink-800",
       description:
         "Learn through real-life examples, simple explanations, and engaging practice — from basic to advanced — designed to build strong understanding step by step.",
     },
@@ -35,7 +33,6 @@ const WhyJoinLearnify = () => {
       title: "Three Powerful Evaluation Modes",
       icon: <FaChartBar className="text-blue-700 text-xl" />,
       accent: "border-blue-200",
-      pill: "bg-blue-50 text-blue-800",
       description: (
         <ul className="list-disc ml-5 text-gray-700 space-y-1">
           <li>
@@ -57,7 +54,6 @@ const WhyJoinLearnify = () => {
       title: "Unlimited Quiz Attempts",
       icon: <FaRedo className="text-purple-700 text-xl" />,
       accent: "border-purple-200",
-      pill: "bg-purple-50 text-purple-800",
       description:
         "Practice as much as you want. Each attempt gives you new questions instead of repeating the same ones — so learning stays fresh, fun, and effective.",
     },
@@ -65,7 +61,6 @@ const WhyJoinLearnify = () => {
       title: "Inclusive for Everyone",
       icon: <FaUserFriends className="text-amber-700 text-xl" />,
       accent: "border-amber-200",
-      pill: "bg-amber-50 text-amber-800",
       description:
         "Whether you’re in school or learning at home, Learnify is designed to support every child — accessible, inclusive, and full of opportunities to shine.",
     },
@@ -73,7 +68,6 @@ const WhyJoinLearnify = () => {
       title: "Low-Cost, High-Impact",
       icon: <FaMoneyBillWave className="text-emerald-700 text-xl" />,
       accent: "border-emerald-200",
-      pill: "bg-emerald-50 text-emerald-800",
       description:
         "Premium learning at a price families can afford. We believe quality education should be within reach of every child in Pakistan.",
     },
@@ -81,7 +75,6 @@ const WhyJoinLearnify = () => {
       title: "Empowering Teachers with Real-Time Insight",
       icon: <FaChalkboardTeacher className="text-indigo-700 text-xl" />,
       accent: "border-indigo-200",
-      pill: "bg-indigo-50 text-indigo-800",
       description:
         "Teachers can instantly view assignments, quiz attempts, and learning gaps — reducing manual checking and helping teachers focus on instruction, support, and lesson planning.",
     },
@@ -89,7 +82,6 @@ const WhyJoinLearnify = () => {
       title: "Helping Parents Make Better School Choices",
       icon: <FaChartBar className="text-teal-700 text-xl" />,
       accent: "border-teal-200",
-      pill: "bg-teal-50 text-teal-800",
       description:
         "Clear performance insights help parents understand learning progress and compare academic outcomes — so they can make more informed decisions for their child’s education.",
     },
@@ -97,7 +89,6 @@ const WhyJoinLearnify = () => {
       title: "Inspiring Healthy Academic Competition",
       icon: <FaChartBar className="text-cyan-800 text-xl" />,
       accent: "border-cyan-200",
-      pill: "bg-cyan-50 text-cyan-900",
       description:
         "By highlighting progress and outcomes, Learnify motivates schools and students to improve continuously — building a positive nationwide culture of learning and excellence.",
     },
@@ -105,7 +96,6 @@ const WhyJoinLearnify = () => {
       title: "Driving National-Level Educational Research",
       icon: <FaGlobeAsia className="text-red-700 text-xl" />,
       accent: "border-red-200",
-      pill: "bg-red-50 text-red-800",
       description:
         "Learnify can generate anonymized insights across cities, regions, genders, sectors, and language groups — supporting researchers and policymakers to design fair, evidence-based interventions.",
     },
@@ -201,9 +191,7 @@ const WhyJoinLearnify = () => {
                       <h3 className="text-lg md:text-xl font-extrabold text-gray-900">
                         {f.title}
                       </h3>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${f.pill}`}>
-                        Feature
-                      </span>
+                      
                     </div>
 
                     <div className="mt-2 text-gray-700 leading-relaxed">
