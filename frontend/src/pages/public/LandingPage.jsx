@@ -12,6 +12,7 @@ const LandingPage = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(null);
   const [userFullName, setFullName] = useState("");
+  const [userGrade, setUserGrade] = useState(null);
   const [quizData, setQuizData] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,8 +38,11 @@ const navLinkClass = () =>
   useEffect(() => {
     const storedRole = localStorage.getItem("user_role");
     const storedName = localStorage.getItem("user_full_name");
+    const storedGrade = localStorage.getItem("user_grade");
+  
     setRole(storedRole);
     setFullName(storedName);
+    setUserGrade(storedGrade);
   }, []);
 
   // Expired user redirect
@@ -106,8 +110,18 @@ const navLinkClass = () =>
   useEffect(() => {
     if (!Array.isArray(quizData) || quizData.length === 0) return;
   
-    // open all grades by default
-    setOpenGrades(new Set(quizData.map((g) => g.grade)));
+    // ✅ DEFAULT EXPAND RULES (NEW)
+    // Guests + Teachers -> all grades open
+    // Students -> only their grade open (others collapsed)
+    if (!role || role === "teacher") {
+      setOpenGrades(new Set(quizData.map((g) => g.grade)));
+    } else if (role === "student") {
+      const g = localStorage.getItem("user_grade"); // student grade stored at login
+      if (g) setOpenGrades(new Set([g]));
+      else setOpenGrades(new Set()); // if grade missing, keep collapsed
+    } else {
+      setOpenGrades(new Set());
+    }
   
     // ✅ default pin: first chapter of each subject (only if not already pinned)
     setPinnedChapterBySubject((prev) => {
@@ -134,7 +148,7 @@ const navLinkClass = () =>
   
     // (optional) clear hover state so pinned always wins initially
     setHoverChapterBySubject({});
-  }, [quizData]);
+  }, [quizData, role]);
 
   const handleLogin = async () => {
     try {
@@ -149,6 +163,17 @@ const navLinkClass = () =>
       const role = me.data.role;
       const fullName = me.data.full_name || me.data.username;
       const status = me.data.account_status;
+
+      // ✅ NEW: store student grade
+      const studentGrade =
+        me.data.grade ||          // if backend sends grade directly
+        me.data.grade_name ||     // fallback
+        me.data.grade?.name ||    // fallback if object
+        null;
+
+      if (studentGrade) {
+        localStorage.setItem("user_grade", studentGrade);
+      }
 
       if (role === "admin" || role === "manager") {
         alert("Admins and Managers must login from the backend.");
