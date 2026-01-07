@@ -116,9 +116,23 @@ const navLinkClass = () =>
     if (!role || role === "teacher") {
       setOpenGrades(new Set(quizData.map((g) => g.grade)));
     } else if (role === "student") {
-      const g = localStorage.getItem("user_grade"); // student grade stored at login
-      if (g) setOpenGrades(new Set([g]));
-      else setOpenGrades(new Set()); // if grade missing, keep collapsed
+      const raw = localStorage.getItem("user_grade");
+    
+      // ✅ normalize (handles "3", "Grade 3", " grade 3 ", etc.)
+      const cleaned = String(raw || "").trim().toLowerCase();
+    
+      // Try to match against real grade names coming from API
+      const match =
+        quizData.find((x) => String(x.grade || "").trim().toLowerCase() === cleaned) ||
+        quizData.find((x) => String(x.grade || "").trim().toLowerCase().includes(cleaned)) ||
+        quizData.find((x) => cleaned.includes(String(x.grade || "").trim().toLowerCase()));
+    
+      if (match?.grade) {
+        setOpenGrades(new Set([match.grade])); // ✅ IMPORTANT: use API grade name
+      } else {
+        // fallback: keep everything collapsed
+        setOpenGrades(new Set());
+      }
     } else {
       setOpenGrades(new Set());
     }
@@ -173,6 +187,7 @@ const navLinkClass = () =>
 
       if (studentGrade) {
         localStorage.setItem("user_grade", studentGrade);
+        setUserGrade(studentGrade); // ✅ ADD THIS LINE
       }
 
       if (role === "admin" || role === "manager") {
@@ -202,19 +217,25 @@ const navLinkClass = () =>
   };
 
   const handleLogout = () => {
-    // Clear ALL auth keys (you currently leave "role" behind)
+    // 🔹 Clear authentication
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+  
+    // 🔹 Clear user identity
     localStorage.removeItem("user_role");
     localStorage.removeItem("user_full_name");
     localStorage.removeItem("account_status");
-    localStorage.removeItem("role"); // ✅ important (you set this on login)
+    localStorage.removeItem("role");
   
-    // Reset UI state
+    // 🔹 ✅ CLEAR STUDENT GRADE (THIS IS STEP 3)
+    localStorage.removeItem("user_grade");
+  
+    // 🔹 Reset React state
     setRole(null);
     setFullName("");
+    setUserGrade(null); // ✅ IMPORTANT
   
-    // ✅ No hard refresh. Also blocks back-navigation to old page.
+    // 🔹 Redirect cleanly
     navigate("/", { replace: true });
   };
   
