@@ -135,7 +135,7 @@ def bulk_upload_scq(request, bank_id):
                 skipped += 1
 
         messages.success(request, f" {uploaded} SCQ questions uploaded successfully.  {skipped} rows skipped.")
-        return redirect(f'/admin/core/questionbank/{bank.id}/change/')
+        return redirect(f'/preview-questions/{bank.id}/')
 
     # FIX: define form in GET branch
     form = UploadSCQForm(initial={'question_bank_id': bank_id})
@@ -167,7 +167,7 @@ def bulk_upload_mcq(request, bank_id):
                 skipped += 1
 
         messages.success(request, f"‚ {uploaded} MCQ questions uploaded. {skipped} rows skipped.")
-        return redirect(f'/admin/core/questionbank/{bank.id}/change/')
+        return redirect(f'/preview-questions/{bank.id}/')
 
     form = UploadMCQForm(initial={'question_bank_id': bank_id})
     return render(request, 'admin/core/mcq_upload_form.html', {'form': form, 'bank': bank})
@@ -203,7 +203,7 @@ def bulk_upload_fib(request, bank_id):
             created_count += 1
 
         messages.success(request, f"FIB upload complete: {created_count} question(s) added.")
-        return redirect(f'/admin/core/questionbank/{bank.id}/change/')
+        return redirect(f'/preview-questions/{bank.id}/')
 
     return render(request, 'admin/core/fib_upload_form.html', {'bank': bank})
 
