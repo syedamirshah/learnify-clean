@@ -27,6 +27,54 @@ def normalize_text(value):
     return re.sub(r'\s+', ' ', BeautifulSoup(str(value), 'html.parser').get_text()).strip().lower()
 
 
+# -----------------------------------------------------------------------------
+# NEW (SAFE): numeric comma normalization for FIB answers only
+# -----------------------------------------------------------------------------
+# Accept:
+#   1234
+#   1,234
+#   12,345,678
+# Reject (won't modify):
+#   1, 234   (space)
+#   12,34    (wrong grouping)
+#   abc,123  (not numeric)
+_INTL_COMMA_NUMBER_RE = re.compile(r"^\d{1,3}(?:,\d{3})+$")
+_PLAIN_NUMBER_RE = re.compile(r"^\d+$")
+
+
+def normalize_numeric_commas(value) -> str:
+    """
+    For numeric-like FIB inputs, ignore commas safely.
+
+    - Removes HTML tags (if any)
+    - Trims whitespace
+    - If value is a plain integer or a correctly comma-grouped integer
+      (International system), return the digits-only version.
+    - Otherwise, return the cleaned text unchanged.
+
+    IMPORTANT: This is intended to be used ONLY in FIB comparisons
+    (not in "put commas correctly" quizzes, which you are converting to SCQ).
+    """
+    if value is None:
+        return ""
+
+    # Strip HTML but DO NOT lowercase (numbers don't need it; text should use normalize_text)
+    text = BeautifulSoup(str(value), "html.parser").get_text()
+    text = text.strip()
+
+    if not text:
+        return ""
+
+    # Only normalize commas if it's clearly a number in international grouping
+    if _PLAIN_NUMBER_RE.match(text):
+        return text
+    if _INTL_COMMA_NUMBER_RE.match(text):
+        return text.replace(",", "")
+
+    # Not a pure number -> return as-is (trimmed)
+    return text
+
+
 def send_account_notification_email(user, action, plain_password=None):
     """
     Send activation/extension emails. Login URL now uses PUBLIC_FRONTEND_ORIGIN

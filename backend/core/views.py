@@ -48,7 +48,7 @@ from .serializers import EditProfileSerializer, ChangePasswordSerializer
 from .models import Grade
 from django.utils.timezone import localtime
 import pytz
-from core.utils import normalize_text
+from core.utils import normalize_text, normalize_numeric_commas
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 from core.emails import send_password_change_email, send_welcome_email
@@ -367,11 +367,11 @@ def submit_quiz(request, attempt_id):
 
                 if isinstance(given, dict) and isinstance(correct_answer, dict):
                     normalized_student = {
-                        str(k).lower(): normalize_text(v)
+                        str(k).lower(): normalize_numeric_commas(v)
                         for k, v in given.items() if v is not None
                     }
                     normalized_correct = {
-                        str(k).lower(): normalize_text(v)
+                        str(k).lower(): normalize_numeric_commas(v)
                         for k, v in correct_answer.items() if v is not None
                     }
                     is_correct = normalized_student == normalized_correct
@@ -584,12 +584,12 @@ def get_quiz_result(request, attempt_id):
 
                 if isinstance(student_answer, dict) and isinstance(correct_answer, dict):
                     normalized_student = {
-                        str(k).strip().lower(): normalize_text(v)
+                        str(k).strip().lower(): normalize_numeric_commas(v)
                         for k, v in student_answer.items()
                         if v and str(v).strip()
                     }
                     normalized_correct = {
-                        str(k).strip().lower(): normalize_text(v)
+                        str(k).strip().lower(): normalize_numeric_commas(v)
                         for k, v in correct_answer.items()
                         if v and str(v).strip()
                     }
@@ -881,12 +881,12 @@ def finalize_quiz(request):
                 correct_answer = q.correct_answers
                 if isinstance(student_answer, dict) and isinstance(correct_answer, dict):
                     normalized_student = {
-                        str(k).strip().lower(): normalize_text(v)
+                        str(k).strip().lower(): normalize_numeric_commas(v)
                         for k, v in student_answer.items()
                         if v and str(v).strip()
                     }
                     normalized_correct = {
-                        str(k).strip().lower(): normalize_text(v)
+                        str(k).strip().lower(): normalize_numeric_commas(v)
                         for k, v in correct_answer.items()
                         if v and str(v).strip()
                     }
