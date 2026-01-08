@@ -6,6 +6,7 @@ import logo from "@/assets/logo.png";
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 // If you already use a specific payments/choose URL, keep it consistent:
 const PAYMENT_LINK = `${API}payments/choose/`;
+const SCHOOL_TEMPLATE_URL = "/student_bulk_upload_template.xlsx";
 
 const MembershipPage = () => {
   // Pricing (as per your decision)
@@ -258,9 +259,29 @@ const MembershipPage = () => {
 
               <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200">
                 <div className="font-bold text-green-900">School onboarding support</div>
-                <div className="text-sm text-green-900/80 mt-1">
-                  Learnify helps schools create accounts smoothly. Schools only need to provide
-                  teachers’ and students’ names in a simple template — we organize the setup.
+                <div className="text-sm text-green-900/80 mt-1 space-y-1">
+                  <p>
+                    Learnify helps schools create accounts smoothly. Schools only need to provide
+                    teachers’ and students’ names in a simple Excel template — we organize the setup.
+                  </p>
+                  <p>
+                    📎{" "}
+                    <a
+                      href={SCHOOL_TEMPLATE_URL}
+                      download
+                      className="font-semibold text-green-800 underline hover:text-green-900"
+                    >
+                      Download student upload template
+                    </a>{" "}
+                    and email the completed sheet to{" "}
+                    <a
+                      href="mailto:support@learnifypakistan.com"
+                      className="font-semibold underline hover:text-green-900"
+                    >
+                      support@learnifypakistan.com
+                    </a>
+                    .
+                  </p>
                 </div>
               </div>
             </div>
