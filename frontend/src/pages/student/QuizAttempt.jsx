@@ -10,6 +10,9 @@ const HIDE_OPTION_MARKERS = new Set([
   '[hide]', '[HIDE]', 'n/a'
 ]);
 
+// Only treat [a], [b], [c] ... as FIB blanks
+const BLANK_PLACEHOLDER_RE = /\[[a-z]\]/gi;
+
 const shouldHideOption = (opt) => {
   if (opt == null) return true;                // hides null/undefined
   const s = String(opt).trim();
@@ -37,9 +40,9 @@ const QuizAttempt = () => {
   let canProceed = false;
   if (currentQuestion) {
     if (currentQuestion.type === 'fib') {
-      const blanks = currentQuestion.question_text.match(/\[(.*?)\]/g) || [];
+      const blanks = currentQuestion.question_text.match(BLANK_PLACEHOLDER_RE) || [];
       canProceed = blanks.every((b) => {
-        const key = b.replace(/\[|\]/g, '').trim();
+        const key = b[1].toLowerCase(); // [a] -> 'a'
         const compoundId = `${currentQuestion.question_id}_${key}`;
         return answers[compoundId] && answers[compoundId].trim() !== '';
       });
@@ -89,9 +92,9 @@ const QuizAttempt = () => {
   
         let valid = false;
         if (type === 'fib') {
-          const blanks = q.question_text.match(/\[(.*?)\]/g) || [];
+          const blanks = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
           valid = blanks.every((b) => {
-            const key = b.replace(/\[|\]/g, '').trim();
+            const key = b[1].toLowerCase(); // [a] -> 'a'
             const compoundId = `${qid}_${key}`;
             return answers[compoundId] && answers[compoundId].trim() !== '';
           });
@@ -176,8 +179,9 @@ const QuizAttempt = () => {
     // ---- FIB helpers: collect keys and save them in ONE request ----
     const getFibKeys = (q) => {
       if (!q || q.type !== 'fib' || !q.question_text) return [];
-      const matches = q.question_text.match(/\[(.*?)\]/g) || [];
-      return matches.map(m => m.replace(/\[|\]/g, '').trim()).filter(Boolean);
+      const matches = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
+      // [a] -> 'a'
+      return matches.map(m => m[1].toLowerCase()).filter(Boolean);
     };
   
     const saveFibCombined = async (q) => {
@@ -418,7 +422,7 @@ const QuizAttempt = () => {
                       .replace(/<\/?p>/gi, '');           // strip <p> and </p>
 
                     // Split by [a], [b], ... while retaining HTML around them
-                    const parts = seriesHtmlWithPs.split(/\[(.*?)\]/g);
+                    const parts = seriesHtmlWithPs.split(/(\[[a-z]\])/gi);
 
                     return (
                       <div className="mt-2">
@@ -432,17 +436,16 @@ const QuizAttempt = () => {
                         {/* series rendered, respecting <br> before blanks */}
                         <div style={{ whiteSpace: 'normal' }}>
                           {parts.map((part, index) => {
-                            const isInput = index % 2 === 1;
+                            const placeholderMatch = part.match(/^\[([a-z])\]$/i);
 
-                            if (isInput) {
-                              const key = part.trim();
+                            if (placeholderMatch) {
+                              const key = placeholderMatch[1].toLowerCase(); // [a] -> 'a'
                               const compoundId = `${currentQuestion.question_id}_${key}`;
                               const value = answers[compoundId] || '';
-
-                              // Look at previous chunk: if it ends with <br>, drop input to a new line
+                            
                               const prev = parts[index - 1] || '';
                               const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
-
+                            
                               const inputEl = (
                                 <input
                                   key={`in-${index}`}
@@ -458,15 +461,15 @@ const QuizAttempt = () => {
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,     // tighter box
-                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
+                                    height: `${fontSize * 1.2}px`,
+                                    lineHeight: `${fontSize * 1.2}px`,
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
-                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
+                                    verticalAlign: 'text-bottom',
                                   }}
                                 />
                               );
-
+                            
                               return (
                                 <>
                                   {needsNewLine && <br />}
@@ -590,10 +593,10 @@ const QuizAttempt = () => {
                 const isAttempted = (() => {
                   if (!q) return false;
                   if (q.type === 'fib') {
-                    const blanks = q.question_text.match(/\[(.*?)\]/g) || [];
+                    const blanks = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
                     if (blanks.length === 0) return false;
                     return blanks.every((b) => {
-                      const key = b.replace(/\[|\]/g, '').trim();
+                      const key = b[1].toLowerCase(); // [a] -> 'a'
                       const answerKey = `${q.question_id}_${key}`;
                       return answers.hasOwnProperty(answerKey) && answers[answerKey]?.trim() !== '';
                     });
