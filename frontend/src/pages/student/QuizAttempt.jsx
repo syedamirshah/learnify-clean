@@ -11,7 +11,7 @@ const HIDE_OPTION_MARKERS = new Set([
 ]);
 
 // Only treat [a], [b], [c] ... as FIB blanks
-const BLANK_PLACEHOLDER_RE = /\[[a-z]\]/gi;
+const BLANK_PLACEHOLDER_RE = /\[[a-z]{1,2}\]/gi;
 
 const shouldHideOption = (opt) => {
   if (opt == null) return true;                // hides null/undefined
@@ -42,7 +42,7 @@ const QuizAttempt = () => {
     if (currentQuestion.type === 'fib') {
       const blanks = currentQuestion.question_text.match(BLANK_PLACEHOLDER_RE) || [];
       canProceed = blanks.every((b) => {
-        const key = b[1].toLowerCase(); // [a] -> 'a'
+        const key = b.slice(1, -1).toLowerCase(); // "[aa]" -> "aa"
         const compoundId = `${currentQuestion.question_id}_${key}`;
         return answers[compoundId] && answers[compoundId].trim() !== '';
       });
@@ -94,7 +94,7 @@ const QuizAttempt = () => {
         if (type === 'fib') {
           const blanks = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
           valid = blanks.every((b) => {
-            const key = b[1].toLowerCase(); // [a] -> 'a'
+            const key = b.slice(1, -1).toLowerCase(); // "[aa]" -> "aa"
             const compoundId = `${qid}_${key}`;
             return answers[compoundId] && answers[compoundId].trim() !== '';
           });
@@ -180,8 +180,10 @@ const QuizAttempt = () => {
     const getFibKeys = (q) => {
       if (!q || q.type !== 'fib' || !q.question_text) return [];
       const matches = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
-      // [a] -> 'a'
-      return matches.map(m => m[1].toLowerCase()).filter(Boolean);
+      // "[aa]" -> "aa"
+      return matches
+        .map(m => m.slice(1, -1).toLowerCase())
+        .filter(Boolean);
     };
   
     const saveFibCombined = async (q) => {
@@ -422,7 +424,7 @@ const QuizAttempt = () => {
                       .replace(/<\/?p>/gi, '');           // strip <p> and </p>
 
                     // Split by [a], [b], ... while retaining HTML around them
-                    const parts = seriesHtmlWithPs.split(/(\[[a-z]\])/gi);
+                    const parts = seriesHtmlWithPs.split(/(\[[a-z]{1,2}\])/gi);
 
                     return (
                       <div className="mt-2">
@@ -436,7 +438,7 @@ const QuizAttempt = () => {
                         {/* series rendered, respecting <br> before blanks */}
                         <div style={{ whiteSpace: 'normal' }}>
                           {parts.map((part, index) => {
-                            const placeholderMatch = part.match(/^\[([a-z])\]$/i);
+                            const placeholderMatch = part.match(/^\[([a-z]{1,2})\]$/i);
 
                             if (placeholderMatch) {
                               const key = placeholderMatch[1].toLowerCase(); // [a] -> 'a'
@@ -596,7 +598,7 @@ const QuizAttempt = () => {
                     const blanks = q.question_text.match(BLANK_PLACEHOLDER_RE) || [];
                     if (blanks.length === 0) return false;
                     return blanks.every((b) => {
-                      const key = b[1].toLowerCase(); // [a] -> 'a'
+                      const key = b.slice(1, -1).toLowerCase(); // "[aa]" -> "aa"
                       const answerKey = `${q.question_id}_${key}`;
                       return answers.hasOwnProperty(answerKey) && answers[answerKey]?.trim() !== '';
                     });
