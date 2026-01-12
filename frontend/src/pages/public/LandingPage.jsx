@@ -17,6 +17,29 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+    // Guest mode: if we arrive with ?guest=1, clear all auth and behave as a guest
+    useEffect(() => {
+      const params = new URLSearchParams(location.search || "");
+      if (params.get("guest") === "1") {
+        // Clear everything related to login
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_role");
+        localStorage.removeItem("user_full_name");
+        localStorage.removeItem("account_status");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user_grade");
+  
+        // Reset React state
+        setRole(null);
+        setFullName("");
+        setUserGrade(null);
+  
+        // Remove ?guest=1 from the URL
+        navigate("/", { replace: true });
+      }
+    }, [location.search, navigate]);
+
 const isActive = (paths = []) => {
   const p = location.pathname;
   return paths.some((x) => p === x || p.startsWith(x + "/"));
@@ -47,9 +70,16 @@ const navLinkClass = () =>
 
   // Expired user redirect
   useEffect(() => {
+    const token = localStorage.getItem("access_token");
     const status = localStorage.getItem("account_status");
     const role = localStorage.getItem("user_role");
-    if ((role === "student" || role === "teacher") && status === "expired") {
+
+    // Only force to payment if this is a *logged-in* student/teacher
+    if (
+      token &&
+      (role === "student" || role === "teacher") &&
+      status === "expired"
+    ) {
       alert("Your subscription has expired. Redirecting to payment page...");
       window.location.href = `${API}payments/choose/`;
     }
