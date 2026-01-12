@@ -335,8 +335,30 @@ EASYPAY_CONFIRM_PATH = os.environ.get("EASYPAY_CONFIRM_PATH", "/easypay/Confirm.
 EASYPAY_STORE_ID = os.environ.get("EASYPAY_STORE_ID", "")
 EASYPAY_HASH_KEY = os.environ.get("EASYPAY_HASH_KEY", "")
 
-# Where the status handler should send users back to on success/failure (overridable)
+# -----------------------------------------------------------------------------------
+# Where Easypay status handler should send users on success/failure
+# -----------------------------------------------------------------------------------
+
+# Main frontend host (React landing page)
+FRONTEND_BASE_URL = os.environ.get(
+    "FRONTEND_BASE_URL",
+    "https://learnifypakistan.com"   # or "https://www.learnifypakistan.com" if you prefer
+)
+
+# Path for successful payments (status handler will append ?pid=&status=&txn=&desc=)
+FRONTEND_SUCCESS_URL = os.environ.get(
+    "FRONTEND_SUCCESS_URL",
+    "/"   # → https://learnifypakistan.com/?status=success&...
+)
+
+# Path for failed payments
+FRONTEND_FAILURE_URL = os.environ.get(
+    "FRONTEND_FAILURE_URL",
+    "/"   # you could later change to "/payment-error" if you make that route
+)
+
+# Fallback / "other" outcome path (also used for unknown status)
 FRONTEND_RETURN_URL = os.environ.get(
     "FRONTEND_RETURN_URL",
-    "https://www.learnifypakistan.com/payments/result"
+    "/"   # keep it simple: send everyone to landing page
 )

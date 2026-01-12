@@ -17,28 +17,6 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-    // Guest mode: if we arrive with ?guest=1, clear all auth and behave as a guest
-    useEffect(() => {
-      const params = new URLSearchParams(location.search || "");
-      if (params.get("guest") === "1") {
-        // Clear everything related to login
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user_role");
-        localStorage.removeItem("user_full_name");
-        localStorage.removeItem("account_status");
-        localStorage.removeItem("role");
-        localStorage.removeItem("user_grade");
-  
-        // Reset React state
-        setRole(null);
-        setFullName("");
-        setUserGrade(null);
-  
-        // Remove ?guest=1 from the URL
-        navigate("/", { replace: true });
-      }
-    }, [location.search, navigate]);
 
 const isActive = (paths = []) => {
   const p = location.pathname;
@@ -68,22 +46,60 @@ const navLinkClass = () =>
     setUserGrade(storedGrade);
   }, []);
 
-  // Expired user redirect
+    // Handle "guest=1" (from Back to Home as Guest User)
+  // and payment success (?status=success from Easypay)
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    const status = localStorage.getItem("account_status");
-    const role = localStorage.getItem("user_role");
+    const params = new URLSearchParams(location.search || "");
+    const guestFlag = params.get("guest");
+    const paymentStatus = params.get("payment_status") || params.get("status");
 
-    // Only force to payment if this is a *logged-in* student/teacher
-    if (
-      token &&
-      (role === "student" || role === "teacher") &&
-      status === "expired"
-    ) {
-      alert("Your subscription has expired. Redirecting to payment page...");
-      window.location.href = `${API}payments/choose/`;
+    if (guestFlag === "1" || paymentStatus === "success") {
+      // 🔹 Clear all auth-related storage (force guest mode)
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_full_name");
+      localStorage.removeItem("account_status");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user_grade");
+
+      // 🔹 Reset React state
+      setRole(null);
+      setFullName("");
+      setUserGrade(null);
+
+      // 🔹 Optional message
+      if (paymentStatus === "success") {
+        alert("Payment successful! Please login to start using Learnify.");
+      }
+
+      // 🔹 Clean URL so refresh doesn't repeat this logic
+      if (window.history && window.history.replaceState) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("guest");
+        url.searchParams.delete("payment_status");
+        url.searchParams.delete("status");
+        window.history.replaceState({}, "", url.toString());
+      }
     }
-  }, []);
+  }, [location.search]);
+
+  // Expired user redirect
+    // Expired user redirect (only if actually logged in)
+    useEffect(() => {
+      const status = localStorage.getItem("account_status");
+      const storedRole = localStorage.getItem("user_role");
+      const token = localStorage.getItem("access_token");
+  
+      if (
+        token && // ✅ only redirect if we have a token (real login)
+        (storedRole === "student" || storedRole === "teacher") &&
+        status === "expired"
+      ) {
+        alert("Your subscription has expired. Redirecting to payment page...");
+        window.location.href = `${API}payments/choose/`;
+      }
+    }, []);
 
   // Fetch quiz data from backend and log it
   useEffect(() => {
