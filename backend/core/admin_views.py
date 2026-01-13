@@ -725,6 +725,85 @@ def delete_question_bank(request, bank_id):
     return render(request, 'admin/core/confirm_delete_question_bank.html', {'bank': bank})
 
 @staff_member_required
+def duplicate_question_bank(request, bank_id):
+    """
+    Create a full copy of a QuestionBank *and* all its questions.
+    The new bank title becomes "… (Copy)", and if that already exists,
+    it becomes "… (Copy 2)", "… (Copy 3)", etc.
+    """
+    original = get_object_or_404(QuestionBank, id=bank_id)
+
+    # ----- 1. Create the new QuestionBank -----
+    base_title = original.title
+
+    # First candidate: "Title (Copy)"
+    title_candidate = f"{base_title} (Copy)"
+    counter = 2
+    while QuestionBank.objects.filter(title=title_candidate).exists():
+        title_candidate = f"{base_title} (Copy {counter})"
+        counter += 1
+
+    # Copy basic fields
+    new_bank = QuestionBank()
+    new_bank.title = title_candidate
+
+    # Your project sometimes uses `type` and sometimes `question_type`.
+    # We copy both if they exist, so it stays safe with your current model.
+    if hasattr(original, "type"):
+        new_bank.type = original.type
+    if hasattr(original, "question_type"):
+        new_bank.question_type = original.question_type
+
+    # If you have any other simple fields you want to carry over
+    # (e.g. description, created_by, subject, etc.), copy them here similarly:
+    # new_bank.description = original.description
+
+    new_bank.save()
+
+    # Decide which question model to copy from
+    bank_type = getattr(original, "type", None) or getattr(original, "question_type", None)
+
+    # ----- 2. Duplicate questions based on bank type -----
+    # We always set a *new* question_id so there are no clashes.
+    if bank_type == "SCQ":
+        queryset = SCQQuestion.objects.filter(question_bank=original)
+        for q in queryset:
+            q.pk = None           # new DB row
+            q.id = None           # in case `id` is explicit
+            if hasattr(q, "question_id"):
+                q.question_id = uuid.uuid4()
+            q.question_bank = new_bank
+            q.save()
+
+    elif bank_type == "MCQ":
+        queryset = MCQQuestion.objects.filter(question_bank=original)
+        for q in queryset:
+            q.pk = None
+            q.id = None
+            if hasattr(q, "question_id"):
+                q.question_id = uuid.uuid4()
+            q.question_bank = new_bank
+            q.save()
+
+    elif bank_type == "FIB":
+        queryset = FIBQuestion.objects.filter(question_bank=original)
+        for q in queryset:
+            q.pk = None
+            q.id = None
+            if hasattr(q, "question_id"):
+                q.question_id = uuid.uuid4()
+            q.question_bank = new_bank
+            q.save()
+
+    messages.success(
+        request,
+        f"Question Bank '{original.title}' duplicated successfully as '{new_bank.title}'."
+    )
+
+    return redirect("admin-question-bank")
+
+
+@staff_member_required
 def admin_quiz_dashboard(request):
     return render(request, 'admin/dashboard/admin_quizzes.html')
 

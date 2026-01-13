@@ -32,6 +32,7 @@ from core.admin_views import (
     create_metadata_view, quiz_question_assignment_view, quiz_formatting_view,
     edit_question_bank, delete_question_bank, delete_question,
     bulk_delete_users,
+    duplicate_question_bank,
 )
 
 # --- Stats dashboard ---
@@ -96,6 +97,7 @@ urlpatterns = [
     # ---------- Question Bank ----------
     path('admin/question-bank/edit/<int:bank_id>/', edit_question_bank, name='edit-question-bank'),
     path('admin/question-bank/delete/<int:bank_id>/', delete_question_bank, name='delete-question-bank'),
+    path('admin/question-bank/duplicate/<int:bank_id>/', duplicate_question_bank, name='duplicate-question-bank'),
 
     # ---------- Questions ----------
     path('admin/core/duplicate/<str:question_type>/<int:question_id>/', duplicate_question, name='duplicate_question'),
