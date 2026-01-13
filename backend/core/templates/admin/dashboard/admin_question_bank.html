@@ -49,8 +49,8 @@
             <!-- ✅ NEW Duplicate button -->
             <a href="{% url 'duplicate-question-bank' bank.id %}" class="btn-action">📄 Duplicate</a>
             <!-- existing buttons -->
-            <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add Question</a>
-            <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 Bulk Upload</a>
+            <a href="/admin/core/{{ bank.type|lower }}question/add/?bank={{ bank.id }}" class="btn-action">✏️ Add</a>
+            <a href="/upload/{{ bank.type|lower }}/{{ bank.id }}/" class="btn-action">📥 BulkUpload</a>
             <a href="/preview-questions/{{ bank.id }}/" class="btn-action">👁️ Preview</a>
           </div>
         {% else %}
