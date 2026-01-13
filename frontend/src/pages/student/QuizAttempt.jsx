@@ -666,7 +666,7 @@ const QuizAttempt = () => {
                           <button
                             type="button"
                             onClick={handleStartTimer}
-                            className="w-full mt-1 py-1.5 rounded-md text-s font-normal"
+                            className="w-full mt-1 py-1.5 rounded-md text-normal font-normal"
                             style={{
                               backgroundColor: '#5CC245',
                               color: '#ffffff',
