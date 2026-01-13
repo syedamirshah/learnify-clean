@@ -761,12 +761,9 @@ const QuizAttempt = () => {
                       {timedStatus === 'finished' && (
                         <>
                           <div className="flex flex-col items-center mb-2">
-                            <span className="flex items-center gap-1 text-[13px] font-semibold text-red-500 mb-1">
+                            <span className="flex items-center gap-1 text-[18px] font-semibold text-red-500 mb-1">
                               <span>⏰</span>
                               <span>Time&apos;s up</span>
-                            </span>
-                            <span className="text-[11px] text-gray-600 text-center leading-snug">
-                              You can keep working – this timer is just for practice.
                             </span>
                           </div>
                           <button
