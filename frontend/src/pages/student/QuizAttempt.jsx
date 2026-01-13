@@ -625,7 +625,7 @@ const QuizAttempt = () => {
 
                       {timedStatus === 'idle' && (
                         <>
-                          <div className="text-[11px] text-gray-500 mb-2 leading-snug">
+                          <div className="text-[13px] text-gray-700 mb-2 leading-snug">
                             Set a target time.
                           </div>
 
@@ -666,7 +666,7 @@ const QuizAttempt = () => {
                           <button
                             type="button"
                             onClick={handleStartTimer}
-                            className="w-full mt-1 py-1.5 rounded-md text-xs font-semibold"
+                            className="w-full mt-1 py-1.5 rounded-md text-s font-normal"
                             style={{
                               backgroundColor: '#5CC245',
                               color: '#ffffff',
