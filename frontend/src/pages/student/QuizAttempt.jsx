@@ -626,7 +626,7 @@ const QuizAttempt = () => {
                       {timedStatus === 'idle' && (
                         <>
                           <div className="text-[11px] text-gray-500 mb-2 leading-snug">
-                            Set a target time – quiz will <b>not</b> auto-submit.
+                            Set a target time.
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 mb-2 w-full">
