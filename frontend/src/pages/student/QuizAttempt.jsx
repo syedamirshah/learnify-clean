@@ -578,214 +578,217 @@ const QuizAttempt = () => {
                   <ElapsedTimer startTime={startTime} />
 
                   {/* ⏱ Timed Challenge Panel (optional) */}
-<div className="mt-3 w-full flex justify-center">
-  {!showTimedPanel ? (
-    <button
-      type="button"
-      onClick={() => setShowTimedPanel(true)}
-      className="
-        text-xs px-3 py-1.5 rounded-full
-        border
-        bg-white
-        shadow-sm
-        hover:shadow-md
-        transition
-      "
-      style={{
-        fontFamily: 'calibri',
-        borderColor: '#5CC245',
-        color: '#5CC245',
-      }}
-    >
-      ⏱️ Timed challenge (optional)
-    </button>
-  ) : (
-    <div
-      className="w-[190px] rounded-xl border bg-white shadow-md px-3 py-2"
-      style={{
-        fontFamily: 'calibri',
-        fontSize: '12px',
-        borderColor: '#e5e7eb',
-      }}
-    >
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="font-semibold text-gray-700">
-          Timed challenge
-        </span>
-        <button
-          type="button"
-          onClick={handleCancelTimer}
-          className="text-xs text-gray-400 hover:text-gray-600"
-          title="Close timed challenge"
-        >
-          ✕
-        </button>
-      </div>
+                  <div className="mt-4 w-full flex justify-center">
+                  {!showTimedPanel ? (
+                    <button
+                    type="button"
+                    onClick={() => setShowTimedPanel(true)}
+                    className="
+                      text-sm px-4 py-2 rounded-full
+                      border-2
+                      bg-white
+                      shadow-sm
+                      hover:shadow-md
+                      transition
+                    "
+                    style={{
+                      fontFamily: 'calibri',
+                      borderColor: '#5CC245',
+                      color: '#5CC245',
+                      backgroundColor: '#f0fdf4', // soft green tint
+                    }}
+                  >
+                    ⏱️ Timed challenge
+                  </button>
+                  ) : (
+                    <div
+                      className="w-[190px] rounded-xl border bg-white shadow-md px-3 py-2"
+                      style={{
+                        fontFamily: 'calibri',
+                        fontSize: '12px',
+                        borderColor: '#e5e7eb',
+                      }}
+                    >
+                      <div className="relative mb-2">
+                        <h3 className="text-[13px] font-semibold text-gray-800 text-center">
+                          Timed challenge
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={handleCancelTimer}
+                          className="absolute right-0 top-0 text-xs text-gray-400 hover:text-gray-600"
+                          title="Close timed challenge"
+                        >
+                          ✕
+                        </button>
+                      </div>
 
-      {timedStatus === 'idle' && (
-        <>
-          <div className="text-[11px] text-gray-500 mb-2 leading-snug">
-            Set a target time – quiz will <b>not</b> auto-submit.
-          </div>
+                      {timedStatus === 'idle' && (
+                        <>
+                          <div className="text-[11px] text-gray-500 mb-2 leading-snug">
+                            Set a target time – quiz will <b>not</b> auto-submit.
+                          </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {TIMED_PRESETS.map((sec) => {
-              const minutes = Math.round(sec / 60);
-              const isActive = timedSeconds === sec;
-              return (
-                <button
-                  key={sec}
-                  type="button"
-                  onClick={() => setTimedSeconds(sec)}
-                  className="
-                    px-2 py-1 rounded-full text-[11px]
-                    border transition
-                  "
-                  style={
-                    isActive
-                      ? {
-                          backgroundColor: '#5CC245',
-                          borderColor: '#5CC245',
-                          color: '#ffffff',
-                        }
-                      : {
-                          backgroundColor: '#f9fafb',
-                          borderColor: '#e5e7eb',
-                          color: '#374151',
-                        }
-                  }
-                >
-                  {minutes} min
-                </button>
-              );
-            })}
-          </div>
+                          <div className="grid grid-cols-2 gap-2 mb-2 w-full">
+                            {TIMED_PRESETS.map((sec) => {
+                              const minutes = Math.round(sec / 60);
+                              const isActive = timedSeconds === sec;
+                              return (
+                                <button
+                                  key={sec}
+                                  type="button"
+                                  onClick={() => setTimedSeconds(sec)}
+                                  className="
+                                    w-full
+                                    px-2 py-1 rounded-full text-[11px]
+                                    border transition
+                                  "
+                                  style={
+                                    isActive
+                                      ? {
+                                          backgroundColor: '#5CC245',
+                                          borderColor: '#5CC245',
+                                          color: '#ffffff',
+                                        }
+                                      : {
+                                          backgroundColor: '#f9fafb',
+                                          borderColor: '#e5e7eb',
+                                          color: '#374151',
+                                        }
+                                  }
+                                >
+                                  {minutes} min
+                                </button>
+                              );
+                            })}
+                          </div>
 
-          <button
-            type="button"
-            onClick={handleStartTimer}
-            className="w-full mt-1 py-1.5 rounded-md text-xs font-semibold"
-            style={{
-              backgroundColor: '#5CC245',
-              color: '#ffffff',
-            }}
-          >
-            Start ⏱ {formatSeconds(timedSeconds)}
-          </button>
-        </>
-      )}
+                          <button
+                            type="button"
+                            onClick={handleStartTimer}
+                            className="w-full mt-1 py-1.5 rounded-md text-xs font-semibold"
+                            style={{
+                              backgroundColor: '#5CC245',
+                              color: '#ffffff',
+                            }}
+                          >
+                            Start ⏱ {formatSeconds(timedSeconds)}
+                          </button>
+                        </>
+                      )}
 
-      {timedStatus === 'running' && (
-        <>
-          <div className="flex flex-col items-center mb-2">
-            <span className="text-[11px] text-gray-500 mb-1">
-              Time remaining
-            </span>
-            <span
-              className="font-semibold text-lg"
-              style={{
-                color:
-                  (timeLeft ?? 0) <= 60 ? '#f97316' : '#16a34a',
-              }}
-            >
-              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
-            </span>
-          </div>
-          <div className="flex justify-center gap-2 mt-1">
-            <button
-              type="button"
-              onClick={handlePauseTimer}
-              className="
-                px-2 py-1 rounded-md text-[11px]
-                bg-gray-100 text-gray-700
-                hover:bg-gray-200
-              "
-            >
-              Pause
-            </button>
-            <button
-              type="button"
-              onClick={handleCancelTimer}
-              className="
-                px-2 py-1 rounded-md text-[11px]
-                bg-gray-100 text-gray-500
-                hover:bg-gray-200
-              "
-            >
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
+                      {timedStatus === 'running' && (
+                        <>
+                          <div className="flex flex-col items-center mb-2">
+                            <span className="text-[11px] text-gray-500 mb-1">
+                              Time remaining
+                            </span>
+                            <span
+                              className="font-semibold text-xl"
+                              style={{
+                                color:
+                                  (timeLeft ?? 0) <= 60 ? '#f97316' : '#16a34a',
+                              }}
+                            >
+                              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
+                            </span>
+                          </div>
+                          <div className="flex justify-center gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={handlePauseTimer}
+                              className="
+                                px-2 py-1 rounded-md text-[11px]
+                                bg-gray-100 text-gray-700
+                                hover:bg-gray-200
+                              "
+                            >
+                              Pause
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelTimer}
+                              className="
+                                px-2 py-1 rounded-md text-[11px]
+                                bg-gray-100 text-gray-500
+                                hover:bg-gray-200
+                              "
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      )}
 
-      {timedStatus === 'paused' && (
-        <>
-          <div className="flex flex-col items-center mb-2">
-            <span className="text-[11px] text-gray-500 mb-1">
-              Paused at
-            </span>
-            <span className="font-semibold text-lg text-gray-700">
-              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
-            </span>
-          </div>
-          <div className="flex justify-center gap-2 mt-1">
-            <button
-              type="button"
-              onClick={handleResumeTimer}
-              className="
-                px-2 py-1 rounded-md text-[11px]
-                text-white
-                hover:opacity-95
-              "
-              style={{ backgroundColor: '#5CC245' }}
-            >
-              Resume
-            </button>
-            <button
-              type="button"
-              onClick={handleCancelTimer}
-              className="
-                px-2 py-1 rounded-md text-[11px]
-                bg-gray-100 text-gray-500
-                hover:bg-gray-200
-              "
-            >
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
+                      {timedStatus === 'paused' && (
+                        <>
+                          <div className="flex flex-col items-center mb-2">
+                            <span className="text-[11px] text-gray-500 mb-1">
+                              Paused at
+                            </span>
+                            <span className="font-semibold text-lg text-gray-700">
+                              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
+                            </span>
+                          </div>
+                          <div className="flex justify-center gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={handleResumeTimer}
+                              className="
+                                px-2 py-1 rounded-md text-[11px]
+                                text-white
+                                hover:opacity-95
+                              "
+                              style={{ backgroundColor: '#5CC245' }}
+                            >
+                              Resume
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelTimer}
+                              className="
+                                px-2 py-1 rounded-md text-[11px]
+                                bg-gray-100 text-gray-500
+                                hover:bg-gray-200
+                              "
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      )}
 
-      {timedStatus === 'finished' && (
-        <>
-          <div className="flex flex-col items-center mb-2">
-            <span className="text-[11px] text-gray-500 mb-1">
-              ⏰ Time&apos;s up
-            </span>
-            <span className="text-[11px] text-gray-600 text-center leading-snug">
-              You can keep working – this timer is just for practice.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleCancelTimer}
-            className="
-              w-full py-1.5 rounded-md
-              text-xs font-semibold
-              hover:opacity-95
-            "
-            style={{ backgroundColor: '#5CC245', color: '#ffffff' }}
-          >
-            Reset timer
-          </button>
-        </>
-      )}
-    </div>
-  )}
-</div>
+                      {timedStatus === 'finished' && (
+                        <>
+                          <div className="flex flex-col items-center mb-2">
+                            <span className="flex items-center gap-1 text-[13px] font-semibold text-red-500 mb-1">
+                              <span>⏰</span>
+                              <span>Time&apos;s up</span>
+                            </span>
+                            <span className="text-[11px] text-gray-600 text-center leading-snug">
+                              You can keep working – this timer is just for practice.
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleCancelTimer}
+                            className="
+                              w-full py-1.5 rounded-md
+                              text-xs font-semibold
+                              hover:opacity-95
+                            "
+                            style={{ backgroundColor: '#5CC245', color: '#ffffff' }}
+                          >
+                            Reset timer
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                   {/* Scratch Pad Button */}
-                  <div className="mt-6" />
+                  <div className="mt-4" />
                   <button
                     type="button"
                     onClick={() => setShowRoughWork(true)}
