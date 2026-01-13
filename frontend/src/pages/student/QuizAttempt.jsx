@@ -13,6 +13,16 @@ const HIDE_OPTION_MARKERS = new Set([
 // Only treat [a], [b], [c] ... as FIB blanks
 const BLANK_PLACEHOLDER_RE = /\[[a-z]{1,2}\]/gi;
 
+// 🔔 Timed challenge presets (seconds): 3, 5, 10, 15 minutes
+const TIMED_PRESETS = [180, 300, 600, 900];
+
+const formatSeconds = (total) => {
+  if (total == null || Number.isNaN(total)) return '00:00';
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 const shouldHideOption = (opt) => {
   if (opt == null) return true;                // hides null/undefined
   const s = String(opt).trim();
@@ -33,6 +43,13 @@ const QuizAttempt = () => {
   const [quizMeta, setQuizMeta] = useState({});
   const [previewMode, setPreviewMode] = useState(false);
   const [showRoughWork, setShowRoughWork] = useState(false);
+
+  // ⏱ Timed challenge local state (purely frontend)
+  const [showTimedPanel, setShowTimedPanel] = useState(false);   // collapsed / expanded
+  const [timedStatus, setTimedStatus] = useState('idle');        // 'idle' | 'running' | 'paused' | 'finished'
+  const [timedSeconds, setTimedSeconds] = useState(600);         // selected duration in seconds (default 10 min)
+  const [timeLeft, setTimeLeft] = useState(null);                // live countdown
+  const [timerDeadline, setTimerDeadline] = useState(null);      // timestamp (ms) when timer ends
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const totalQuestions = questions.length > 0 ? (quizMeta.total_expected_questions || questions.length) : 0;
@@ -134,6 +151,27 @@ const QuizAttempt = () => {
     return () => window.removeEventListener('keydown', handleEnterKey);
   }, [currentQuestion, answers, currentIndex, previewMode]);
 
+    // ⏱ Soft countdown effect (no auto-submit)
+    useEffect(() => {
+      if (timedStatus !== 'running' || !timerDeadline) return;
+  
+      const interval = setInterval(() => {
+        const diff = Math.max(
+          0,
+          Math.round((timerDeadline - Date.now()) / 1000)
+        );
+  
+        setTimeLeft(diff);
+  
+        if (diff <= 0) {
+          setTimedStatus('finished');
+          setTimerDeadline(null);
+        }
+      }, 250);
+  
+      return () => clearInterval(interval);
+    }, [timedStatus, timerDeadline]);
+
   const extractUUIDFromId = (questionId) => {
     return questionId.includes('_') ? questionId.split('_')[0] : questionId;
   };
@@ -229,8 +267,39 @@ const QuizAttempt = () => {
       const finalizedAttemptId = res.data.attempt_id;
       navigate(`/student/quiz-result/${finalizedAttemptId}/`);
     } catch (err) {
-      console.error('‚ö†Ô∏è Failed to finalize quiz:', err);
+      console.error('Failed to finalize quiz:', err);
     }
+  };
+
+  // 🔧 Timed challenge controls (frontend only)
+  const handleStartTimer = () => {
+    if (!timedSeconds || timedSeconds <= 0) return;
+    const now = Date.now();
+    const totalMs = timedSeconds * 1000;
+
+    setTimeLeft(timedSeconds);
+    setTimerDeadline(now + totalMs);
+    setTimedStatus('running');
+  };
+
+  const handlePauseTimer = () => {
+    if (timedStatus !== 'running') return;
+    setTimedStatus('paused');
+    setTimerDeadline(null); // freeze at current timeLeft
+  };
+
+  const handleResumeTimer = () => {
+    if (timedStatus !== 'paused' || timeLeft == null) return;
+    const now = Date.now();
+    setTimerDeadline(now + timeLeft * 1000);
+    setTimedStatus('running');
+  };
+
+  const handleCancelTimer = () => {
+    setTimedStatus('idle');
+    setTimeLeft(null);
+    setTimerDeadline(null);
+    setShowTimedPanel(false);
   };
 
   const fontSize = quizMeta.font_size || 16;
@@ -501,16 +570,210 @@ const QuizAttempt = () => {
                 </div>
               </div>
     
-              {/* Timer Block */}
-              <div className="w-1/4 flex justify-end">
-                {/* Keep timer at far right, and center button UNDER the clock
-                    WITHOUT increasing the column width */}
+                            {/* Timer Block */}
+                            <div className="w-1/4 flex justify-end">
+                {/* Keep timer at far right; stack elapsed clock, timed challenge, then Scratch Pad */}
                 <div className="flex flex-col items-center">
+                  {/* Existing circular elapsed timer */}
                   <ElapsedTimer startTime={startTime} />
 
-                  {/* more space between clock and button */}
-                  <div className="mt-6" />
+                  {/* ⏱ Timed Challenge Panel (optional) */}
+                  <div className="mt-4 w-full flex justify-center">
+                    {!showTimedPanel ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowTimedPanel(true)}
+                        className="
+                          text-xs px-3 py-1.5 rounded-full
+                          border border-green-500 text-green-600
+                          bg-white
+                          shadow-sm
+                          hover:bg-green-50
+                          transition
+                        "
+                        style={{ fontFamily: 'calibri' }}
+                      >
+                        ⏱️ Timed challenge (optional)
+                      </button>
+                    ) : (
+                      <div
+                        className="w-[190px] rounded-lg border border-gray-200 bg-white shadow-sm px-3 py-2"
+                        style={{ fontFamily: 'calibri', fontSize: '12px' }}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-gray-700">
+                            Timed challenge
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleCancelTimer}
+                            className="text-xs text-gray-400 hover:text-gray-600"
+                            title="Close timed challenge"
+                          >
+                            ✕
+                          </button>
+                        </div>
 
+                        {timedStatus === 'idle' && (
+                          <>
+                            <div className="text-[11px] text-gray-500 mb-2">
+                              Set a target time – quiz will <b>not</b> auto-submit.
+                            </div>
+
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {TIMED_PRESETS.map((sec) => {
+                                const minutes = Math.round(sec / 60);
+                                const isActive = timedSeconds === sec;
+                                return (
+                                  <button
+                                    key={sec}
+                                    type="button"
+                                    onClick={() => setTimedSeconds(sec)}
+                                    className={`
+                                      px-2 py-1 rounded-full text-[11px]
+                                      border
+                                      ${
+                                        isActive
+                                          ? 'bg-green-500 border-green-500 text-white'
+                                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                                      }
+                                    `}
+                                  >
+                                    {minutes} min
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleStartTimer}
+                              className="
+                                w-full mt-1 py-1.5 rounded-md
+                                bg-green-500 text-white
+                                text-xs font-semibold
+                                hover:bg-green-600
+                                transition
+                              "
+                            >
+                              Start ⏱ {formatSeconds(timedSeconds)}
+                            </button>
+                          </>
+                        )}
+
+                        {timedStatus === 'running' && (
+                          <>
+                            <div className="flex flex-col items-center mb-1">
+                              <span className="text-[11px] text-gray-500 mb-1">
+                                Time remaining
+                              </span>
+                              <span
+                                className={`
+                                  font-semibold text-lg
+                                  ${
+                                    (timeLeft ?? 0) <= 60
+                                      ? 'text-orange-500'
+                                      : 'text-green-600'
+                                  }
+                                `}
+                              >
+                                ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
+                              </span>
+                            </div>
+                            <div className="flex justify-center gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={handlePauseTimer}
+                                className="
+                                  px-2 py-1 rounded-md text-[11px]
+                                  bg-gray-100 text-gray-700
+                                  hover:bg-gray-200
+                                "
+                              >
+                                Pause
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelTimer}
+                                className="
+                                  px-2 py-1 rounded-md text-[11px]
+                                  bg-gray-100 text-gray-500
+                                  hover:bg-gray-200
+                                "
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {timedStatus === 'paused' && (
+                          <>
+                            <div className="flex flex-col items-center mb-1">
+                              <span className="text-[11px] text-gray-500 mb-1">
+                                Paused at
+                              </span>
+                              <span className="font-semibold text-lg text-gray-700">
+                                ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
+                              </span>
+                            </div>
+                            <div className="flex justify-center gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={handleResumeTimer}
+                                className="
+                                  px-2 py-1 rounded-md text-[11px]
+                                  bg-green-500 text-white
+                                  hover:bg-green-600
+                                "
+                              >
+                                Resume
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelTimer}
+                                className="
+                                  px-2 py-1 rounded-md text-[11px]
+                                  bg-gray-100 text-gray-500
+                                  hover:bg-gray-200
+                                "
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {timedStatus === 'finished' && (
+                          <>
+                            <div className="flex flex-col items-center mb-2">
+                              <span className="text-[11px] text-gray-500 mb-1">
+                                ⏰ Time&apos;s up
+                              </span>
+                              <span className="text-[11px] text-gray-600 text-center">
+                                You can keep working – this timer is just for practice.
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleCancelTimer}
+                              className="
+                                w-full py-1.5 rounded-md
+                                bg-green-500 text-white
+                                text-xs font-semibold
+                                hover:bg-green-600
+                              "
+                            >
+                              Reset timer
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Scratch Pad Button */}
+                  <div className="mt-6" />
                   <button
                     type="button"
                     onClick={() => setShowRoughWork(true)}
@@ -526,13 +789,13 @@ const QuizAttempt = () => {
                       active:scale-[0.99]
                     "
                     style={{
-                      fontFamily: "calibri",
-                      backgroundColor: "#5CC245",
+                      fontFamily: 'calibri',
+                      backgroundColor: '#5CC245',
                     }}
                   >
                     <span className="font-normal">Scratch Pad</span>
                   </button>
-                </div> 
+                </div>
               </div>
             </div>
     
