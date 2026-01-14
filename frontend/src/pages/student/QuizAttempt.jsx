@@ -525,18 +525,32 @@ const QuizAttempt = () => {
                                   onChange={(e) =>
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
-                                  onBlur={(e) =>
-                                    setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
-                                  }
-                                  className="border rounded px-1 py-0.5 mx-1"
+                                  onFocus={(e) => {
+                                    // highlight on focus
+                                    e.target.style.borderColor = '#5CC245';
+                                    e.target.style.boxShadow = '0 0 4px #5CC24555';
+                                  }}
+                                  onBlur={(e) => {
+                                    const newVal = e.target.value;
+                                    // save answer on blur (same as before)
+                                    setAnswers((prev) => ({ ...prev, [compoundId]: newVal }));
+                                    // remove highlight
+                                    e.target.style.borderColor = '#94a3b8';
+                                    e.target.style.boxShadow = 'none';
+                                  }}
+                                  className="mx-1"
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,
-                                    lineHeight: `${fontSize * 1.2}px`,
+                                    height: `${fontSize * 1.35}px`,      // slightly taller
+                                    lineHeight: `${fontSize * 1.35}px`,
                                     fontSize: `${fontSize}px`,
-                                    padding: '0 6px',
+                                    padding: '0 8px',
                                     verticalAlign: 'text-bottom',
+                                    borderRadius: '6px',
+                                    border: '1.5px solid #94a3b8',      // more visible border
+                                    backgroundColor: '#ffffff',
+                                    transition: 'all 0.15s ease',
                                   }}
                                 />
                               );
