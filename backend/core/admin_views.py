@@ -824,9 +824,9 @@ def create_metadata_view(request):
 def quiz_question_assignment_view(request):
     quizzes = Quiz.objects.all()
     grades = Grade.objects.all()
-    chapters = Chapter.objects.all().select_related('subject__grade').order_by(
-        'subject__grade__name', 'subject__name', 'name'
-    )
+    chapters = Chapter.objects.all().select_related(
+        'subject__grade'
+    ).order_by('subject__grade__name', 'subject__name', 'name')
     
     # Apply grade filter if selected
     selected_grade_id = request.GET.get('grade_filter')
@@ -858,16 +858,11 @@ def quiz_question_assignment_view(request):
                 )
                 messages.success(
                     request,
-                    f" {num_questions} questions from '{bank.title}' assigned to quiz '{quiz.title}'."
+                    f" {num_questions} questions from '{bank.title}' "
+                    f"assigned to quiz '{quiz.title}'."
                 )
-
-                # 🔁 AFTER ASSIGNMENT → GO TO QUIZ LIST PAGE
-                # If your quiz list URL is `/admin/core/list-quizzes/`, this is enough:
-                return redirect('/admin/core/list-quizzes/')
-
-                # If you later have a named URL, e.g. name='list_quizzes_admin',
-                # you can switch to:  return redirect('list_quizzes_admin')
-
+                # ✅ After assigning, go to the main quiz list page
+                return redirect('admin-list-quizzes')
             except Exception as e:
                 messages.error(request, f" Error: {e}")
 
@@ -876,8 +871,9 @@ def quiz_question_assignment_view(request):
         'grades': grades,
         'selected_grade_id': selected_grade_id,
         'question_banks': question_banks,
-        'chapters': chapters,
+        'chapters': chapters,   # NEW
     })
+
 
 # KEEP this in admin_views.py and update it to include line_spacing
 class QuizFormattingForm(forms.ModelForm):
