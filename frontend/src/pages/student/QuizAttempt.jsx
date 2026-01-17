@@ -525,35 +525,18 @@ const QuizAttempt = () => {
                                   onChange={(e) =>
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
-                                  onFocus={(e) => {
-                                    // highlight on focus (no size change)
-                                    e.target.style.borderColor = '#5CC245';
-                                    e.target.style.boxShadow = '0 0 4px #5CC24555';
-                                  }}
-                                  onBlur={(e) => {
-                                    const newVal = e.target.value;
-                                    setAnswers((prev) => ({ ...prev, [compoundId]: newVal }));
-                                    // back to neutral border
-                                    e.target.style.borderColor = '#94a3b8';
-                                    e.target.style.boxShadow = 'none';
-                                  }}
-                                  className="mx-1"
+                                  onBlur={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
+                                  }
+                                  className="border rounded px-1 py-0.5 mx-1"
                                   style={{
                                     display: 'inline-block',
-                                    // 🔙 exactly like before: width controlled purely by fibWidth
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,
-                                    lineHeight: `${fontSize * 1.2}px`,
+                                    height: `${fontSize * 1.2}px`,     // tighter box
+                                    lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
-                                    verticalAlign: 'text-bottom',
-                              
-                                    // visual improvements that don't shrink inner content
-                                    borderRadius: '6px',
-                                    border: '1px solid #94a3b8',
-                                    backgroundColor: '#ffffff',
-                                    boxSizing: 'content-box',
-                                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                                    verticalAlign: 'text-bottom',      // baseline alignment with surrounding text
                                   }}
                                 />
                               );
