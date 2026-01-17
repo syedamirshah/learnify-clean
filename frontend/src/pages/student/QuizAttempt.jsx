@@ -526,31 +526,34 @@ const QuizAttempt = () => {
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
                                   onFocus={(e) => {
-                                    // highlight on focus
+                                    // highlight on focus (no size change)
                                     e.target.style.borderColor = '#5CC245';
                                     e.target.style.boxShadow = '0 0 4px #5CC24555';
                                   }}
                                   onBlur={(e) => {
                                     const newVal = e.target.value;
-                                    // save answer on blur (same as before)
                                     setAnswers((prev) => ({ ...prev, [compoundId]: newVal }));
-                                    // remove highlight
+                                    // back to neutral border
                                     e.target.style.borderColor = '#94a3b8';
                                     e.target.style.boxShadow = 'none';
                                   }}
                                   className="mx-1"
                                   style={{
                                     display: 'inline-block',
+                                    // 🔙 exactly like before: width controlled purely by fibWidth
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.35}px`,      // slightly taller
-                                    lineHeight: `${fontSize * 1.35}px`,
+                                    height: `${fontSize * 1.2}px`,
+                                    lineHeight: `${fontSize * 1.2}px`,
                                     fontSize: `${fontSize}px`,
-                                    padding: '0 8px',
+                                    padding: '0 6px',
                                     verticalAlign: 'text-bottom',
+                              
+                                    // visual improvements that don't shrink inner content
                                     borderRadius: '6px',
-                                    border: '1.5px solid #94a3b8',      // more visible border
+                                    border: '1px solid #94a3b8',
                                     backgroundColor: '#ffffff',
-                                    transition: 'all 0.15s ease',
+                                    boxSizing: 'content-box',
+                                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                                   }}
                                 />
                               );
