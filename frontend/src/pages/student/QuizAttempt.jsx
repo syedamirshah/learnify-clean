@@ -528,11 +528,11 @@ const QuizAttempt = () => {
                                   onBlur={(e) =>
                                     setAnswers((prev) => ({ ...prev, [compoundId]: e.target.value }))
                                   }
-                                  className="border border-gray-400 rounded px-1 py-0.5 mx-1"
+                                  className="border rounded px-1 py-0.5 mx-1"
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,     // tighterr  box
+                                    height: `${fontSize * 1.2}px`,     // tighter box
                                     lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
