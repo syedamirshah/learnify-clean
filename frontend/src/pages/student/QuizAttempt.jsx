@@ -515,7 +515,7 @@ const QuizAttempt = () => {
                               const value = answers[compoundId] || '';
                             
                               const prev = parts[index - 1] || '';
-                              const needsNewLine = /<br\s*\/?>\s*$/i.test(prev);
+                              const needsNewLine = /<br\s*\/?>\s*$/i.test(prev); 
                             
                               const inputEl = (
                                 <input
@@ -532,7 +532,7 @@ const QuizAttempt = () => {
                                   style={{
                                     display: 'inline-block',
                                     width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,     // tighter box
+                                    height: `${fontSize * 1.2}px`,     // tighterr  box
                                     lineHeight: `${fontSize * 1.2}px`, // centers the text vertically inside
                                     fontSize: `${fontSize}px`,
                                     padding: '0 6px',
