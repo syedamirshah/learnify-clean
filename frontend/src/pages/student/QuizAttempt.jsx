@@ -156,11 +156,11 @@ const QuizAttempt = () => {
 
         if (!valid) return;
 
-        // Save answer before proceeding
+        // Save answer before proceeding AND update correctness (circles) now
         if (type === 'fib') {
-          await saveFibCombined(q); // one request, merged keys
+          await saveFibCombined(q, true); // one request, merged keys
         } else {
-          await saveAnswer(qid, answers[qid]);
+          await saveAnswer(qid, answers[qid], true);
         }
 
         // Lock question in exam mode after answer is submitted
@@ -228,7 +228,7 @@ const QuizAttempt = () => {
     return question ? question.type : 'scq';
   };
 
-  const saveAnswer = async (questionId, value) => {
+  const saveAnswer = async (questionId, value, updateCorrectness = false) => {
     if (previewMode) return;
   
     const baseId = extractUUIDFromId(questionId);
@@ -247,13 +247,15 @@ const QuizAttempt = () => {
         answer_data: answer,
       });
   
-      // ✅ if backend sends correctness, store it
-      if (res?.data && typeof res.data.is_correct === 'boolean') {
+      // ✅ only colour circles when explicitly requested
+      if (updateCorrectness && res?.data && typeof res.data.is_correct === 'boolean') {
         setQuestionResults((prev) => ({
           ...prev,
           [baseId]: res.data.is_correct ? 'correct' : 'incorrect',
         }));
       }
+  
+      return res?.data;
     } catch (err) {
       console.error('💥 Failed to save answer:', err);
     }
@@ -269,7 +271,7 @@ const QuizAttempt = () => {
       .filter(Boolean);
   };
 
-  const saveFibCombined = async (q) => {
+  const saveFibCombined = async (q, updateCorrectness = false) => {
     if (!q || q.type !== 'fib' || previewMode) return;
   
     const qid = q.question_id;
@@ -289,13 +291,14 @@ const QuizAttempt = () => {
         answer_data: payload,
       });
   
-      // ✅ store correctness if backend sends it
-      if (res?.data && typeof res.data.is_correct === 'boolean') {
+      if (updateCorrectness && res?.data && typeof res.data.is_correct === 'boolean') {
         setQuestionResults((prev) => ({
           ...prev,
           [qid]: res.data.is_correct ? 'correct' : 'incorrect',
         }));
       }
+  
+      return res?.data;
     } catch (err) {
       console.error('💥 Failed to save FIB (combined):', err);
     }
@@ -304,12 +307,10 @@ const QuizAttempt = () => {
   const handleOptionChange = (questionId, value) => {
     const baseId = extractUUIDFromId(questionId);
     const isLocked = attemptMode === 'exam' && lockedQuestions[baseId];
-
-    // In exam mode, once locked, do not allow further changes
     if (isLocked) return;
-
+  
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
-    saveAnswer(questionId, value);
+    saveAnswer(questionId, value, false);   // 👈 no colouring yet
   };
 
   const handleSubmit = async () => {
@@ -642,7 +643,8 @@ const QuizAttempt = () => {
                                       [compoundId]: e.target.value,
                                     }));
                                     if (!isLocked) {
-                                      await saveFibCombined(currentQuestion);
+                                      // save, but DO NOT update correctness yet
+                                      await saveFibCombined(currentQuestion, false);
                                     }
                                   }}
                                   className="border border-gray-400 rounded px-1 py-0.5 mx-1"
@@ -914,20 +916,23 @@ const QuizAttempt = () => {
                 }`}
                 onClick={async () => {
                   if (!canProceed) return;
+                
+                  // ✅ Save AND update correctness only when pressing Next
                   if (currentQuestion?.type === 'fib') {
-                    await saveFibCombined(currentQuestion);
+                    await saveFibCombined(currentQuestion, true);
                   } else {
                     await saveAnswer(
                       currentQuestion.question_id,
-                      answers[currentQuestion.question_id]
+                      answers[currentQuestion.question_id],
+                      true
                     );
                   }
-
+                
                   if (!previewMode && attemptMode === 'exam') {
                     // lock current question in exam mode
                     lockQuestion(currentQuestion.question_id);
                   }
-
+                
                   setCurrentIndex((prev) =>
                     Math.min(prev + 1, questions.length - 1)
                   );
@@ -945,19 +950,22 @@ const QuizAttempt = () => {
                 }`}
                 onClick={async () => {
                   if (!canProceed) return;
+                
+                  // ✅ Final question: save and update correctness now
                   if (currentQuestion?.type === 'fib') {
-                    await saveFibCombined(currentQuestion);
+                    await saveFibCombined(currentQuestion, true);
                   } else {
                     await saveAnswer(
                       currentQuestion.question_id,
-                      answers[currentQuestion.question_id]
+                      answers[currentQuestion.question_id],
+                      true
                     );
                   }
-
+                
                   if (!previewMode && attemptMode === 'exam') {
                     lockQuestion(currentQuestion.question_id);
                   }
-
+                
                   await handleSubmit();
                 }}
                 disabled={!canProceed}
