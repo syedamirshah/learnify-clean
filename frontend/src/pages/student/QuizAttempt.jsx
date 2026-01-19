@@ -55,8 +55,7 @@ const QuizAttempt = () => {
 
   // ⏱ Timed challenge local state (purely frontend)
   const [timedStatus, setTimedStatus] = useState('idle');        // 'idle' | 'running' | 'paused' | 'finished'
-  const [timedSeconds, setTimedSeconds] = useState(600);         // selected duration in seconds (default 10 min)
-  const [timeLeft, setTimeLeft] = useState(null);                // live countdown
+  const [timedSeconds, setTimedSeconds] = useState(420); // default 7 min  const [timeLeft, setTimeLeft] = useState(null);                // live countdown
   const [timerDeadline, setTimerDeadline] = useState(null);      // timestamp (ms) when timer ends
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
@@ -139,6 +138,7 @@ const QuizAttempt = () => {
 
         const q = currentQuestion;
         if (!q) return;
+        ensureExamTimerStarted();
 
         const qid = q.question_id;
         const type = q.type;
@@ -338,6 +338,13 @@ useEffect(() => {
       navigate(`/student/quiz-result/${finalizedAttemptId}/`);
     } catch (err) {
       console.error('Failed to finalize quiz:', err);
+    }
+  };
+
+  // Ensure exam timer has started (auto-start with current preset, default 7 min)
+  const ensureExamTimerStarted = () => {
+    if (attemptMode === 'exam' && timedStatus === 'idle') {
+      handleStartTimer();
     }
   };
 
@@ -799,6 +806,9 @@ useEffect(() => {
                 }`}
                 onClick={async () => {
                   if (!canProceed) return;
+
+                  ensureExamTimerStarted();   // 🔸 in case they reach last question without starting
+
                 
                   // ✅ Save AND update correctness only when pressing Next
                   if (currentQuestion?.type === 'fib') {
@@ -833,6 +843,9 @@ useEffect(() => {
                 }`}
                 onClick={async () => {
                   if (!canProceed) return;
+
+                  ensureExamTimerStarted();   // 🔸 in case they reach last question without starting
+
                 
                   // ✅ Final question: save and update correctness now
                   if (currentQuestion?.type === 'fib') {
