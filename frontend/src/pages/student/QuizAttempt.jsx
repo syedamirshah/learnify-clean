@@ -50,6 +50,9 @@ const QuizAttempt = () => {
   // 🔒 NEW: Track which questions are locked (exam mode)
   const [lockedQuestions, setLockedQuestions] = useState({}); // { [baseQuestionId]: true }
 
+  // ✅ NEW: correctness per question: 'correct' | 'incorrect'
+  const [questionResults, setQuestionResults] = useState({});
+
   // ⏱ Timed challenge local state (purely frontend)
   const [showTimedPanel, setShowTimedPanel] = useState(false);   // collapsed / expanded
   const [timedStatus, setTimedStatus] = useState('idle');        // 'idle' | 'running' | 'paused' | 'finished'
@@ -99,6 +102,8 @@ const QuizAttempt = () => {
         setStartTime(Date.now());
         setAttemptId(res.data.attempt_id);
         setAnswers({});
+        setLockedQuestions({});   // reset locks
+        setQuestionResults({});   // ✅ reset correctness map
         setLockedQuestions({}); // reset locks on new attempt
 
         setQuizMeta({
@@ -225,23 +230,30 @@ const QuizAttempt = () => {
 
   const saveAnswer = async (questionId, value) => {
     if (previewMode) return;
-
+  
     const baseId = extractUUIDFromId(questionId);
     const type = getQuestionTypeById(questionId);
     const answer = extractAnswerData(questionId, value);
-
-    // Skip saving if value is empty and question is FIB
+  
     if (type === 'fib' && Object.values(answer).every((val) => val.trim() === '')) {
       return;
     }
-
+  
     try {
-      await axios.post(`/student/submit-answer/`, {
+      const res = await axios.post(`/student/submit-answer/`, {
         attempt_id: attemptId,
         question_id: baseId,
         question_type: type,
         answer_data: answer,
       });
+  
+      // ✅ if backend sends correctness, store it
+      if (res?.data && typeof res.data.is_correct === 'boolean') {
+        setQuestionResults((prev) => ({
+          ...prev,
+          [baseId]: res.data.is_correct ? 'correct' : 'incorrect',
+        }));
+      }
     } catch (err) {
       console.error('💥 Failed to save answer:', err);
     }
@@ -259,23 +271,31 @@ const QuizAttempt = () => {
 
   const saveFibCombined = async (q) => {
     if (!q || q.type !== 'fib' || previewMode) return;
-
+  
     const qid = q.question_id;
     const keys = getFibKeys(q);
     const payload = {};
-
+  
     for (const key of keys) {
       const compoundId = `${qid}_${key}`;
       payload[key] = (answers[compoundId] ?? '').toString();
     }
-
+  
     try {
-      await axios.post(`/student/submit-answer/`, {
+      const res = await axios.post(`/student/submit-answer/`, {
         attempt_id: attemptId,
         question_id: qid,
         question_type: 'fib',
-        answer_data: payload, // send ALL blanks at once
+        answer_data: payload,
       });
+  
+      // ✅ store correctness if backend sends it
+      if (res?.data && typeof res.data.is_correct === 'boolean') {
+        setQuestionResults((prev) => ({
+          ...prev,
+          [qid]: res.data.is_correct ? 'correct' : 'incorrect',
+        }));
+      }
     } catch (err) {
       console.error('💥 Failed to save FIB (combined):', err);
     }
@@ -975,18 +995,39 @@ const QuizAttempt = () => {
                 }
               })();
 
+              const baseId = q.question_id;
+              const correctness = questionResults[baseId]; // 'correct' | 'incorrect' | undefined
+
               const baseClasses =
                 'w-10 h-10 rounded-full text-sm font-semibold flex items-center justify-center border';
 
-              const style = isAttempted
-                ? {
-                    backgroundColor: '#5CC245',
-                    color: 'white',
-                    borderColor: '#5CC245',
-                  }
-                : isCurrent
-                ? { borderColor: '#5CC245', color: '#5CC245' }
-                : { borderColor: '#ccc', color: '#ccc' };
+              let style;
+              if (correctness === 'correct') {
+                // ✅ correct = green
+                style = {
+                  backgroundColor: '#5CC245',
+                  color: 'white',
+                  borderColor: '#5CC245',
+                };
+              } else if (correctness === 'incorrect') {
+                // ❌ incorrect = red
+                style = {
+                  backgroundColor: '#EF4444',
+                  color: 'white',
+                  borderColor: '#EF4444',
+                };
+              } else if (isAttempted) {
+                // answered but correctness unknown (fallback)
+                style = {
+                  backgroundColor: '#5CC245',
+                  color: 'white',
+                  borderColor: '#5CC245',
+                };
+              } else if (isCurrent) {
+                style = { borderColor: '#5CC245', color: '#5CC245' };
+              } else {
+                style = { borderColor: '#ccc', color: '#ccc' };
+              }
 
               return (
                 <div key={index} className={baseClasses} style={style}>
