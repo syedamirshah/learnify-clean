@@ -55,7 +55,8 @@ const QuizAttempt = () => {
 
   // ⏱ Timed challenge local state (purely frontend)
   const [timedStatus, setTimedStatus] = useState('idle');        // 'idle' | 'running' | 'paused' | 'finished'
-  const [timedSeconds, setTimedSeconds] = useState(420); // default 7 min  const [timeLeft, setTimeLeft] = useState(null);                // live countdown
+  const [timedSeconds, setTimedSeconds] = useState(420); // default 7 min  
+  const [timeLeft, setTimeLeft] = useState(null);                // live countdown
   const [timerDeadline, setTimerDeadline] = useState(null);      // timestamp (ms) when timer ends
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
