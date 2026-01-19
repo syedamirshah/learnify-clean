@@ -14,7 +14,7 @@ const HIDE_OPTION_MARKERS = new Set([
 const BLANK_PLACEHOLDER_RE = /\[[a-z]{1,2}\]/gi;
 
 // 🔔 Timed challenge presets (seconds): 3, 5, 10, 15 minutes
-const TIMED_PRESETS = [180, 300, 600, 900];
+const TIMED_PRESETS = [180, 300, 420, 600];
 
 const formatSeconds = (total) => {
   if (total == null || Number.isNaN(total)) return '00:00';
@@ -54,7 +54,6 @@ const QuizAttempt = () => {
   const [questionResults, setQuestionResults] = useState({});
 
   // ⏱ Timed challenge local state (purely frontend)
-  const [showTimedPanel, setShowTimedPanel] = useState(false);   // collapsed / expanded
   const [timedStatus, setTimedStatus] = useState('idle');        // 'idle' | 'running' | 'paused' | 'finished'
   const [timedSeconds, setTimedSeconds] = useState(600);         // selected duration in seconds (default 10 min)
   const [timeLeft, setTimeLeft] = useState(null);                // live countdown
@@ -104,6 +103,10 @@ const QuizAttempt = () => {
         setAnswers({});
         setLockedQuestions({});   // reset locks
         setQuestionResults({});   // ✅ reset correctness map
+        setTimedStatus('idle');
+        setTimedSeconds(420);   // default 7 min (you can change)
+        setTimeLeft(null);
+        setTimerDeadline(null);
         setLockedQuestions({}); // reset locks on new attempt
 
         setQuizMeta({
@@ -190,25 +193,32 @@ const QuizAttempt = () => {
   }, [currentQuestion, answers, currentIndex, previewMode, attemptMode]);
 
   // ⏱ Soft countdown effect (no auto-submit)
-  useEffect(() => {
-    if (timedStatus !== 'running' || !timerDeadline) return;
+  // ⏱ Exam countdown – auto-submit in exam mode
+useEffect(() => {
+  if (timedStatus !== 'running' || !timerDeadline) return;
 
-    const interval = setInterval(() => {
-      const diff = Math.max(
-        0,
-        Math.round((timerDeadline - Date.now()) / 1000)
-      );
+  const interval = setInterval(() => {
+    const diff = Math.max(
+      0,
+      Math.round((timerDeadline - Date.now()) / 1000)
+    );
 
-      setTimeLeft(diff);
+    setTimeLeft(diff);
 
-      if (diff <= 0) {
-        setTimedStatus('finished');
-        setTimerDeadline(null);
+    if (diff <= 0) {
+      clearInterval(interval);
+      setTimedStatus('finished');
+      setTimerDeadline(null);
+
+      // ⛔ Time's up in Exam mode → auto submit
+      if (!previewMode && attemptMode === 'exam') {
+        handleSubmit();
       }
-    }, 250);
+    }
+  }, 250);
 
-    return () => clearInterval(interval);
-  }, [timedStatus, timerDeadline]);
+  return () => clearInterval(interval);
+}, [timedStatus, timerDeadline, attemptMode, previewMode]);
 
   const extractUUIDFromId = (questionId) => {
     return questionId.includes('_') ? questionId.split('_')[0] : questionId;
@@ -342,26 +352,6 @@ const QuizAttempt = () => {
     setTimedStatus('running');
   };
 
-  const handlePauseTimer = () => {
-    if (timedStatus !== 'running') return;
-    setTimedStatus('paused');
-    setTimerDeadline(null); // freeze at current timeLeft
-  };
-
-  const handleResumeTimer = () => {
-    if (timedStatus !== 'paused' || timeLeft == null) return;
-    const now = Date.now();
-    setTimerDeadline(now + timeLeft * 1000);
-    setTimedStatus('running');
-  };
-
-  const handleCancelTimer = () => {
-    setTimedStatus('idle');
-    setTimeLeft(null);
-    setTimerDeadline(null);
-    setShowTimedPanel(false);
-  };
-
   const fontSize = quizMeta.font_size || 16;
   const lineSpacing = quizMeta.line_spacing || 1.6;
   const alignment = quizMeta.text_alignment || 'left';
@@ -432,45 +422,116 @@ const QuizAttempt = () => {
         </div>
       </div>
 
-      {/* 🔁 NEW: Mode selector (Learning / Exam) */}
-      {!previewMode && (
-        <div className="flex justify-center mb-4">
-          <div className="inline-flex rounded-full border bg-gray-50 overflow-hidden">
-            <button
-              type="button"
-              disabled={modeSwitchDisabled && attemptMode !== 'learning'}
-              onClick={() => {
-                if (modeSwitchDisabled && attemptMode !== 'learning') return;
-                setAttemptMode('learning');
-              }}
-              className="px-4 py-1 text-sm font-medium"
-              style={{
-                fontFamily: 'calibri',
-                backgroundColor: attemptMode === 'learning' ? '#5CC245' : 'transparent',
-                color: attemptMode === 'learning' ? '#ffffff' : '#374151',
-                opacity: modeSwitchDisabled && attemptMode !== 'learning' ? 0.5 : 1,
-                borderRight: '1px solid #e5e7eb',
-              }}
-            >
-              Learning Mode
-            </button>
-            <button
-              type="button"
-              disabled={modeSwitchDisabled && attemptMode !== 'exam'}
-              onClick={() => {
-                if (modeSwitchDisabled && attemptMode !== 'exam') return;
-                setAttemptMode('exam');
-              }}
-              className="px-4 py-1 text-sm font-medium"
-              style={{
-                fontFamily: 'calibri',
-                backgroundColor: attemptMode === 'exam' ? '#5CC245' : 'transparent',
-                color: attemptMode === 'exam' ? '#ffffff' : '#374151',
-                opacity: modeSwitchDisabled && attemptMode !== 'exam' ? 0.5 : 1,
-              }}
-            >
-              Exam Mode
-            </button>
+      {/* 🔁 Mode selector + Exam timer */}
+{!previewMode && (
+  <div className="flex justify-center mb-4">
+    <div className="inline-flex items-center gap-4">
+      {/* Mode pills */}
+      <div className="inline-flex rounded-full border bg-gray-50 overflow-hidden">
+        <button
+          type="button"
+          disabled={modeSwitchDisabled && attemptMode !== 'learning'}
+          onClick={() => {
+            if (modeSwitchDisabled && attemptMode !== 'learning') return;
+            setAttemptMode('learning');
+          }}
+          className="px-4 py-1 text-sm font-medium"
+          style={{
+            fontFamily: 'calibri',
+            backgroundColor: attemptMode === 'learning' ? '#5CC245' : 'transparent',
+            color: attemptMode === 'learning' ? '#ffffff' : '#374151',
+            opacity: modeSwitchDisabled && attemptMode !== 'learning' ? 0.5 : 1,
+            borderRight: '1px solid #e5e7eb',
+          }}
+        >
+          Learning Mode
+        </button>
+        <button
+          type="button"
+          disabled={modeSwitchDisabled && attemptMode !== 'exam'}
+          onClick={() => {
+            if (modeSwitchDisabled && attemptMode !== 'exam') return;
+            setAttemptMode('exam');
+          }}
+          className="px-4 py-1 text-sm font-medium"
+          style={{
+            fontFamily: 'calibri',
+            backgroundColor: attemptMode === 'exam' ? '#5CC245' : 'transparent',
+            color: attemptMode === 'exam' ? '#ffffff' : '#374151',
+            opacity: modeSwitchDisabled && attemptMode !== 'exam' ? 0.5 : 1,
+          }}
+        >
+          Exam Mode
+        </button>
+      </div>
+
+            {/* ⏱ Exam timer – only visible in Exam mode */}
+            {attemptMode === 'exam' && (
+              <div
+                className="flex items-center gap-2 px-3 py-1 rounded-full border shadow-sm"
+                style={{
+                  fontFamily: 'calibri',
+                  borderColor: '#F97316',
+                  backgroundColor: '#FFF7ED',
+                  color: '#9A3412',
+                }}
+              >
+                {timedStatus === 'idle' && (
+                  <>
+                    <span className="text-sm font-medium">⏱ Exam timer</span>
+                    <div className="flex gap-1">
+                      {TIMED_PRESETS.map((sec) => {
+                        const minutes = Math.round(sec / 60);
+                        const isActive = timedSeconds === sec;
+                        return (
+                          <button
+                            key={sec}
+                            type="button"
+                            onClick={() => setTimedSeconds(sec)}
+                            className="px-2 py-0.5 rounded-full text-xs border"
+                            style={
+                              isActive
+                                ? {
+                                    backgroundColor: '#F97316',
+                                    borderColor: '#F97316',
+                                    color: '#ffffff',
+                                  }
+                                : {
+                                    backgroundColor: '#ffffff',
+                                    borderColor: '#F97316',
+                                    color: '#9A3412',
+                                  }
+                            }
+                          >
+                            {minutes} min
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleStartTimer}
+                      className="ml-1 px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: '#F97316', color: '#ffffff' }}
+                    >
+                      Start
+                    </button>
+                  </>
+                )}
+
+                {timedStatus === 'running' && (
+                  <span className="text-sm font-semibold">
+                    ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
+                  </span>
+                )}
+
+                {timedStatus === 'finished' && (
+                  <span className="text-sm font-semibold text-red-600">
+                    ⏰ Time&apos;s up
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -693,185 +754,7 @@ const QuizAttempt = () => {
                 {/* Elapsed timer */}
                 <ElapsedTimer startTime={startTime} />
 
-                {/* Timed challenge (same for both modes, purely optional) */}
-                <div className="mt-4 w-full flex justify-center">
-                  {!showTimedPanel ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowTimedPanel(true)}
-                      className="text-sm px-4 py-2 rounded-full border-2 bg-white shadow-sm hover:shadow-md transition"
-                      style={{
-                        fontFamily: 'calibri',
-                        borderColor: '#5CC245',
-                        color: '#5CC245',
-                        backgroundColor: '#f0fdf4',
-                      }}
-                    >
-                      ⏱️ Timed challenge
-                    </button>
-                  ) : (
-                    <div
-                      className="w-[190px] rounded-xl border bg-white shadow-md px-3 py-2"
-                      style={{
-                        fontFamily: 'calibri',
-                        fontSize: '12px',
-                        borderColor: '#e5e7eb',
-                      }}
-                    >
-                      <div className="relative mb-2">
-                        <h3 className="text-[13px] font-semibold text-gray-800 text-center">
-                          Timed challenge
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={handleCancelTimer}
-                          className="absolute right-0 top-0 text-xs text-gray-400 hover:text-gray-600"
-                          title="Close timed challenge"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      {timedStatus === 'idle' && (
-                        <>
-                          <div className="text-[13px] text-gray-700 mb-2 leading-snug">
-                            Set a target time.
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 mb-2 w-full">
-                            {TIMED_PRESETS.map((sec) => {
-                              const minutes = Math.round(sec / 60);
-                              const isActive = timedSeconds === sec;
-                              return (
-                                <button
-                                  key={sec}
-                                  type="button"
-                                  onClick={() => setTimedSeconds(sec)}
-                                  className="w-full px-2 py-1 rounded-full text-[11px] border transition"
-                                  style={
-                                    isActive
-                                      ? {
-                                          backgroundColor: '#5CC245',
-                                          borderColor: '#5CC245',
-                                          color: '#ffffff',
-                                        }
-                                      : {
-                                          backgroundColor: '#f9fafb',
-                                          borderColor: '#e5e7eb',
-                                          color: '#374151',
-                                        }
-                                  }
-                                >
-                                  {minutes} min
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleStartTimer}
-                            className="w-full mt-1 py-1.5 rounded-md text-normal font-normal"
-                            style={{
-                              backgroundColor: '#5CC245',
-                              color: '#ffffff',
-                            }}
-                          >
-                            Start ⏱ {formatSeconds(timedSeconds)}
-                          </button>
-                        </>
-                      )}
-
-                      {timedStatus === 'running' && (
-                        <>
-                          <div className="flex flex-col items-center mb-2">
-                            <span className="text-[11px] text-gray-500 mb-1">
-                              Time remaining
-                            </span>
-                            <span
-                              className="font-semibold text-xl"
-                              style={{
-                                color:
-                                  (timeLeft ?? 0) <= 60 ? '#f97316' : '#16a34a',
-                              }}
-                            >
-                              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
-                            </span>
-                          </div>
-                          <div className="flex justify-center gap-2 mt-1">
-                            <button
-                              type="button"
-                              onClick={handlePauseTimer}
-                              className="px-2 py-1 rounded-md text-[11px] bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            >
-                              Pause
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleCancelTimer}
-                              className="px-2 py-1 rounded-md text-[11px] bg-gray-100 text-gray-500 hover:bg-gray-200"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </>
-                      )}
-
-                      {timedStatus === 'paused' && (
-                        <>
-                          <div className="flex flex-col items-center mb-2">
-                            <span className="text-[11px] text-gray-500 mb-1">
-                              Paused at
-                            </span>
-                            <span className="font-semibold text-lg text-gray-700">
-                              ⏱ {formatSeconds(timeLeft ?? timedSeconds)}
-                            </span>
-                          </div>
-                          <div className="flex justify-center gap-2 mt-1">
-                            <button
-                              type="button"
-                              onClick={handleResumeTimer}
-                              className="px-2 py-1 rounded-md text-[11px] text-white hover:opacity-95"
-                              style={{ backgroundColor: '#5CC245' }}
-                            >
-                              Resume
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleCancelTimer}
-                              className="px-2 py-1 rounded-md text-[11px] bg-gray-100 text-gray-500 hover:bg-gray-200"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </>
-                      )}
-
-                      {timedStatus === 'finished' && (
-                        <>
-                          <div className="flex flex-col items-center mb-2">
-                            <span className="flex items-center gap-1 text-[18px] font-semibold text-red-500 mb-1">
-                              <span>⏰</span>
-                              <span>Time&apos;s up</span>
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleCancelTimer}
-                            className="w-full py-1.5 rounded-md text-xs font-semibold hover:opacity-95"
-                            style={{
-                              backgroundColor: '#5CC245',
-                              color: '#ffffff',
-                            }}
-                          >
-                            Reset timer
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
+              
                 {/* Scratch Pad Button */}
                 <div className="mt-4" />
                 <button
