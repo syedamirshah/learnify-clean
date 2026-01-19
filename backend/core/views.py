@@ -208,10 +208,19 @@ def bulk_upload_fib(request, bank_id):
     return render(request, 'admin/core/fib_upload_form.html', {'bank': bank})
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # ‚úÖ Allow unauthenticated users (guests) to preview
+@permission_classes([AllowAny])  # ✅ Allow unauthenticated users (guests) to preview
 @csrf_exempt
 def start_quiz(request, quiz_id):
     user = request.user if request.user.is_authenticated else None
+
+    # Read mode from frontend (defaults to 'learning')
+    # learning  = bidirectional, trial & error
+    # exam      = one-way, locked questions (frontend will enforce behaviour)
+    mode = (request.data.get('mode')
+            or request.query_params.get('mode')
+            or 'learning').lower()
+    if mode not in ['learning', 'exam']:
+        mode = 'learning'
 
     # Always fetch quiz first before role logic
     try:
@@ -244,7 +253,7 @@ def start_quiz(request, quiz_id):
         qtype = bank.type.upper()
         num = assignment.num_questions
 
-        # üëá Adjust number of questions in preview mode
+        # 🔍 Adjust number of questions in preview mode
         limit = min(num, 3) if preview_mode else num
 
         if qtype == 'SCQ':
@@ -287,16 +296,13 @@ def start_quiz(request, quiz_id):
                 })
                 selected_question_ids.append(str(q.question_id))
 
-    # ‚úÖ Remove preview-mode slicing (handled per-bank now)
-    # ‚ùå Removed:
-    # if preview_mode:
-    #     questions_output = questions_output[:3]
-    #     selected_question_ids = selected_question_ids[:3]
-
-    # ‚úÖ Create attempt only if it's NOT preview
+    # 🟢 Create attempt only if it's NOT preview
     if not preview_mode and user:
         attempt = StudentQuizAttempt.objects.create(student=user, quiz=quiz)
-        attempt.meta = {'selected_question_ids': selected_question_ids}
+        attempt.meta = {
+            'selected_qids': selected_question_ids,  # ✅ fixed key
+            'mode': mode,                            # ✅ store mode for this attempt
+        }
         attempt.save()
         attempt_id = attempt.id
     else:
@@ -714,7 +720,7 @@ def submit_answer(request):
     data = request.data
     attempt_id = data.get('attempt_id')
     question_id = data.get('question_id')
-    question_type = data.get('question_type')
+    question_type = (data.get('question_type') or '').lower()
     answer_data = data.get('answer_data')
 
     print("DEBUG DATA RECEIVED")
@@ -724,25 +730,18 @@ def submit_answer(request):
     print("answer_data:", answer_data)
 
     # Check all fields exist
-    if not all([attempt_id, question_id, question_type, answer_data]):
+    if not all([attempt_id, question_id, question_type, answer_data is not None]):
         print("Missing required fields.")
         return Response({'detail': 'Missing fields.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Prevent saving empty answers (more strict for FIB)
-    if question_type == 'fib':
-        if not isinstance(answer_data, dict):
-            print("Invalid FIB data format. Skipping.")
-            return Response({'detail': 'Invalid FIB data.'}, status=status.HTTP_400_BAD_REQUEST)
+    # Prevent saving totally empty answers (same as before)
+    if isinstance(answer_data, dict):
         if all(str(v).strip() == '' for v in answer_data.values()):
-            print("All blanks in FIB are empty. Not saving.")
-            return Response({'detail': 'Answer is empty and was not saved.'}, status=status.HTTP_204_NO_CONTENT)
-    elif isinstance(answer_data, dict):
-        if all(str(v).strip() == '' for v in answer_data.values()):
-            print("Empty FIB answer detected. Not saving.")
+            print("Empty dict answer detected. Not saving.")
             return Response({'detail': 'Answer is empty and was not saved.'}, status=status.HTTP_204_NO_CONTENT)
     elif isinstance(answer_data, str):
         if answer_data.strip() == "":
-            print("Empty SCQ/MCQ answer detected. Not saving.")
+            print("Empty string answer detected. Not saving.")
             return Response({'detail': 'Answer is empty and was not saved.'}, status=status.HTTP_204_NO_CONTENT)
 
     # Validate UUID
@@ -756,25 +755,166 @@ def submit_answer(request):
     try:
         attempt = StudentQuizAttempt.objects.get(id=attempt_id, student=user, completed_at__isnull=True)
     except StudentQuizAttempt.DoesNotExist:
-        print("‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√†√∂‚àö¬¥‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√Ñ√∂‚àö‚Ä†‚àö√°‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√¢√†‚àö¬®‚Äö√†√∂‚àö√´‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´¬¨¬®¬¨¬¢ Attempt not found or already finalized.")
+        print("Attempt not found or already finalized.")
         return Response({'detail': 'Attempt not found or already finalized.'}, status=status.HTTP_404_NOT_FOUND)
+
+    quiz = attempt.quiz
 
     # Save or replace answer
     try:
         StudentAnswer.objects.filter(attempt=attempt, question_id=question_uuid).delete()
 
-        StudentAnswer.objects.create(
+        saved_answer = StudentAnswer.objects.create(
             attempt=attempt,
             question_type=question_type,
             question_id=question_uuid,
             answer_data=answer_data
         )
 
-        print("‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√†√∂‚àö¬¥‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√Ñ√∂‚àö‚Ä†‚àö√°‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†¬¨¬®¬¨‚Ä¢‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ¬¨¬®¬¨¬± Answer saved successfully")
-        return Response({'message': 'Answer submitted successfully.'}, status=status.HTTP_200_OK)
+        print("Answer saved successfully")
+
+        # ================
+        # ✅ LIVE EVALUATION
+        # ================
+        # 1) Check if THIS answer is correct (no correct options revealed)
+        is_correct = False
+        student_answer = saved_answer.answer_data
+
+        try:
+            if question_type == 'scq':
+                q = SCQQuestion.objects.get(question_id=question_uuid)
+                correct_label = (q.correct_answer or "").strip().upper()
+                option_map = {'A': q.option_a, 'B': q.option_b, 'C': q.option_c, 'D': q.option_d}
+                correct_answer_text = option_map.get(correct_label)
+                selected = student_answer.get('selected') if isinstance(student_answer, dict) else student_answer
+                is_correct = (
+                    normalize_text(selected) == normalize_text(correct_answer_text)
+                    if selected and correct_answer_text else False
+                )
+
+            elif question_type == 'mcq':
+                q = MCQQuestion.objects.get(question_id=question_uuid)
+                correct_labels = [x.strip().lower() for x in q.correct_answers.split(',')]
+                options_map = {
+                    'a': q.option_a,
+                    'b': q.option_b,
+                    'c': q.option_c,
+                    'd': q.option_d
+                }
+                correct_answers_text = sorted([
+                    normalize_text(options_map[label]) for label in correct_labels if label in options_map
+                ])
+
+                selected = student_answer.get('selected', []) if isinstance(student_answer, dict) else student_answer
+                if isinstance(selected, str):
+                    selected = [selected]
+                selected = sorted([normalize_text(x) for x in selected])
+                is_correct = selected == correct_answers_text
+
+            elif question_type == 'fib':
+                q = FIBQuestion.objects.get(question_id=question_uuid)
+                correct_answer_obj = q.correct_answers
+                if isinstance(student_answer, dict) and isinstance(correct_answer_obj, dict):
+                    normalized_student = {
+                        str(k).strip().lower(): normalize_numeric_commas(v)
+                        for k, v in student_answer.items()
+                        if v and str(v).strip()
+                    }
+                    normalized_correct = {
+                        str(k).strip().lower(): normalize_numeric_commas(v)
+                        for k, v in correct_answer_obj.items()
+                        if v and str(v).strip()
+                    }
+                    is_correct = normalized_student == normalized_correct
+                else:
+                    is_correct = False
+
+        except (SCQQuestion.DoesNotExist, MCQQuestion.DoesNotExist, FIBQuestion.DoesNotExist):
+            is_correct = False
+
+        # 2) Recompute current score from ALL answers of this attempt
+        all_answers = StudentAnswer.objects.filter(attempt=attempt)
+        correct_count = 0
+
+        for ans in all_answers:
+            qid = ans.question_id
+            qtype = ans.question_type
+            ans_data = ans.answer_data
+
+            try:
+                if qtype == 'scq':
+                    q = SCQQuestion.objects.get(question_id=qid)
+                    correct_label = (q.correct_answer or "").strip().upper()
+                    option_map = {'A': q.option_a, 'B': q.option_b, 'C': q.option_c, 'D': q.option_d}
+                    correct_text = option_map.get(correct_label)
+                    selected = ans_data.get('selected') if isinstance(ans_data, dict) else ans_data
+                    ok = (
+                        normalize_text(selected) == normalize_text(correct_text)
+                        if selected and correct_text else False
+                    )
+
+                elif qtype == 'mcq':
+                    q = MCQQuestion.objects.get(question_id=qid)
+                    correct_labels = [x.strip().lower() for x in q.correct_answers.split(',')]
+                    options_map = {
+                        'a': q.option_a,
+                        'b': q.option_b,
+                        'c': q.option_c,
+                        'd': q.option_d
+                    }
+                    correct_texts = sorted([
+                        normalize_text(options_map[label]) for label in correct_labels if label in options_map
+                    ])
+
+                    selected = ans_data.get('selected', []) if isinstance(ans_data, dict) else ans_data
+                    if isinstance(selected, str):
+                        selected = [selected]
+                    selected = sorted([normalize_text(x) for x in selected])
+                    ok = selected == correct_texts
+
+                elif qtype == 'fib':
+                    q = FIBQuestion.objects.get(question_id=qid)
+                    correct_obj = q.correct_answers
+                    if isinstance(ans_data, dict) and isinstance(correct_obj, dict):
+                        norm_student = {
+                            str(k).strip().lower(): normalize_numeric_commas(v)
+                            for k, v in ans_data.items()
+                            if v and str(v).strip()
+                        }
+                        norm_correct = {
+                            str(k).strip().lower(): normalize_numeric_commas(v)
+                            for k, v in correct_obj.items()
+                            if v and str(v).strip()
+                        }
+                        ok = norm_student == norm_correct
+                    else:
+                        ok = False
+                else:
+                    ok = False
+
+                if ok:
+                    correct_count += 1
+
+            except (SCQQuestion.DoesNotExist, MCQQuestion.DoesNotExist, FIBQuestion.DoesNotExist):
+                continue
+
+        # Total questions intended for this quiz
+        total_questions = quiz.assignments.aggregate(
+            total=models.Sum('num_questions')
+        )['total'] or 0
+
+        marks_obtained = correct_count * quiz.marks_per_question
+
+        return Response({
+            'message': 'Answer submitted successfully.',
+            'is_correct': is_correct,                 # ✅ for circle color
+            'current_correct': correct_count,         # ✅ for live score
+            'total_questions': total_questions,
+            'marks_obtained': marks_obtained,
+        }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        print("‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√†√∂‚àö¬¥‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√Ñ√∂‚àö‚Ä†‚àö√°‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√¢√†‚àö¬®‚Äö√†√∂‚àö√´‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´¬¨¬®¬¨¬¢ Exception while saving answer:", e)
+        print("Exception while saving answer:", e)
         traceback.print_exc()
         return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -797,15 +937,22 @@ def finalize_quiz(request):
         return Response({'detail': 'Attempt not found or already finalized.'}, status=status.HTTP_404_NOT_FOUND)
 
     quiz = attempt.quiz
-    submitted_qids = set(attempt.answers.values_list('question_id', flat=True))
-    selected_qids = set(attempt.meta.get('selected_qids', []))
 
+    # 🔧 Normalize submitted_qids → strings
+    submitted_qids = set(str(qid) for qid in attempt.answers.values_list('question_id', flat=True))
+
+    # 🔧 Support both old and new meta keys
+    meta = attempt.meta or {}
+    selected_qids_raw = meta.get('selected_qids') or meta.get('selected_question_ids') or []
+    selected_qids = set(str(qid) for qid in selected_qids_raw)
+
+    # 🔄 Fill missing answers as "unanswered"
     for q in SCQQuestion.objects.filter(question_id__in=selected_qids):
         if str(q.question_id) not in submitted_qids:
             StudentAnswer.objects.create(
                 attempt=attempt,
                 question_type='scq',
-                question_id=str(q.question_id),
+                question_id=q.question_id,
                 answer_data={'selected': None}
             )
 
@@ -814,7 +961,7 @@ def finalize_quiz(request):
             StudentAnswer.objects.create(
                 attempt=attempt,
                 question_type='mcq',
-                question_id=str(q.question_id),
+                question_id=q.question_id,
                 answer_data={'selected': []}
             )
 
@@ -823,7 +970,7 @@ def finalize_quiz(request):
             StudentAnswer.objects.create(
                 attempt=attempt,
                 question_type='fib',
-                question_id=str(q.question_id),
+                question_id=q.question_id,
                 answer_data={}
             )
 
@@ -842,11 +989,11 @@ def finalize_quiz(request):
 
         if qtype == 'scq':
             try:
-                q = SCQQuestion.objects.get(question_id=str(qid))
+                q = SCQQuestion.objects.get(question_id=qid)
                 correct_label = (q.correct_answer or "").strip().upper()
                 option_map = {'A': q.option_a, 'B': q.option_b, 'C': q.option_c, 'D': q.option_d}
                 correct_answer = option_map.get(correct_label)
-                selected = student_answer.get('selected')
+                selected = student_answer.get('selected') if isinstance(student_answer, dict) else student_answer
                 is_correct = (
                     normalize_text(selected) == normalize_text(correct_answer)
                     if selected and correct_answer else False
@@ -856,7 +1003,7 @@ def finalize_quiz(request):
 
         elif qtype == 'mcq':
             try:
-                q = MCQQuestion.objects.get(question_id=str(qid))
+                q = MCQQuestion.objects.get(question_id=qid)
                 correct_labels = [x.strip().lower() for x in q.correct_answers.split(',')]
                 options_map = {
                     'a': q.option_a,
@@ -867,7 +1014,7 @@ def finalize_quiz(request):
                 correct_answer = sorted([
                     normalize_text(options_map[label]) for label in correct_labels if label in options_map
                 ])
-                selected = student_answer.get('selected', [])
+                selected = student_answer.get('selected', []) if isinstance(student_answer, dict) else student_answer
                 if isinstance(selected, str):
                     selected = [selected]
                 selected = sorted([normalize_text(x) for x in selected])
@@ -877,7 +1024,7 @@ def finalize_quiz(request):
 
         elif qtype == 'fib':
             try:
-                q = FIBQuestion.objects.get(question_id=str(qid))
+                q = FIBQuestion.objects.get(question_id=qid)
                 correct_answer = q.correct_answers
                 if isinstance(student_answer, dict) and isinstance(correct_answer, dict):
                     normalized_student = {
@@ -917,7 +1064,7 @@ def finalize_quiz(request):
     )
     result.save()
 
-    # ‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚àö√´‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√†√∂‚àö¬¥‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ‚Äö√Ñ√∂‚àö‚Ä†‚àö√°‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†¬¨¬®¬¨‚Ä¢‚Äö√Ñ√∂‚àö√ë‚àö‚àÇ‚Äö√†√∂‚Äö√Ñ‚Ä†‚Äö√†√∂‚Äö√†√á‚Äö√Ñ√∂‚àö‚Ä†‚àö‚àÇ¬¨¬®¬¨¬± This line was missing
+    # sync back into attempt
     attempt.score = result.marks_obtained
     attempt.completed_at = timezone.now()
     attempt.save()
