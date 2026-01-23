@@ -676,7 +676,7 @@ useEffect(() => {
                           </div>
                         )}
 
-                        <div style={{ whiteSpace: 'normal' }}>
+                        <div style={{ whiteSpace: 'nowrap' }}>
                           {parts.map((part, index) => {
                             const placeholderMatch = part.match(
                               /^\[([a-z]{1,2})\]$/i
