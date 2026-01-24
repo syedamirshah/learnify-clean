@@ -75,17 +75,67 @@ const SignupPage = () => {
       alert('✅ Account created!\n\nNext step: please complete your fee payment.');
       window.location.href =
         `${import.meta.env.VITE_API_BASE_URL}payments/choose/?username=${encodeURIComponent(formData.username)}`;
-    } catch (error) {
-      console.error("❌ Registration failed:", error);
-
-      if (error.response?.status === 403) {
-        alert('Your account is not active yet. Please wait for activation.');
-      } else if (error.response?.data) {
-        alert("Registration failed:\n" + JSON.stringify(error.response.data, null, 2));
-      } else {
-        alert('Registration failed. Please check your details and try again.');
+      } catch (error) {
+        console.error("❌ Registration failed:", error);
+  
+        const resp = error.response;
+  
+        // Special case: account not active
+        if (resp?.status === 403) {
+          alert('Your account is not active yet. Please wait for activation.');
+          return;
+        }
+  
+        // If backend sent structured errors, turn them into friendly lines
+        if (resp?.data) {
+          const data = resp.data;
+          let messageLines = [];
+  
+          // Case 1: our usual {"success": false, "errors": { ... }}
+          if (data.errors && typeof data.errors === 'object') {
+            const errorsObj = data.errors;
+  
+            // If username error exists, show a very clear line
+            if (errorsObj.username) {
+              const usernameMsg = Array.isArray(errorsObj.username)
+                ? errorsObj.username.join(' ')
+                : String(errorsObj.username);
+              messageLines.push(`User ID: ${usernameMsg}`);
+            }
+  
+            // Handle all other fields
+            Object.entries(errorsObj).forEach(([field, msgs]) => {
+              if (field === 'username') return; // already handled
+              const niceFieldName =
+                field === 'full_name' ? 'Full name'
+                : field === 'schooling_status' ? 'Schooling status'
+                : field === 'language_used_at_home' ? 'Language used at home'
+                : field === 'profile_picture' ? 'Profile picture'
+                : field === 'grade' ? 'Grade'
+                : field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ');
+  
+              const text = Array.isArray(msgs) ? msgs.join(' ') : String(msgs);
+              messageLines.push(`${niceFieldName}: ${text}`);
+            });
+          }
+  
+          // Case 2: DRF sometimes sends a top-level "detail" message
+          if (data.detail && typeof data.detail === 'string') {
+            messageLines.push(data.detail);
+          }
+  
+          // Fallback: if we still have nothing, show generic
+          if (messageLines.length === 0) {
+            messageLines.push('Please check the form and try again.');
+          }
+  
+          alert('Registration could not be completed:\n\n' + messageLines.join('\n'));
+          return;
+        }
+  
+        // Network / unknown errors
+        alert('Registration failed. Please check your internet connection and try again.');
       }
-    }
   };
 
   // Teacher has a single “I am Teacher” schooling option; students see school types
