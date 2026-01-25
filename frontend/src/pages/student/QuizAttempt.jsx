@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../utils/axiosInstance';
 import logo from '../../assets/logo.png';
@@ -43,6 +43,11 @@ const QuizAttempt = () => {
   const [quizMeta, setQuizMeta] = useState({});
   const [previewMode, setPreviewMode] = useState(false);
   const [showRoughWork, setShowRoughWork] = useState(false);
+  // 🔹 Scratch Pad drag state
+  const [padPosition, setPadPosition] = useState({ x: null, y: null });
+  const [isDraggingPad, setIsDraggingPad] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const padRef = useRef(null);
 
   // 🔁 NEW: Attempt mode state: 'learning' | 'exam'
   const [attemptMode, setAttemptMode] = useState('learning');
@@ -131,6 +136,67 @@ const QuizAttempt = () => {
     };
     startQuiz();
   }, [quizId]);
+
+  // Center Scratch Pad when it opens the first time
+  useEffect(() => {
+    if (!showRoughWork || !padRef.current) return;
+    if (padPosition.x !== null && padPosition.y !== null) return;
+
+    const rect = padRef.current.getBoundingClientRect();
+    const { innerWidth, innerHeight } = window;
+
+    const x = (innerWidth - rect.width) / 2;
+    const y = (innerHeight - rect.height) / 2;
+
+    setPadPosition({ x, y });
+  }, [showRoughWork, padPosition.x, padPosition.y]);
+
+  // Start dragging when mouse is down on header
+const handlePadMouseDown = (e) => {
+  if (!padRef.current) return;
+  const rect = padRef.current.getBoundingClientRect();
+  setIsDraggingPad(true);
+  setDragOffset({
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  });
+};
+
+// Move pad while dragging
+useEffect(() => {
+  if (!isDraggingPad) return;
+
+  const handleMove = (e) => {
+    if (!padRef.current) return;
+
+    const { innerWidth, innerHeight } = window;
+    const padWidth = padRef.current.offsetWidth;
+    const padHeight = padRef.current.offsetHeight;
+
+    let x = e.clientX - dragOffset.x;
+    let y = e.clientY - dragOffset.y;
+
+    const maxX = innerWidth - padWidth;
+    const maxY = innerHeight - padHeight;
+
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > maxX) x = maxX;
+    if (y > maxY) y = maxY;
+
+    setPadPosition({ x, y });
+  };
+
+  const handleUp = () => setIsDraggingPad(false);
+
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('mouseup', handleUp);
+
+  return () => {
+    window.removeEventListener('mousemove', handleMove);
+    window.removeEventListener('mouseup', handleUp);
+  };
+}, [isDraggingPad, dragOffset]);
 
   useEffect(() => {
     const handleEnterKey = async (e) => {
@@ -944,20 +1010,34 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Scratch Pad Popup */}
+                  {/* Scratch Pad Popup (draggable) */}
       {showRoughWork && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50"
           style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
           onClick={() => setShowRoughWork(false)}
         >
           <div
+            ref={padRef}
             className="bg-white rounded-xl shadow-2xl w-[92vw] max-w-3xl"
-            style={{ fontFamily: 'calibri' }}
+            style={{
+              fontFamily: 'calibri',
+              position: 'absolute',
+              top: padPosition.y ?? '50%',
+              left: padPosition.x ?? '50%',
+              transform:
+                padPosition.x == null || padPosition.y == null
+                  ? 'translate(-50%, -50%)'
+                  : 'none',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
+            {/* Header (drag handle) */}
+            <div
+              className="flex items-center justify-between px-4 py-3 border-b"
+              style={{ cursor: 'move' }}
+              onMouseDown={handlePadMouseDown}
+            >
               <div className="font-semibold text-gray-800">📝 Scratch Pad</div>
               <button
                 type="button"
