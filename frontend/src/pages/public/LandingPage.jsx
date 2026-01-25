@@ -603,41 +603,53 @@ const chapterPalettes = [
       {/* Content Explorer */}
       <div className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
         {quizData.map((gradeItem, gradeIndex) => {
+          // 🚫 For students: hide all grades except their own
+          if (role === "student" && userGrade) {
+            const normalizedUserGrade = String(userGrade).trim().toLowerCase();
+            const normalizedItemGrade = String(gradeItem.grade).trim().toLowerCase();
+
+            if (normalizedUserGrade !== normalizedItemGrade) {
+              // 👉 Do not render this grade at all
+              return null;
+            }
+          }
+
           const gradeOpen = openGrades.has(gradeItem.grade);
 
           return (
             <div key={`grade-${gradeIndex}`} className="mb-12">
               {/* ✅ Grade itself is the toggle (no extra expand/collapse button) */}
               {/* ===== Grade Header ===== */}
-                <div className="flex items-center justify-center gap-6 mt-4 mb-6">
-                  {/* Left line (longer than subject) */}
-                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+              <div className="flex items-center justify-center gap-6 mt-4 mb-6">
+                {/* Left line (longer than subject) */}
+                <div className="h-[2px] w-28 bg-green-300 rounded-full" />
 
-                  {/* Grade Button */}
-                  <button
-                    type="button"
-                    onClick={() => toggleGrade(gradeItem.grade)}
-                    className="
-                      flex items-center gap-3
-                      px-10 py-4
-                      rounded-full
-                      border-2 border-green-300
-                      bg-green-100
-                      shadow-md
-                      hover:shadow-lg
-                      transition
-                      text-3xl
-                      font-extrabold
-                      text-green-900
-                    "
-                  >
-                    {gradeItem.grade}
-                    <span className="text-xl">▾</span>
-                  </button>
+                {/* Grade Button */}
+                <button
+                  type="button"
+                  onClick={() => toggleGrade(gradeItem.grade)}
+                  className="
+                    flex items-center gap-3
+                    px-10 py-4
+                    rounded-full
+                    border-2 border-green-300
+                    bg-green-100
+                    shadow-md
+                    hover:shadow-lg
+                    transition
+                    text-3xl
+                    font-extrabold
+                    text-green-900
+                  "
+                >
+                  {gradeItem.grade}
+                  <span className="text-xl">▾</span>
+                </button>
 
-                  {/* Right line */}
-                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
-                </div>
+                {/* Right line */}
+                <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+              </div>
+
 
               {!gradeOpen ? null : (
                 <div className="mt-6 space-y-10">
