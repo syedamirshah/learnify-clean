@@ -220,6 +220,27 @@ class QuestionBankAdmin(admin.ModelAdmin):
             )
 
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
+    
+    # ---------------- NEW PART BELOW ----------------
+
+    def response_add(self, request, obj, post_url_continue=None):
+        """
+        After creating a Question Bank, go to the custom
+        Question Bank Management page instead of the default
+        Django list.
+        """
+        if "_addanother" not in request.POST and "_continue" not in request.POST:
+            return redirect(reverse('admin-question-bank'))
+        return super().response_add(request, obj, post_url_continue)
+
+    def response_change(self, request, obj):
+        """
+        Optional: after editing a Question Bank, also return to
+        the custom Question Bank page when pressing plain Save.
+        """
+        if "_addanother" not in request.POST and "_continue" not in request.POST:
+            return redirect(reverse('admin-question-bank'))
+        return super().response_change(request, obj)
 
 # Individual Question Admins
 from django.shortcuts import redirect
