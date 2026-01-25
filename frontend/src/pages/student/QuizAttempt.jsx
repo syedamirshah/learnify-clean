@@ -694,40 +694,40 @@ useEffect(() => {
                               const isLocked =
                                 attemptMode === 'exam' && lockedQuestions[baseId];
 
-                              const inputEl = (
-                                <input
-                                  key={`in-${index}`}
-                                  data-blank={key}
-                                  value={value}
-                                  disabled={isLocked}
-                                  onChange={(e) =>
-                                    setAnswers((prev) => ({
-                                      ...prev,
-                                      [compoundId]: e.target.value,
-                                    }))
-                                  }
-                                  onBlur={async (e) => {
-                                    setAnswers((prev) => ({
-                                      ...prev,
-                                      [compoundId]: e.target.value,
-                                    }));
-                                    if (!isLocked) {
-                                      // save, but DO NOT update correctness yet
-                                      await saveFibCombined(currentQuestion, false);
+                                const inputEl = (
+                                  <input
+                                    key={`in-${index}`}
+                                    data-blank={key}
+                                    value={value}
+                                    disabled={isLocked}
+                                    onChange={(e) =>
+                                      setAnswers((prev) => ({
+                                        ...prev,
+                                        [compoundId]: e.target.value,
+                                      }))
                                     }
-                                  }}
-                                  className="border border-gray-400 rounded px-1 py-0.5 mx-1"
-                                  style={{
-                                    display: 'inline-block',
-                                    width: `${fibWidth * 10}px`,
-                                    height: `${fontSize * 1.2}px`,
-                                    lineHeight: `${fontSize * 1.2}px`,
-                                    fontSize: `${fontSize}px`,
-                                    padding: '0 6px',
-                                    verticalAlign: 'text-bottom',
-                                  }}
-                                />
-                              );
+                                    onBlur={async (e) => {
+                                      setAnswers((prev) => ({
+                                        ...prev,
+                                        [compoundId]: e.target.value,
+                                      }));
+                                      if (!isLocked) {
+                                        await saveFibCombined(currentQuestion, false);
+                                      }
+                                    }}
+                                    className="border rounded px-1 py-0.5 mx-1"
+                                    style={{
+                                      display: 'inline-block',
+                                      width: `${fibWidth * 10}px`,
+                                      height: `${fontSize * 1.2}px`,
+                                      lineHeight: `${fontSize * 1.2}px`,
+                                      fontSize: `${fontSize}px`,
+                                      padding: '0 6px',
+                                      verticalAlign: 'text-bottom',
+                                      borderColor: '#5CC245',          // ✅ light green border
+                                    }}
+                                  />
+                                );
 
                               return (
                                 <React.Fragment key={`wrap-${index}`}>
