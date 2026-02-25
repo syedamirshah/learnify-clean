@@ -565,11 +565,11 @@ const chapterPalettes = [
 
       {/* Hero Section (full width) */}
       <section className="w-full">
-        <div className="w-full aspect-[16/9] overflow-hidden bg-white md:aspect-auto md:h-[520px]">
+        <div className="w-full h-[220px] sm:h-[280px] overflow-hidden bg-green-50 md:h-[520px]">
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="w-full h-full object-contain md:object-cover object-center block"
+            className="w-full h-full object-cover object-center block"
           />
         </div>
       </section>
