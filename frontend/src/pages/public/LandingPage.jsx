@@ -4,6 +4,8 @@ import "../../App.css";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
+import AppLayout from "../../components/layout/AppLayout";
+import AuthPanel from "../../components/layout/AuthPanel";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -34,6 +36,9 @@ const navLinkClass = () =>
   const [hoverChapterBySubject, setHoverChapterBySubject] = useState({}); // subjectKey -> chapterKey
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileAuthOpen, setMobileAuthOpen] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Load role and name
   useEffect(() => {
@@ -430,204 +435,141 @@ const chapterPalettes = [
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
+  const navItems = [
+    { key: "home", label: "Home", href: "/" },
+    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
+    ...(role === "student"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/student/assessment",
+            children: [
+              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
+              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
+              { key: "tasks", label: "Tasks", href: "/student/tasks" },
+            ],
+          },
+        ]
+      : []),
+    ...(role === "teacher"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/teacher/assessment",
+            children: [
+              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
+              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
+              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
+            ],
+          },
+        ]
+      : []),
+    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
+    { key: "membership", label: "Membership", href: "/membership" },
+    { key: "help-center", label: "Help Center", href: "/help-center" },
+    ...(!role
+      ? [
+          {
+            key: "sign-up",
+            label: "Sign up",
+            href: "/signup",
+            children: [
+              { key: "create-account", label: "Create Account", href: "/signup" },
+              {
+                key: "make-payment",
+                label: "Make Payment",
+                onClick: () => {
+                  window.location.href = `${API}payments/choose/`;
+                },
+              },
+            ],
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div className="min-h-screen font-[Nunito] text-gray-800 bg-white">
-      {/* Header (same before/after login, with requested layout) */}
-      <header className="px-6 md:px-10 pt-4 pb-2">
-        {/* ✅ Wrapper to reduce extreme left/right without centering everything */}
-        <div className="max-w-[1200px] mx-auto flex justify-between items-center">
-          {/* Left: logo + brand + motto */}
-          <div className="flex items-center gap-4 min-w-0">
-          <img
-              src={logo}
-              alt="Learnify Pakistan Logo"
-              className="h-20 md:h-24 -ml-2 md:-ml-4"
-            />
-            <div className="min-w-0">
-              <div className="text-xl md:text-2xl font-extrabold text-green-900 leading-tight">
-                {brandTitle}
-              </div>
-              <div className="text-sm md:text-base font-semibold italic text-green-800 leading-tight">
-                {brandMotto}
-              </div>
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle={brandTitle}
+      brandMotto={brandMotto}
+      isAuthenticated={Boolean(role)}
+      userFullName={userFullName}
+      username={username}
+      password={password}
+      remember={rememberMe}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onUsernameChange={(e) => setUsername(e.target.value)}
+      onPasswordChange={(e) => setPassword(e.target.value)}
+      onRememberChange={(e) => setRememberMe(e.target.checked)}
+      onSignInClick={handleLogin}
+      onLogoutClick={handleLogout}
+      onProfileClick={() => setProfileMenuOpen((prev) => !prev)}
+      mobileAuthContent={
+        role ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700"
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setMobileAuthOpen((prev) => !prev)}
+            className="rounded-md bg-[#42b72a] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700"
+          >
+            Sign in
+          </button>
+        )
+      }
+    >
+      {role && profileMenuOpen && (
+        <div className="hidden md:block">
+          <div className="mx-auto flex w-full max-w-[1200px] justify-end px-4 pt-2 md:px-6">
+            <div className="w-44 rounded border bg-white text-black shadow-lg">
+              <Link to="/my-profile" className="block px-4 py-2 text-base hover:bg-gray-100">
+                My Profile
+              </Link>
             </div>
           </div>
-  
-          {/* Right: user name near logout OR login form (logic unchanged) */}
-          <div className="flex items-center gap-3">
-            {role ? (
-              <>
-                {userFullName && (
-                    <div
-                      className="relative hidden sm:block"
-                      onMouseEnter={() => setProfileMenuOpen(true)}
-                      onMouseLeave={() => setProfileMenuOpen(false)}
-                    >
-                      <button
-                        type="button"
-                        className="text-base md:text-lg font-semibold text-gray-700 italic hover:underline"
-                      >
-                        Welcome, {userFullName}
-                      </button>
-
-                      {profileMenuOpen && (
-                        <div className="absolute right-0 top-full z-50 pt-2">
-                          <div className="w-44 flex flex-col bg-white text-black shadow-lg rounded text-lg border">
-                            <Link to="/my-profile" className="px-4 py-2 hover:bg-gray-100">
-                              My Profile
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                <button
-                  onClick={handleLogout}
-                  className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 ml-3 md:ml-5"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="px-3 py-1 border rounded w-28 md:w-40"
-                />
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="px-3 py-1 border rounded w-28 md:w-40"
-                />
-                <button
-                  onClick={handleLogin}
-                  className="bg-[#42b72a] text-white px-4 py-1 rounded hover:bg-green-700"
-                >
-                  Sign in
-                </button>
-                <label className="ml-1 text-sm hidden md:inline">
-                  <input type="checkbox" className="mr-1" /> Remember
-                </label>
-              </>
-            )}
-          </div>
         </div>
-      </header>
+      )}
 
-      {/* Navbar */}
-      <nav
-        className="w-full bg-[#42b72a] text-white
-                  flex justify-evenly items-center text-center
-                  text-xl font-normal
-                  py-2 px-6 md:px-10"
-      >
-        {/* ✅ NEW: Home */}
-        <div>
-          <Link to="/" className={navLinkClass(isActive(["/"]))}>
-            Home
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/why-join" className={navLinkClass(isActive(["/why-join"]))}>
-            Why Join Learnify?
-          </Link>
-        </div>
-
-        {/* ✅ Assessment ONLY for logged-in student/teacher */}
-        {(role === "student" || role === "teacher") && (
-          <div className="relative group">
-            <button className={navLinkClass(isActive(["/student", "/teacher"]))}>
-              Assessment
-            </button>
-
-            {role === "student" && (
-              <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
-                <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
-                  <Link to="/student/assessment" className="px-4 py-2 hover:bg-gray-100">
-                    Subject-wise Performance
-                  </Link>
-                  <Link to="/student/quiz-history" className="px-4 py-2 hover:bg-gray-100">
-                    Quiz History
-                  </Link>
-                  <Link to="/student/tasks" className="px-4 py-2 hover:bg-gray-100">
-                    Tasks
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {role === "teacher" && (
-              <div className="absolute left-0 top-full hidden group-hover:block z-50 pt-2">
-                <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
-                  <Link to="/teacher/assessment" className="px-4 py-2 hover:bg-gray-100">
-                    Student Results
-                  </Link>
-                  <Link to="/teacher/tasks" className="px-4 py-2 hover:bg-gray-100">
-                    My Tasks
-                  </Link>
-                  <Link to="/teacher/assign-task" className="px-4 py-2 hover:bg-gray-100">
-                    Assign Task
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ✅ Renamed */}
-        <div>
-          <Link to="/honor-board" className={navLinkClass(isActive(["/honor-board"]))}>
-            Honor Board
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/membership" className={navLinkClass(isActive(["/membership"]))}>
-            Membership
-          </Link>
-        </div>
-
-        <div>
-          <Link to="/help-center" className={navLinkClass(isActive(["/help-center"]))}>
-            Help Center
-          </Link>
-        </div>
-
-        {!role && (
-          <div className="relative group">
-            <button className="text-white hover:underline font-normal">
-              Sign up
-            </button>
-            <div className="absolute right-0 top-full hidden group-hover:block z-50 pt-2">
-              <div className="w-60 flex flex-col bg-white text-black shadow-lg rounded text-lg">
-                <Link to="/signup" className="px-4 py-2 hover:bg-gray-100">
-                  Create Account
-                </Link>
-                <a href={`${API}payments/choose/`} className="px-4 py-2 hover:bg-gray-100">
-                  Make Payment
-                </a>
-              </div>
+      {!role && mobileAuthOpen && (
+        <div className="md:hidden">
+          <div className="mx-auto w-full max-w-[1200px] px-3 pt-2 sm:px-4">
+            <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+              <AuthPanel
+                isAuthenticated={false}
+                username={username}
+                password={password}
+                remember={rememberMe}
+                onUsernameChange={(e) => setUsername(e.target.value)}
+                onPasswordChange={(e) => setPassword(e.target.value)}
+                onRememberChange={(e) => setRememberMe(e.target.checked)}
+                onSignInClick={handleLogin}
+              />
             </div>
           </div>
-        )}
-      </nav>
+        </div>
+      )}
 
       {/* Hero Section (full width) */}
       <section className="w-full">
-        <div className="w-full h-[520px] overflow-hidden">
+        <div className="w-full aspect-[16/9] overflow-hidden bg-white md:aspect-auto md:h-[520px]">
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="w-full h-full object-cover object-center block"
+            className="w-full h-full object-contain md:object-cover object-center block"
           />
         </div>
       </section>
@@ -910,7 +852,7 @@ const chapterPalettes = [
           </div>
         </div>
       </footer>
-    </div>
+    </AppLayout>
   );
 };
 
