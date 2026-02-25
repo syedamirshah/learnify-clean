@@ -569,7 +569,7 @@ const chapterPalettes = [
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
-            className="w-full h-full object-cover object-center block"
+            className="w-full h-full object-contain md:object-cover object-center block"
           />
         </div>
       </section>
