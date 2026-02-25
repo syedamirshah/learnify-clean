@@ -23,7 +23,7 @@ function DesktopNavItem({ item }) {
 export default function PublicNav({ items = [], className = "" }) {
   return (
     <nav className={`hidden w-full border-t border-white/10 bg-[#42b72a] md:block ${className}`}>
-      <div className="mx-auto flex w-full max-w-[1200px] min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 lg:gap-x-8 lg:px-6">
+      <div className="mx-auto flex w-full max-w-[1400px] min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 md:gap-x-8 lg:max-w-[1600px] lg:gap-x-10 lg:px-6">
         {items.map((item) => (
           <div key={item.key || item.label} className="relative">
             <DesktopNavItem item={item} />
