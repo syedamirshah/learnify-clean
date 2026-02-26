@@ -21,6 +21,7 @@ import StudentTasks from "./pages/student/StudentTasks";
 import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
 import MyProfile from "./pages/public/MyProfile";
+import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 
 
 
@@ -55,10 +56,10 @@ function App() {
           <Route path="/teacher/tasks" element={<TeacherTasks />} />
           <Route path="/my-profile" element={<MyProfile />} />
         </Routes>
+        <PwaUpdatePrompt />
       </div>
     </Router>
   );
 }
 
 export default App;
-
