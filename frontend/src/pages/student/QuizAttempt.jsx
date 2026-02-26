@@ -1091,7 +1091,8 @@ useEffect(() => {
           >
             {/* Header (drag handle) */}
             <div
-              className="flex items-center justify-between px-4 py-3 border-b"
+              className="flex cursor-move items-center justify-between border-b px-4 py-3"
+              data-drag-handle
               style={{ cursor: 'move' }}
               onMouseDown={handlePadMouseDown}
             >
@@ -1107,11 +1108,18 @@ useEffect(() => {
             </div>
 
             {/* Body */}
-            <div
-              className="p-3"
-              style={{ maxHeight: '75vh', overflow: 'auto' }}
-            >
-              <RoughWorkBoard />
+            <div className="p-3">
+              <div
+                className="max-h-[70vh] max-w-[95vw] md:max-h-[80vh] md:max-w-[90vw]"
+                style={{
+                  resize: 'both',
+                  overflow: 'auto',
+                  minWidth: '260px',
+                  minHeight: '220px',
+                }}
+              >
+                <RoughWorkBoard />
+              </div>
             </div>
           </div>
         </div>
