@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 function DesktopChildItem({ child, onSelect }) {
@@ -29,7 +29,10 @@ function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
       <div className="relative">
         <button
           type="button"
-          onClick={onToggle}
+          onClick={() => {
+            console.log("[PublicNav] parent menu click:", item.key || item.label);
+            onToggle();
+          }}
           className={baseClass}
           aria-expanded={isOpen}
           aria-controls={`desktop-menu-${item.key || item.label}`}
@@ -76,6 +79,10 @@ export default function PublicNav({ items = [], className = "" }) {
   const handleToggle = (key) => {
     setOpenMenuKey((prev) => (prev === key ? null : key));
   };
+
+  useEffect(() => {
+    console.log("[PublicNav] openMenuKey:", openMenuKey);
+  }, [openMenuKey]);
 
   return (
     <nav className={`hidden w-full border-t border-white/10 bg-[#42b72a] md:flex md:h-[52px] md:items-center ${className}`}>
