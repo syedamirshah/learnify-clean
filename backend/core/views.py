@@ -1258,9 +1258,15 @@ def get_top_performers(days):
             round(sum(data['percentage_scores']) / len(data['percentage_scores']), 2)
             if data['percentage_scores'] else 0
         )
+        full_name_raw = getattr(student, "full_name", None)
+        full_name_clean = (full_name_raw or "").strip()
+        fallback_name = (
+            f"{getattr(student, 'first_name', '') or ''} {getattr(student, 'last_name', '') or ''}"
+        ).strip()
+        display_name = full_name_clean or fallback_name or "N/A"
 
         grade_wise[grade].append({
-            'full_name': student.full_name.strip() if getattr(student, 'full_name', '').strip() else f"{student.first_name} {student.last_name}".strip(),
+            'full_name': display_name,
             'username': student.username,
             'school': student.school_name or "N/A",
             'city': student.city or "N/A",
