@@ -31,6 +31,13 @@ const staticCacheFirst = new CacheFirst({
 const navigationNetworkFirst = new NetworkFirst({
   cacheName: 'learnify-pages',
   networkTimeoutSeconds: 5,
+  plugins: [
+    {
+      // Never use cached navigation responses (prevents offline index shell fallback)
+      cachedResponseWillBeUsed: async () => null,
+      cacheWillUpdate: async () => null,
+    },
+  ],
 });
 
 const sensitivePathPattern = /(token|refresh|user\/me|quiz|submit-answer|finalize|quiz-result|quiz-history|payments)/i;
