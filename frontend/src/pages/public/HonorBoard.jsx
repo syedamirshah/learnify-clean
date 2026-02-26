@@ -36,12 +36,24 @@ const HonorBoard = () => {
     }
   };
 
+  const apiUrl = (pathNoApiPrefix, pathWithApiPrefix) => {
+    const base = axiosInstance?.defaults?.baseURL || "";
+    const baseHasApi = typeof base === "string" && base.includes("/api");
+    return baseHasApi ? pathNoApiPrefix : pathWithApiPrefix;
+  };
+
   useEffect(() => {
     const fetchHonorData = async () => {
       try {
         const [starsData, heroesData] = await Promise.all([
-          fetchWithFallback("honors/shining-stars/", "/honors/shining-stars/"),
-          fetchWithFallback("honors/national-heroes/", "/honors/national-heroes/"),
+          fetchWithFallback(
+            apiUrl("honors/shining-stars/", "/api/honors/shining-stars/"),
+            "/honors/shining-stars/"
+          ),
+          fetchWithFallback(
+            apiUrl("honors/national-heroes/", "/api/honors/national-heroes/"),
+            "/honors/national-heroes/"
+          ),
         ]);
         setShiningStars(starsData);
         setNationalHeroes(heroesData);
