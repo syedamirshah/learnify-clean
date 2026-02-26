@@ -13,6 +13,9 @@ const HonorBoard = () => {
   const [role, setRole] = useState(localStorage.getItem("user_role"));
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState("rank");
   const navigate = useNavigate();
   const publicAxios = axios.create({ baseURL: axiosInstance.defaults.baseURL });
 
@@ -145,6 +148,91 @@ const HonorBoard = () => {
 
   const getPalette = (i) => palettes[i % palettes.length];
 
+  const gradeOptions = useMemo(() => {
+    const gradeSet = new Set();
+    [...(shiningStars || []), ...(nationalHeroes || [])].forEach((group) => {
+      if (group?.grade !== null && group?.grade !== undefined && String(group.grade).trim() !== "") {
+        gradeSet.add(String(group.grade));
+      }
+    });
+
+    const isNumeric = (value) => /^-?\d+(\.\d+)?$/.test(value);
+    return Array.from(gradeSet).sort((a, b) => {
+      if (isNumeric(a) && isNumeric(b)) return Number(a) - Number(b);
+      return a.localeCompare(b);
+    });
+  }, [shiningStars, nationalHeroes]);
+
+  const deriveViewData = (rawGroups) => {
+    const query = searchQuery.trim().toLowerCase();
+    const normalizeNum = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : Number.NEGATIVE_INFINITY;
+    };
+
+    return (rawGroups || [])
+      .filter((group) => {
+        if (selectedGrade === "ALL") return true;
+        return String(group?.grade) === String(selectedGrade);
+      })
+      .map((group) => {
+        const filteredStudents = (group?.top_students || []).filter((student) => {
+          if (!query) return true;
+          const fullName = String(student?.full_name || "").toLowerCase();
+          const school = String(student?.school || "").toLowerCase();
+          const city = String(student?.city || "").toLowerCase();
+          const province = String(student?.province || "").toLowerCase();
+          return (
+            fullName.includes(query) ||
+            school.includes(query) ||
+            city.includes(query) ||
+            province.includes(query)
+          );
+        });
+
+        const sortedStudents =
+          sortKey === "rank"
+            ? filteredStudents
+            : [...filteredStudents].sort((a, b) => {
+                if (sortKey === "total_marks") {
+                  return normalizeNum(b?.total_marks) - normalizeNum(a?.total_marks);
+                }
+                if (sortKey === "average_score") {
+                  return normalizeNum(b?.average_score) - normalizeNum(a?.average_score);
+                }
+                return 0;
+              });
+
+        return {
+          ...group,
+          top_students: sortedStudents,
+        };
+      })
+      .filter((group) => (group?.top_students || []).length > 0);
+  };
+
+  const shiningStarsView = useMemo(
+    () => deriveViewData(shiningStars),
+    [shiningStars, selectedGrade, searchQuery, sortKey]
+  );
+  const nationalHeroesView = useMemo(
+    () => deriveViewData(nationalHeroes),
+    [nationalHeroes, selectedGrade, searchQuery, sortKey]
+  );
+
+  const rankBadge = (idx) => {
+    if (idx === 0) {
+      return "ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800";
+    }
+    if (idx === 1) {
+      return "ml-2 inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-extrabold text-slate-700";
+    }
+    if (idx === 2) {
+      return "ml-2 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-extrabold text-orange-700";
+    }
+    return "";
+  };
+
   const renderTable = (title, data, icon) => (
     <div className="mb-14">
       <div className="flex items-center justify-center gap-2 mb-5">
@@ -185,6 +273,11 @@ const HonorBoard = () => {
                       <div className="mb-2 flex items-center justify-between">
                         <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-900">
                           Rank #{idx + 1}
+                          {idx < 3 ? (
+                            <span className={rankBadge(idx)}>
+                              {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="inline-flex items-center rounded-full border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-gray-900">
                           {student.average_score != null ? `${student.average_score}%` : "-"}
@@ -246,6 +339,11 @@ const HonorBoard = () => {
                         >
                           <td className="px-4 py-3 text-center font-bold">
                             {idx + 1}
+                            {idx < 3 ? (
+                              <span className={rankBadge(idx)}>
+                                {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                              </span>
+                            ) : null}
                           </td>
                           <td className="px-4 py-3 font-semibold break-words">
                             {student.full_name || "N/A"}
@@ -318,6 +416,68 @@ const HonorBoard = () => {
               Celebrating our Shining Stars and National Heroes
             </p>
           </div>
+          {!loading && !error ? (
+            <div className="mt-5 rounded-2xl border border-green-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedGrade("ALL")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
+                    selectedGrade === "ALL"
+                      ? "bg-green-700 text-white"
+                      : "bg-green-50 text-green-900 border border-green-200 hover:bg-green-100"
+                  }`}
+                >
+                  All
+                </button>
+                {gradeOptions.map((grade) => (
+                  <button
+                    key={`chip-${grade}`}
+                    type="button"
+                    onClick={() => setSelectedGrade(String(grade))}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
+                      selectedGrade === String(grade)
+                        ? "bg-green-700 text-white"
+                        : "bg-green-50 text-green-900 border border-green-200 hover:bg-green-100"
+                    }`}
+                  >
+                    Grade {grade}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 flex flex-col gap-3 md:flex-row">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="honor-search" className="sr-only">
+                    Search by student name, school, city, or province
+                  </label>
+                  <input
+                    id="honor-search"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by name, school, city, or province"
+                    className="w-full rounded-xl border border-green-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  />
+                </div>
+                <div className="w-full md:w-56">
+                  <label htmlFor="honor-sort" className="sr-only">
+                    Sort students
+                  </label>
+                  <select
+                    id="honor-sort"
+                    value={sortKey}
+                    onChange={(e) => setSortKey(e.target.value)}
+                    className="w-full rounded-xl border border-green-200 px-3 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
+                    <option value="rank">Sort: Rank</option>
+                    <option value="total_marks">Sort: Total Marks</option>
+                    <option value="average_score">Sort: Avg Score</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="mt-8">
             {loading ? (
               <div aria-live="polite" className="bg-white border border-green-200 rounded-2xl shadow-sm p-10 text-center">
@@ -345,10 +505,43 @@ const HonorBoard = () => {
                   </Link>
                 </div>
               </div>
+            ) : shiningStarsView.length === 0 && nationalHeroesView.length === 0 ? (
+              <div aria-live="polite" className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
+                <div className="font-semibold text-green-900">No results match your filters/search.</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGrade("ALL");
+                    setSearchQuery("");
+                    setSortKey("rank");
+                  }}
+                  className="mt-3 inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                >
+                  Clear filters
+                </button>
+                <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                  <Link
+                    to="/"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
+                    Go to Home
+                  </Link>
+                  <Link
+                    to="/membership"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
+                    View Membership
+                  </Link>
+                </div>
+              </div>
             ) : (
               <>
-                {renderTable("Shining Stars (Top Performers of the Month)", shiningStars, "🌟")}
-                {renderTable("National Heroes (Top Performers of the Quarter)", nationalHeroes, "🏅")}
+                {shiningStarsView.length > 0
+                  ? renderTable("Shining Stars (Top Performers of the Month)", shiningStarsView, "🌟")
+                  : null}
+                {nationalHeroesView.length > 0
+                  ? renderTable("National Heroes (Top Performers of the Quarter)", nationalHeroesView, "🏅")
+                  : null}
               </>
             )}
           </div>
