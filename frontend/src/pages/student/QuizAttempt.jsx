@@ -449,19 +449,18 @@ useEffect(() => {
     <>
       {/* Logo + Green Title Bar aligned side by side */}
       <div
+        className="mb-4 flex w-full items-center gap-2 px-2 sm:px-4"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
           marginBottom: '16px',
         }}
       >
         {/* Logo */}
-        <div style={{ paddingLeft: '16px' }}>
+        <div className="pl-2 sm:pl-4">
           <img
             src={logo}
             alt="Learnify Home"
-            style={{ height: '80px', cursor: 'pointer' }}
+            className="h-[52px] w-auto md:h-[70px]"
+            style={{ cursor: 'pointer' }}
             onClick={() => navigate('/')}
           />
         </div>
@@ -471,7 +470,7 @@ useEffect(() => {
           style={{
             backgroundColor: '#5CC245',
             flexGrow: 1,
-            height: '44px',
+            minHeight: '44px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -479,6 +478,7 @@ useEffect(() => {
           }}
         >
           <h1
+            className="break-words px-2 text-center"
             style={{
               color: 'white',
               fontFamily: 'calibri',
@@ -498,18 +498,19 @@ useEffect(() => {
 
       {/* 🔁 Mode selector + Exam timer */}
 {!previewMode && (
-  <div className="flex justify-center mb-4">
-    <div className="inline-flex items-center gap-4">
+  <div className="mb-4 flex justify-center">
+    <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4">
       {/* Mode pills */}
       <div className="inline-flex rounded-full border bg-gray-50 overflow-hidden">
         <button
           type="button"
+          aria-label="Learning Mode"
           disabled={modeSwitchDisabled && attemptMode !== 'learning'}
           onClick={() => {
             if (modeSwitchDisabled && attemptMode !== 'learning') return;
             setAttemptMode('learning');
           }}
-          className="px-4 py-1 text-sm font-medium"
+          className="px-4 py-1 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
           style={{
             fontFamily: 'calibri',
             backgroundColor: attemptMode === 'learning' ? '#5CC245' : 'transparent',
@@ -522,12 +523,13 @@ useEffect(() => {
         </button>
         <button
           type="button"
+          aria-label="Exam Mode"
           disabled={modeSwitchDisabled && attemptMode !== 'exam'}
           onClick={() => {
             if (modeSwitchDisabled && attemptMode !== 'exam') return;
             setAttemptMode('exam');
           }}
-          className="px-4 py-1 text-sm font-medium"
+          className="px-4 py-1 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
           style={{
             fontFamily: 'calibri',
             backgroundColor: attemptMode === 'exam' ? '#5CC245' : 'transparent',
@@ -561,8 +563,9 @@ useEffect(() => {
                           <button
                             key={sec}
                             type="button"
+                            aria-label={`Set exam timer ${minutes} minutes`}
                             onClick={() => setTimedSeconds(sec)}
-                            className="px-2 py-0.5 rounded-full text-xs border"
+                            className="px-2 py-0.5 rounded-full text-xs border focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                             style={
                               isActive
                                 ? {
@@ -584,8 +587,9 @@ useEffect(() => {
                     </div>
                     <button
                       type="button"
+                      aria-label="Start exam timer"
                       onClick={handleStartTimer}
-                      className="ml-1 px-3 py-1 rounded-full text-xs font-semibold"
+                      className="ml-1 rounded-full px-3 py-1 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                       style={{ backgroundColor: '#F97316', color: '#ffffff' }}
                     >
                       Start
@@ -613,10 +617,10 @@ useEffect(() => {
       {questions.length === 0 ? (
         <div className="text-center mt-8 text-green-700 font-semibold">Loading quiz...</div>
       ) : (
-        <div className="p-6 max-w-6xl mx-auto bg-white font-[calibri]">
-          <div className="flex justify-between items-start">
+        <div className="mx-auto max-w-6xl bg-white p-3 font-[calibri] sm:p-4 md:p-6">
+          <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:gap-0">
             {/* Question Block */}
-            <div className="flex-1 pr-6 min-w-0">
+            <section aria-label="Question" className="w-full min-w-0 lg:flex-1 lg:pr-6">
               <div
                 className="mb-4 text-gray-900"
                 style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
@@ -662,7 +666,7 @@ useEffect(() => {
                           return (
                             <label
                               key={`${qid}-${index}`}
-                              className="flex items-center gap-3 cursor-pointer"
+                              className="flex cursor-pointer items-center gap-3 rounded-md py-2 hover:bg-green-50 active:bg-green-100"
                               style={{
                                 fontSize: `${fontSize}px`,
                                 lineHeight: lineSpacing,
@@ -689,13 +693,13 @@ useEffect(() => {
                                     handleOptionChange(qid, opt);
                                   }
                                 }}
-                                className="h-5 w-5 shrink-0"
+                                className="h-5 w-5 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                                 style={{
                                   margin: 0,
                                   accentColor: '#5CC245',
                                 }}
                               />
-                              <span className="min-w-0 break-words">{opt}</span>
+                              <span className="min-w-0 break-words leading-relaxed">{opt}</span>
                             </label>
                           );
                         })}
@@ -764,6 +768,8 @@ useEffect(() => {
                                   <input
                                     key={`in-${index}`}
                                     data-blank={key}
+                                    inputMode="text"
+                                    aria-label={`Blank ${key}`}
                                     value={value}
                                     disabled={isLocked}
                                     onChange={(e) =>
@@ -784,7 +790,7 @@ useEffect(() => {
                                     className="border rounded px-1 py-0.5 mx-1"
                                     style={{
                                       display: 'inline-block',
-                                      width: `${fibWidth * 10}px`,
+                                      width: `min(${fibWidth * 10}px, 140px)`,
                                       height: `${fontSize * 1.2}px`,
                                       lineHeight: `${fontSize * 1.2}px`,
                                       fontSize: `${fontSize}px`,
@@ -820,10 +826,10 @@ useEffect(() => {
                     );
                   })()}
               </div>
-            </div>
+            </section>
 
             {/* Right panel: timers + scratch pad */}
-            <div className="w-1/4 flex justify-end">
+            <aside aria-label="Timers and tools" className="mt-4 flex w-full justify-center lg:mt-0 lg:w-[280px] lg:justify-end">
               <div className="flex flex-col items-center">
                 {/* Elapsed timer */}
                 <ElapsedTimer startTime={startTime} />
@@ -834,8 +840,9 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={() => setShowRoughWork(true)}
+                  aria-label="Open Scratch Pad"
                   title="Open Scratch Pad"
-                  className="inline-flex items-center justify-center w-[170px] py-3 rounded text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
+                  className="inline-flex w-[170px] items-center justify-center rounded py-3 text-white shadow-md transition hover:opacity-95 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                   style={{
                     fontFamily: 'calibri',
                     backgroundColor: '#5CC245',
@@ -844,15 +851,16 @@ useEffect(() => {
                   <span className="font-normal">Scratch Pad</span>
                 </button>
               </div>
-            </div>
+            </aside>
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-center mt-4 gap-4">
+          <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
             {/* Previous only in learning mode or preview */}
             {(attemptMode === 'learning' || previewMode) && (
               <button
-                className="bg-green-600 text-white px-6 py-2 rounded font-medium disabled:bg-gray-300 disabled:text-gray-600"
+                aria-label="Previous question"
+                className="w-full rounded bg-green-600 px-6 py-2 font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 disabled:bg-gray-300 disabled:text-gray-600 sm:w-auto"
                 onClick={() =>
                   setCurrentIndex((prev) => Math.max(prev - 1, 0))
                 }
@@ -866,7 +874,8 @@ useEffect(() => {
               ? currentIndex < Math.min(questions.length - 1, 2)
               : currentIndex < questions.length - 1) ? (
               <button
-                className={`px-6 py-2 rounded font-medium ${
+                aria-label="Next question"
+                className={`w-full rounded px-6 py-2 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 sm:w-auto ${
                   canProceed
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -903,7 +912,8 @@ useEffect(() => {
               </button>
             ) : (
               <button
-                className={`px-6 py-2 rounded font-medium ${
+                aria-label="Submit quiz"
+                className={`w-full rounded px-6 py-2 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 sm:w-auto ${
                   canProceed
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -939,7 +949,7 @@ useEffect(() => {
           </div>
 
           {/* Progress Circles (attempted vs current) */}
-          <div className="flex justify-center gap-3 mt-6">
+          <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
             {questions.map((q, index) => {
               const isCurrent = index === currentIndex;
 
@@ -1015,6 +1025,9 @@ useEffect(() => {
         <div
           className="fixed inset-0 z-50"
           style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Scratch Pad"
           onClick={() => setShowRoughWork(false)}
         >
           <div
@@ -1041,7 +1054,8 @@ useEffect(() => {
               <div className="font-semibold text-gray-800">📝 Scratch Pad</div>
               <button
                 type="button"
-                className="px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold"
+                aria-label="Close Scratch Pad"
+                className="rounded-md bg-gray-100 px-3 py-1 font-semibold text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                 onClick={() => setShowRoughWork(false)}
               >
                 ✕
