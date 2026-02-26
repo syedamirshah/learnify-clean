@@ -8,6 +8,8 @@ export default function PublicHeader({
   brandTitle = "Learnify Pakistan",
   brandMotto = "Learning with Responsibility",
   onMenuClick,
+  isMenuOpen = false,
+  menuControlsId = "primary-mobile-drawer",
   desktopAuthContent = null,
   mobileActionContent = null,
   className = "",
@@ -18,8 +20,10 @@ export default function PublicHeader({
         <button
           type="button"
           onClick={onMenuClick}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-700 md:hidden"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 md:hidden"
           aria-label="Open menu"
+          aria-expanded={isMenuOpen}
+          aria-controls={menuControlsId}
         >
           <span className="text-lg leading-none">☰</span>
         </button>

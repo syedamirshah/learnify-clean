@@ -29,6 +29,8 @@ export default function AppLayout({
   mobileAuthContent = null,
   className = "",
 }) {
+  const drawerId = "primary-mobile-drawer";
+
   const desktopAuth = (
     <AuthPanel
       isAuthenticated={isAuthenticated}
@@ -54,6 +56,8 @@ export default function AppLayout({
         brandTitle={brandTitle}
         brandMotto={brandMotto}
         onMenuClick={onOpenMobileDrawer}
+        isMenuOpen={isMobileDrawerOpen}
+        menuControlsId={drawerId}
         desktopAuthContent={desktopAuth}
         mobileActionContent={mobileAuthContent}
       />
@@ -61,6 +65,7 @@ export default function AppLayout({
       <PublicNav items={navItems} />
 
       <MobileDrawer
+        id={drawerId}
         isOpen={isMobileDrawerOpen}
         onClose={onCloseMobileDrawer}
         items={navItems}

@@ -21,18 +21,18 @@ export default function AuthPanel({
           <button
             type="button"
             onClick={onProfileClick}
-            className="max-w-full truncate rounded-md px-2 py-1 text-sm font-semibold text-gray-700 hover:underline"
+            className="max-w-full truncate rounded-md px-2 py-1 text-sm font-semibold text-gray-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
           >
             Welcome, {userFullName}
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={onLogoutClick}
-          className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700"
-        >
-          Logout
-        </button>
+          <button
+            type="button"
+            onClick={onLogoutClick}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+          >
+            Logout
+          </button>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function AuthPanel({
           placeholder="Username"
           value={username}
           onChange={onUsernameChange}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
         />
 
         <input
@@ -55,13 +55,13 @@ export default function AuthPanel({
           placeholder="Password"
           value={password}
           onChange={onPasswordChange}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
         />
 
         <button
           type="button"
           onClick={onSignInClick}
-          className="w-full rounded-md bg-[#42b72a] px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-700 lg:w-auto"
+          className="w-full rounded-md bg-[#42b72a] px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 lg:w-auto"
         >
           Sign in
         </button>
@@ -71,7 +71,7 @@ export default function AuthPanel({
             type="checkbox"
             checked={remember}
             onChange={onRememberChange}
-            className="h-4 w-4"
+            className="h-4 w-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
           />
           Remember
         </label>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 function DesktopChildItem({ child, onSelect }) {
   const itemClass =
-    "block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-gray-800 hover:bg-gray-100";
+    "block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-gray-800 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600";
 
   if (child.href) {
     return (
@@ -22,17 +22,26 @@ function DesktopChildItem({ child, onSelect }) {
 
 function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
   const baseClass =
-    "inline-flex items-center rounded-md px-2 py-2 text-[17px] font-medium text-white transition hover:bg-white/15 lg:px-3 lg:text-lg";
+    "inline-flex items-center rounded-md px-2 py-2 text-[17px] font-medium text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 lg:px-3 lg:text-lg";
 
   if (Array.isArray(item.children) && item.children.length > 0) {
     return (
       <div className="relative">
-        <button type="button" onClick={onToggle} className={baseClass}>
+        <button
+          type="button"
+          onClick={onToggle}
+          className={baseClass}
+          aria-expanded={isOpen}
+          aria-controls={`desktop-menu-${item.key || item.label}`}
+        >
           {item.label}
         </button>
 
         {isOpen ? (
-          <div className="absolute left-0 top-full z-50 mt-1 w-60 rounded-md border bg-white p-2 shadow-lg">
+          <div
+            id={`desktop-menu-${item.key || item.label}`}
+            className="absolute left-0 top-full z-50 mt-1 w-60 rounded-md border bg-white p-2 shadow-lg"
+          >
             {item.children.map((child) => (
               <DesktopChildItem
                 key={child.key || child.label}
