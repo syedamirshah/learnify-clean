@@ -1,7 +1,8 @@
 // src/pages/public/MembershipPage.jsx
-import React from "react";
-import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../../assets/logo.png";
+import AppLayout from "../../components/layout/AppLayout";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 // If you already use a specific payments/choose URL, keep it consistent:
@@ -9,6 +10,11 @@ const PAYMENT_LINK = `${API}payments/choose/`;
 const SCHOOL_TEMPLATE_URL = "/student_bulk_upload_template.xlsx";
 
 const MembershipPage = () => {
+  const [role, setRole] = useState(localStorage.getItem("user_role"));
+  const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+
   // Pricing (as per your decision)
   const MONTHLY_INDIVIDUAL = 200; // Rs.
   const YEARLY_BASE = MONTHLY_INDIVIDUAL * 12; // 2400
@@ -18,49 +24,103 @@ const MembershipPage = () => {
   const SCHOOL_MONTHLY_PER_STUDENT = Math.round(MONTHLY_INDIVIDUAL * 0.75); // 25% off => 150
   const SCHOOL_YEARLY_PER_STUDENT = Math.round(YEARLY_BASE * 0.5); // Annual + school => 50% off => 1200
 
+  useEffect(() => {
+    setRole(localStorage.getItem("user_role"));
+    setUserFullName(localStorage.getItem("user_full_name") || "");
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_full_name");
+    localStorage.removeItem("account_status");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_grade");
+    navigate("/", { replace: true });
+  };
+
+  const navItems = [
+    { key: "home", label: "Home", href: "/" },
+    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
+    ...(role === "student"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/student/assessment",
+            children: [
+              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
+              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
+              { key: "tasks", label: "Tasks", href: "/student/tasks" },
+            ],
+          },
+        ]
+      : []),
+    ...(role === "teacher"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/teacher/assessment",
+            children: [
+              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
+              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
+              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
+            ],
+          },
+        ]
+      : []),
+    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
+    { key: "membership", label: "Membership", href: "/membership" },
+    { key: "help-center", label: "Help Center", href: "/help-center" },
+    ...(!role
+      ? [
+          {
+            key: "sign-up",
+            label: "Sign up",
+            href: "/signup",
+            children: [{ key: "create-account", label: "Create Account", href: "/signup" }],
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-gray-800">
-      {/* Top Navbar */}
-      <header className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src={logo}
-              alt="Learnify Pakistan"
-              className="h-14 w-auto hover:opacity-90 transition"
-              style={{ background: "transparent" }}
-            />
-            <div className="hidden sm:block">
-              <div className="text-xl font-extrabold text-green-900 leading-tight">
-                Learnify Pakistan
-              </div>
-              <div className="text-sm text-green-800/80 italic">
-                Learning with Responsibility
-              </div>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-2 md:gap-3">
-            <Link
-              to="/"
-              className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold"
-            >
-              Home
-            </Link>
-
-            <a
-              href={PAYMENT_LINK}
-              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
-            >
-              Choose Plan
-            </a>
-          </div>
-        </div>
-      </header>
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle="Learnify Pakistan"
+      brandMotto="Learning with Responsibility"
+      isAuthenticated={Boolean(role)}
+      userFullName={userFullName}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onLogoutClick={handleLogout}
+      mobileAuthContent={
+        role ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+          >
+            Logout
+          </button>
+        ) : null
+      }
+    >
+      <div className="min-h-[calc(100vh-180px)] bg-white text-gray-800">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6 md:py-8">
+        <h1 className="text-3xl font-extrabold text-green-950 md:text-4xl">Membership</h1>
+        <p className="mt-2 text-sm text-gray-600 md:text-base">Choose a plan that fits you.</p>
+      </section>
 
       {/* Hero */}
       <section className="bg-gradient-to-b from-green-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-16">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-10 md:py-14">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-semibold">
@@ -69,26 +129,26 @@ const MembershipPage = () => {
                 Grades 1–5
               </div>
 
-              <h1 className="mt-4 text-4xl md:text-5xl font-extrabold text-green-950 leading-tight">
+              <h2 className="mt-4 text-2xl sm:text-3xl md:text-5xl font-extrabold text-green-950 leading-tight">
                 Learnify Membership
-              </h1>
+              </h2>
 
-              <p className="mt-4 text-lg text-gray-700 leading-relaxed">
+              <p className="mt-4 text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
                 Membership is not just a payment — it’s a learning partnership.
                 Students get structured practice, instant feedback, and clear progress
                 tracking, supported by positive recognition in a safe and responsible way.
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap gap-3">
                 <a
                   href={PAYMENT_LINK}
-                  className="px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold shadow-sm"
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   Start Membership
                 </a>
                 <Link
                   to="/signup"
-                  className="px-5 py-3 rounded-xl bg-white border hover:bg-gray-50 text-gray-900 font-bold shadow-sm"
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white border hover:bg-gray-50 text-gray-900 font-bold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   Create Account
                 </Link>
@@ -134,13 +194,13 @@ const MembershipPage = () => {
       </section>
 
       {/* Who is it for */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-12">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-12">
         <SectionTitle
           title="Who is Learnify Membership for?"
           subtitle="Clear, simple learning aligned with officially approved textbooks of Pakistan."
         />
 
-        <div className="grid md:grid-cols-4 gap-6 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
           <Card title="Students (Grades 1–5)">
             Curriculum-aligned exercises, instant feedback, progress tracking,
             and motivation through Shining Stars and National Heroes.
@@ -165,7 +225,7 @@ const MembershipPage = () => {
 
       {/* What membership includes */}
       <section className="bg-gray-50 border-t border-b">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-12">
           <SectionTitle
             title="What does membership include?"
             subtitle="The core benefits that make Learnify meaningful — not just a quiz website."
@@ -216,13 +276,13 @@ const MembershipPage = () => {
       </section>
 
       {/* Plans & rules */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-12">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-12">
         <SectionTitle
           title="Membership plans & access rules"
           subtitle="Simple, transparent pricing — aligned with Learnify’s subscription logic."
         />
 
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           {/* Plans */}
           <div className="bg-white border rounded-2xl shadow-sm p-6">
             <div className="text-xl font-extrabold text-gray-900">
@@ -269,14 +329,14 @@ const MembershipPage = () => {
                     <a
                       href={SCHOOL_TEMPLATE_URL}
                       download
-                      className="font-semibold text-green-800 underline hover:text-green-900"
+                      className="font-semibold text-green-800 underline hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                     >
                       Download student upload template
                     </a>{" "}
                     and email the completed sheet to{" "}
                     <a
                       href="mailto:support@learnifypakistan.com"
-                      className="font-semibold underline hover:text-green-900"
+                      className="font-semibold underline hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                     >
                       support@learnifypakistan.com
                     </a>
@@ -286,16 +346,16 @@ const MembershipPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3 flex-wrap">
+            <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap gap-3">
               <a
                 href={PAYMENT_LINK}
-                className="px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold"
+                className="w-full md:w-auto px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
                 Choose a Plan
               </a>
               <Link
                 to="/my-profile"
-                className="px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold"
+                className="w-full md:w-auto px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
                 View My Profile
               </Link>
@@ -336,13 +396,13 @@ const MembershipPage = () => {
 
       {/* Privacy */}
       <section className="bg-green-50 border-t">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-12">
           <SectionTitle
             title="Our commitment to safety & privacy"
             subtitle="Learnify is built for children — dignity and protection come first."
           />
 
-          <div className="grid md:grid-cols-5 gap-4 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
             <MiniCard title="Privacy-first">
               Student data is treated as sensitive and protected.
             </MiniCard>
@@ -365,7 +425,7 @@ const MembershipPage = () => {
 
       {/* Footer CTA */}
       <footer className="bg-white border-t">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="text-2xl font-extrabold text-green-950">
               Ready to begin?
@@ -375,23 +435,24 @@ const MembershipPage = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full md:w-auto">
             <a
               href={PAYMENT_LINK}
-              className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold"
+              className="w-full md:w-auto px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
             >
               Start Membership
             </a>
             <Link
               to="/help-center"
-              className="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold"
+              className="w-full md:w-auto px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
             >
               Visit Help Center
             </Link>
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
