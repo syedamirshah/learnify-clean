@@ -63,6 +63,9 @@ const QuizAttempt = () => {
   const [timedSeconds, setTimedSeconds] = useState(420); // default 7 min  
   const [timeLeft, setTimeLeft] = useState(null);                // live countdown
   const [timerDeadline, setTimerDeadline] = useState(null);      // timestamp (ms) when timer ends
+  const [liveMessage, setLiveMessage] = useState('');
+  const questionTopRef = useRef(null);
+  const prevIndexRef = useRef(0);
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const totalQuestions = questions.length > 0 ? (quizMeta.total_expected_questions || questions.length) : 0;
@@ -272,13 +275,14 @@ useEffect(() => {
 
     setTimeLeft(diff);
 
-    if (diff <= 0) {
-      clearInterval(interval);
-      setTimedStatus('finished');
-      setTimerDeadline(null);
+      if (diff <= 0) {
+        clearInterval(interval);
+        setTimedStatus('finished');
+        setTimerDeadline(null);
+        setLiveMessage("Time's up. Submitting quiz.");
 
-      // ⛔ Time's up in Exam mode → auto submit
-      if (!previewMode && attemptMode === 'exam') {
+        // ⛔ Time's up in Exam mode → auto submit
+        if (!previewMode && attemptMode === 'exam') {
         handleSubmit();
       }
     }
@@ -286,6 +290,14 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, [timedStatus, timerDeadline, attemptMode, previewMode]);
+
+  useEffect(() => {
+    if (prevIndexRef.current === currentIndex) return;
+    prevIndexRef.current = currentIndex;
+    if (window.innerWidth < 768 && questionTopRef.current) {
+      questionTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentIndex]);
 
   const extractUUIDFromId = (questionId) => {
     return questionId.includes('_') ? questionId.split('_')[0] : questionId;
@@ -424,6 +436,41 @@ useEffect(() => {
     setTimeLeft(timedSeconds);
     setTimerDeadline(now + totalMs);
     setTimedStatus('running');
+    setLiveMessage('Exam timer started.');
+  };
+
+  const handlePreviousClick = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleAdvanceClick = async () => {
+    if (!canProceed) return;
+
+    ensureExamTimerStarted();
+
+    if (currentQuestion?.type === 'fib') {
+      await saveFibCombined(currentQuestion, true);
+    } else {
+      await saveAnswer(
+        currentQuestion.question_id,
+        answers[currentQuestion.question_id],
+        true
+      );
+    }
+
+    if (!previewMode && attemptMode === 'exam') {
+      lockQuestion(currentQuestion.question_id);
+    }
+
+    const canGoNext = previewMode
+      ? currentIndex < Math.min(questions.length - 1, 2)
+      : currentIndex < questions.length - 1;
+
+    if (canGoNext) {
+      setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1));
+    } else {
+      await handleSubmit();
+    }
   };
 
   const fontSize = quizMeta.font_size || 16;
@@ -497,7 +544,7 @@ useEffect(() => {
       </div>
 
       {/* 🔁 Mode selector + Exam timer */}
-{!previewMode && (
+      {!previewMode && (
   <div className="mb-4 flex justify-center">
     <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4">
       {/* Mode pills */}
@@ -613,18 +660,22 @@ useEffect(() => {
           </div>
         </div>
       )}
+      <div className="sr-only" aria-live="polite">{liveMessage}</div>
 
       {questions.length === 0 ? (
         <div className="text-center mt-8 text-green-700 font-semibold">Loading quiz...</div>
       ) : (
-        <div className="mx-auto max-w-6xl bg-white p-3 font-[calibri] sm:p-4 md:p-6">
+        <div className="mx-auto max-w-6xl bg-white p-3 pb-24 font-[calibri] sm:p-4 sm:pb-24 md:p-6 md:pb-6">
           <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:gap-0">
             {/* Question Block */}
-            <section aria-label="Question" className="w-full min-w-0 lg:flex-1 lg:pr-6">
+            <section ref={questionTopRef} aria-label="Question" className="w-full min-w-0 lg:flex-1 lg:pr-6">
               <div
                 className="mb-4 text-gray-900"
                 style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
                 >
+                <div className="mb-2 text-sm font-semibold text-gray-600 md:hidden">
+                  Question {currentIndex + 1} of {totalQuestions}
+                </div>
                 {(currentQuestion.type === 'scq' || currentQuestion.type === 'mcq') && (
                   <div className="mt-2">
                     {/* Question text */}
@@ -770,6 +821,7 @@ useEffect(() => {
                                     data-blank={key}
                                     inputMode="text"
                                     aria-label={`Blank ${key}`}
+                                    placeholder={key}
                                     value={value}
                                     disabled={isLocked}
                                     onChange={(e) =>
@@ -861,9 +913,7 @@ useEffect(() => {
               <button
                 aria-label="Previous question"
                 className="w-full rounded bg-green-600 px-6 py-2 font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 disabled:bg-gray-300 disabled:text-gray-600 sm:w-auto"
-                onClick={() =>
-                  setCurrentIndex((prev) => Math.max(prev - 1, 0))
-                }
+                onClick={handlePreviousClick}
                 disabled={currentIndex === 0}
               >
                 Previous
@@ -880,32 +930,7 @@ useEffect(() => {
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 }`}
-                onClick={async () => {
-                  if (!canProceed) return;
-
-                  ensureExamTimerStarted();   // 🔸 in case they reach last question without starting
-
-                
-                  // ✅ Save AND update correctness only when pressing Next
-                  if (currentQuestion?.type === 'fib') {
-                    await saveFibCombined(currentQuestion, true);
-                  } else {
-                    await saveAnswer(
-                      currentQuestion.question_id,
-                      answers[currentQuestion.question_id],
-                      true
-                    );
-                  }
-                
-                  if (!previewMode && attemptMode === 'exam') {
-                    // lock current question in exam mode
-                    lockQuestion(currentQuestion.question_id);
-                  }
-                
-                  setCurrentIndex((prev) =>
-                    Math.min(prev + 1, questions.length - 1)
-                  );
-                }}
+                onClick={handleAdvanceClick}
                 disabled={!canProceed}
               >
                 Next
@@ -918,29 +943,7 @@ useEffect(() => {
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 }`}
-                onClick={async () => {
-                  if (!canProceed) return;
-
-                  ensureExamTimerStarted();   // 🔸 in case they reach last question without starting
-
-                
-                  // ✅ Final question: save and update correctness now
-                  if (currentQuestion?.type === 'fib') {
-                    await saveFibCombined(currentQuestion, true);
-                  } else {
-                    await saveAnswer(
-                      currentQuestion.question_id,
-                      answers[currentQuestion.question_id],
-                      true
-                    );
-                  }
-                
-                  if (!previewMode && attemptMode === 'exam') {
-                    lockQuestion(currentQuestion.question_id);
-                  }
-                
-                  await handleSubmit();
-                }}
+                onClick={handleAdvanceClick}
                 disabled={!canProceed}
               >
                 {previewMode ? 'Exit Preview' : 'Submit Quiz'}
@@ -1011,11 +1014,56 @@ useEffect(() => {
               }
 
               return (
-                <div key={index} className={baseClasses} style={style}>
-                  {index + 1}
+                <div key={index} className="relative">
+                  <div className={baseClasses} style={style}>
+                    {index + 1}
+                  </div>
+                  {attemptMode === 'exam' && lockedQuestions[q.question_id] ? (
+                    <span className="absolute -right-1 -top-1 text-[10px]" aria-hidden="true">🔒</span>
+                  ) : null}
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile sticky actions */}
+      {questions.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 px-3 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:hidden">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2">
+            {(attemptMode === 'learning' || previewMode) && (
+              <button
+                aria-label="Previous question"
+                className="min-h-[44px] w-full rounded bg-green-600 px-6 py-2 font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 disabled:bg-gray-300 disabled:text-gray-600"
+                onClick={handlePreviousClick}
+                disabled={currentIndex === 0}
+              >
+                Previous
+              </button>
+            )}
+            <button
+              aria-label={
+                (previewMode
+                  ? currentIndex < Math.min(questions.length - 1, 2)
+                  : currentIndex < questions.length - 1)
+                  ? 'Next question'
+                  : 'Submit quiz'
+              }
+              className={`min-h-[44px] w-full rounded px-6 py-2 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${
+                canProceed
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              }`}
+              onClick={handleAdvanceClick}
+              disabled={!canProceed}
+            >
+              {(previewMode
+                ? currentIndex < Math.min(questions.length - 1, 2)
+                : currentIndex < questions.length - 1)
+                ? 'Next'
+                : (previewMode ? 'Exit Preview' : 'Submit Quiz')}
+            </button>
           </div>
         </div>
       )}
