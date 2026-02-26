@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axiosInstance from "../../../utils/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
@@ -40,8 +40,8 @@ const HonorBoard = () => {
     const fetchHonorData = async () => {
       try {
         const [starsData, heroesData] = await Promise.all([
-          fetchWithFallback("/api/honors/shining-stars/", "/honors/shining-stars/"),
-          fetchWithFallback("/api/honors/national-heroes/", "/honors/national-heroes/"),
+          fetchWithFallback("honors/shining-stars/", "/honors/shining-stars/"),
+          fetchWithFallback("honors/national-heroes/", "/honors/national-heroes/"),
         ]);
         setShiningStars(starsData);
         setNationalHeroes(heroesData);
