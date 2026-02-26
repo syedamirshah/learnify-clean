@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axiosInstance from '@/utils/axiosInstance';
 import logo from '@/assets/logo.png';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import AppLayout from '@/components/layout/AppLayout';
 
 const EditProfile = () => {
   const [grades, setGrades] = useState([]);
@@ -25,9 +26,14 @@ const EditProfile = () => {
     confirm_password: '',
   });
 
+  const [role, setRole] = useState(localStorage.getItem('user_role'));
+  const [userFullName, setUserFullName] = useState(localStorage.getItem('user_full_name') || '');
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchProfile = async () => {
-      const res = await axiosInstance.get("user/me/");
+      const res = await axiosInstance.get('user/me/');
       setFormData((prev) => ({
         ...prev,
         ...res.data,
@@ -40,33 +46,38 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchGrades = async () => {
       try {
-        const res = await axiosInstance.get("grades/");
+        const res = await axiosInstance.get('grades/');
         const data = res.data;
 
         // Normalize any backend shape to: [{label, value}]
         const normalized = Array.isArray(data)
           ? data.map((g) => {
               // If API returns strings like ["Grade 1", "Grade 2"]
-              if (typeof g === "string") {
+              if (typeof g === 'string') {
                 return { label: g, value: g };
               }
 
               // If API returns objects like {id, name} or {value, label}
               return {
-                label: g.label ?? g.name ?? g.title ?? g.grade_name ?? String(g.value ?? g.id ?? ""),
-                value: g.value ?? g.id ?? g.code ?? g.slug ?? g.name ?? g.label ?? "",
+                label: g.label ?? g.name ?? g.title ?? g.grade_name ?? String(g.value ?? g.id ?? ''),
+                value: g.value ?? g.id ?? g.code ?? g.slug ?? g.name ?? g.label ?? '',
               };
             })
           : [];
 
         setGrades(normalized);
       } catch (error) {
-        console.error("Failed to fetch grades:", error);
+        console.error('Failed to fetch grades:', error);
         setGrades([]);
       }
     };
 
     fetchGrades();
+  }, []);
+
+  useEffect(() => {
+    setRole(localStorage.getItem('user_role'));
+    setUserFullName(localStorage.getItem('user_full_name') || '');
   }, []);
 
   const handleChange = (e) => {
@@ -125,165 +136,278 @@ const EditProfile = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_full_name');
+    localStorage.removeItem('account_status');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user_grade');
+    navigate('/', { replace: true });
+  };
+
+  const navItems = useMemo(
+    () => [
+      { key: 'home', label: 'Home', href: '/' },
+      { key: 'why-join', label: 'Why Join Learnify?', href: '/why-join' },
+      ...(role === 'student'
+        ? [
+            {
+              key: 'assessment',
+              label: 'Assessment',
+              href: '/student/assessment',
+              children: [
+                { key: 'subject-wise', label: 'Subject-wise Performance', href: '/student/assessment' },
+                { key: 'quiz-history', label: 'Quiz History', href: '/student/quiz-history' },
+                { key: 'tasks', label: 'Tasks', href: '/student/tasks' },
+              ],
+            },
+          ]
+        : []),
+      ...(role === 'teacher'
+        ? [
+            {
+              key: 'assessment',
+              label: 'Assessment',
+              href: '/teacher/assessment',
+              children: [
+                { key: 'student-results', label: 'Student Results', href: '/teacher/assessment' },
+                { key: 'teacher-tasks', label: 'My Tasks', href: '/teacher/tasks' },
+                { key: 'assign-task', label: 'Assign Task', href: '/teacher/assign-task' },
+              ],
+            },
+          ]
+        : []),
+      { key: 'honor-board', label: 'Honor Board', href: '/honor-board' },
+      { key: 'membership', label: 'Membership', href: '/membership' },
+      { key: 'help-center', label: 'Help Center', href: '/help-center' },
+      ...(!role
+        ? [
+            {
+              key: 'sign-up',
+              label: 'Sign up',
+              href: '/signup',
+              children: [{ key: 'create-account', label: 'Create Account', href: '/signup' }],
+            },
+          ]
+        : []),
+    ],
+    [role]
+  );
+
   return (
-    <>
-      {/* Monogram Navigation */}
-      <nav className="w-full flex justify-start bg-white px-6 py-4 shadow-sm">
-        <div className="inline-block">
-          <Link to="/">
-            <img
-              src={logo}
-              alt="Learnify Home"
-              className="h-28 w-auto hover:opacity-80 transition duration-200"
-              style={{ background: "transparent" }}
-            />
-          </Link>
-        </div>
-      </nav>
-
-      {/* White outer container to eliminate gray */}
-      <div className="bg-white py-10">
-        {/* Center wrapper so header + card align */}
-        <div className="max-w-2xl mx-auto px-6">
-          {/* Profile Header */}
-          <div className="flex items-center gap-6 mb-6 bg-white p-6 rounded-xl shadow">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-3xl font-bold text-green-700">
-              {formData.full_name?.[0] || formData.username?.[0] || "U"}
-            </div>
-
-            <div>
-              <div className="text-2xl font-bold text-gray-800">
-                {formData.full_name || "Your Name"}
-              </div>
-              <div className="text-gray-500">@{formData.username}</div>
-              <span className="inline-block mt-2 px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">
-                {formData.role}
-              </span>
-            </div>
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle="Learnify Pakistan"
+      brandMotto="Learning with Responsibility"
+      isAuthenticated={Boolean(role)}
+      userFullName={userFullName}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onLogoutClick={handleLogout}
+      mobileAuthContent={
+        role ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+          >
+            Logout
+          </button>
+        ) : null
+      }
+    >
+      <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6] text-gray-800">
+        <section className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <h1 className="text-2xl font-extrabold text-green-900 sm:text-3xl">Edit Profile</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">Update your details and password</p>
           </div>
+        </section>
 
-          {/* Green inner card */}
-          <div className="px-6 py-8 bg-green-50 border border-green-300 rounded-xl shadow-sm">
-            <h2 className="text-2xl font-bold text-green-700 mb-6">Edit Profile</h2>
-
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              {/* Read-only Fields */}
-              {([
-                { label: 'Username', value: formData.username },
-                { label: 'Role', value: formData.role },
-                { label: 'Language Used at Home', value: formData.language_used_at_home }
-              ]).map((field, idx) => (
-                <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                  <input type="text" value={field.value} disabled className="w-full p-2 border rounded bg-gray-100" />
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <aside className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-1">
+              <div className="flex items-center gap-4 lg:flex-col lg:items-start">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700 sm:h-20 sm:w-20 sm:text-3xl">
+                  {formData.full_name?.[0] || formData.username?.[0] || 'U'}
                 </div>
-              ))}
 
-              {/* Editable Fields */}
-              {[
-                { label: 'Full Name', name: 'full_name', type: 'text' },
-                { label: 'Email', name: 'email', type: 'email' },
-                { label: 'School Name', name: 'school_name', type: 'text' },
-                { label: 'City', name: 'city', type: 'text' },
-              ].map((field, idx) => (
-                <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                  <input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded"
-                  />
+                <div className="min-w-0">
+                  <div className="truncate text-xl font-bold text-gray-800 sm:text-2xl">
+                    {formData.full_name || 'Your Name'}
+                  </div>
+                  <div className="truncate text-sm text-gray-500">@{formData.username}</div>
+                  <span className="mt-2 inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                    {formData.role || 'User'}
+                  </span>
                 </div>
-              ))}
-
-              {/* Select Fields */}
-              {[
-                {
-                  label: 'Schooling Status',
-                  name: 'schooling_status',
-                  options: ['', 'Public school', 'Private school', 'Homeschool', 'Madrassah', 'I am teacher'],
-                },
-                {
-                  label: 'Province',
-                  name: 'province',
-                  options: ['', 'Balochistan', 'Gilgit-Baltistan', 'Azad Kashmir', 'Khyber-Pakhtunkhwa', 'Punjab', 'Sindh', 'Federal Territory'],
-                },
-                {
-                  label: 'Grade',
-                  name: 'grade',
-                  options: grades,
-                }
-              ].map((field, idx) => (
-                <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                  <select
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded"
-                  >
-                    {field.options.length > 0 && typeof field.options[0] === 'object'
-                      ? (
-                        <>
-                          <option value="">Select {field.label}</option>
-                          {field.options.map((opt, i) => (
-                            <option key={i} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </>
-                      )
-                      : (
-                        field.options.map((opt, i) => (
-                          <option key={i} value={opt}>{opt || `Select ${field.label}`}</option>
-                        ))
-                      )}
-                  </select>
-                </div>
-              ))}
-
-              {/* Profile Picture Upload */}
-              <div className="bg-white p-4 rounded shadow-sm">
-                <label className="block text-gray-700 font-semibold mb-1">Update Profile Picture</label>
-                <input type="file" name="profile_picture" onChange={handleChange} className="w-full p-2 border rounded" />
               </div>
+            </aside>
 
-              <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-                Save Changes
-              </button>
-            </form>
+            <div className="space-y-6 lg:col-span-2">
+              <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+                <h2 className="mb-4 text-xl font-bold text-green-700">Profile Details</h2>
 
-            <hr className="my-6" />
+                <form onSubmit={handleProfileSubmit} className="space-y-5">
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Account Info</h3>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {[
+                        { label: 'Username', value: formData.username },
+                        { label: 'Role', value: formData.role },
+                        { label: 'Language Used at Home', value: formData.language_used_at_home },
+                      ].map((field, idx) => (
+                        <div key={idx} className="md:col-span-1">
+                          <label className="mb-1 block text-sm font-medium text-gray-700">{field.label}</label>
+                          <input
+                            type="text"
+                            value={field.value}
+                            disabled
+                            className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-            {/* Change Password */}
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <h3 className="text-xl font-bold text-green-700">Change Password</h3>
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Editable Details</h3>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {[
+                        { label: 'Full Name', name: 'full_name', type: 'text' },
+                        { label: 'Email', name: 'email', type: 'email' },
+                        { label: 'School Name', name: 'school_name', type: 'text' },
+                        { label: 'City', name: 'city', type: 'text' },
+                      ].map((field, idx) => (
+                        <div key={idx} className="md:col-span-1">
+                          <label className="mb-1 block text-sm font-medium text-gray-700">{field.label}</label>
+                          <input
+                            type={field.type}
+                            name={field.name}
+                            value={formData[field.name]}
+                            onChange={handleChange}
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              {([
-                { label: 'Old Password', name: 'old_password' },
-                { label: 'New Password', name: 'new_password' },
-                { label: 'Confirm New Password', name: 'confirm_password' },
-              ]).map((field, idx) => (
-                <div key={idx} className="bg-white p-4 rounded shadow-sm">
-                  <label className="block text-gray-700 font-semibold mb-1">{field.label}</label>
-                  <input
-                    type="password"
-                    name={field.name}
-                    value={passwordData[field.name]}
-                    onChange={handlePasswordChange}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
-              ))}
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Academic Selection</h3>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {[
+                        {
+                          label: 'Schooling Status',
+                          name: 'schooling_status',
+                          options: ['', 'Public school', 'Private school', 'Homeschool', 'Madrassah', 'I am teacher'],
+                        },
+                        {
+                          label: 'Province',
+                          name: 'province',
+                          options: ['', 'Balochistan', 'Gilgit-Baltistan', 'Azad Kashmir', 'Khyber-Pakhtunkhwa', 'Punjab', 'Sindh', 'Federal Territory'],
+                        },
+                        {
+                          label: 'Grade',
+                          name: 'grade',
+                          options: grades,
+                        },
+                      ].map((field, idx) => (
+                        <div key={idx} className="md:col-span-1">
+                          <label className="mb-1 block text-sm font-medium text-gray-700">{field.label}</label>
+                          <select
+                            name={field.name}
+                            value={formData[field.name]}
+                            onChange={handleChange}
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          >
+                            {field.options.length > 0 && typeof field.options[0] === 'object' ? (
+                              <>
+                                <option value="">Select {field.label}</option>
+                                {field.options.map((opt, i) => (
+                                  <option key={i} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </>
+                            ) : (
+                              field.options.map((opt, i) => (
+                                <option key={i} value={opt}>
+                                  {opt || `Select ${field.label}`}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-blue-700">
-                Change Password
-              </button>
-            </form>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Update Profile Picture</label>
+                    <input
+                      type="file"
+                      name="profile_picture"
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-green-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-green-700"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg bg-green-600 px-5 py-2.5 text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 sm:w-auto"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+                <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                  <h3 className="text-xl font-bold text-green-700">Change Password</h3>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {[
+                      { label: 'Old Password', name: 'old_password' },
+                      { label: 'New Password', name: 'new_password' },
+                      { label: 'Confirm New Password', name: 'confirm_password' },
+                    ].map((field, idx) => (
+                      <div key={idx} className="md:col-span-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">{field.label}</label>
+                        <input
+                          type="password"
+                          name={field.name}
+                          value={passwordData[field.name]}
+                          onChange={handlePasswordChange}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg bg-green-600 px-5 py-2.5 text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 sm:w-auto"
+                    >
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </div>
           </div>
         </div>
       </div>
-    </>
+    </AppLayout>
   );
 };
 
