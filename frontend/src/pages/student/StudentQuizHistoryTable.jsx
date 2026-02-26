@@ -283,7 +283,7 @@ const StudentQuizHistoryTable = () => {
                   </div>
 
                   {/* Desktop table */}
-                  <div className="hidden overflow-x-auto md:block md:max-h-[60vh]">
+                  <div className="hidden overflow-x-auto overflow-y-auto md:block md:min-h-[420px] md:max-h-[75vh]">
                     <table className="min-w-full text-sm md:text-base">
                       <caption className="sr-only">
                         Student quiz history table showing quiz, chapter, subject, grade, score, percentage, letter grade, and completion date.
