@@ -569,6 +569,10 @@ const chapterPalettes = [
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
+            loading="eager"
+            fetchPriority="high"
+            width={1536}
+            height={586}
             className="w-full h-full object-contain md:object-cover object-center block"
           />
         </div>
