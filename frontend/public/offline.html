@@ -49,13 +49,39 @@
       button:hover {
         background: #0f7a45;
       }
+      .status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #6b7280;
+        min-height: 16px;
+      }
     </style>
   </head>
   <body>
     <main class="card">
       <h1>You’re offline</h1>
       <p>Please reconnect and try again.</p>
-      <button type="button" onclick="window.location.reload()">Retry</button>
+      <button type="button" onclick="retryOnline()">Retry</button>
+      <div id="offline-status" class="status"></div>
     </main>
+    <script>
+      const statusEl = document.getElementById("offline-status");
+
+      function goHomeWithStamp(param) {
+        window.location.href = "/?" + param + "=1&t=" + Date.now();
+      }
+
+      function retryOnline() {
+        if (navigator.onLine) {
+          goHomeWithStamp("retry");
+          return;
+        }
+        statusEl.textContent = "Still offline";
+      }
+
+      window.addEventListener("online", () => {
+        goHomeWithStamp("online");
+      });
+    </script>
   </body>
 </html>
