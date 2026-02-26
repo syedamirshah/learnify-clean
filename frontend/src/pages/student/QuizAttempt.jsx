@@ -48,6 +48,8 @@ const QuizAttempt = () => {
   const [isDraggingPad, setIsDraggingPad] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const padRef = useRef(null);
+  const padDragHandleRef = useRef(null);
+  const activePointerIdRef = useRef(null);
 
   // 🔁 NEW: Attempt mode state: 'learning' | 'exam'
   const [attemptMode, setAttemptMode] = useState('learning');
@@ -160,10 +162,20 @@ const QuizAttempt = () => {
     setShowRoughWork(true);
   };
 
-  // Start dragging when mouse is down on header
-const handlePadMouseDown = (e) => {
+  // Start dragging when pointer is down on header
+const handlePadPointerDown = (e) => {
+  if (!['mouse', 'touch', 'pen'].includes(e.pointerType)) return;
   if (!padRef.current) return;
+  e.preventDefault();
   const rect = padRef.current.getBoundingClientRect();
+  activePointerIdRef.current = e.pointerId;
+  if (e.currentTarget.setPointerCapture) {
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (_) {
+      // no-op
+    }
+  }
   setIsDraggingPad(true);
   setDragOffset({
     x: e.clientX - rect.left,
@@ -176,6 +188,12 @@ useEffect(() => {
   if (!isDraggingPad) return;
 
   const handleMove = (e) => {
+    if (
+      activePointerIdRef.current != null &&
+      e.pointerId !== activePointerIdRef.current
+    ) {
+      return;
+    }
     if (!padRef.current) return;
 
     const { innerWidth, innerHeight } = window;
@@ -196,14 +214,34 @@ useEffect(() => {
     setPadPosition({ x, y });
   };
 
-  const handleUp = () => setIsDraggingPad(false);
+  const handleUp = (e) => {
+    if (
+      activePointerIdRef.current != null &&
+      e.pointerId !== activePointerIdRef.current
+    ) {
+      return;
+    }
+    if (
+      padDragHandleRef.current &&
+      activePointerIdRef.current != null &&
+      padDragHandleRef.current.releasePointerCapture
+    ) {
+      try {
+        padDragHandleRef.current.releasePointerCapture(activePointerIdRef.current);
+      } catch (_) {
+        // no-op
+      }
+    }
+    activePointerIdRef.current = null;
+    setIsDraggingPad(false);
+  };
 
-  window.addEventListener('mousemove', handleMove);
-  window.addEventListener('mouseup', handleUp);
+  window.addEventListener('pointermove', handleMove);
+  window.addEventListener('pointerup', handleUp);
 
   return () => {
-    window.removeEventListener('mousemove', handleMove);
-    window.removeEventListener('mouseup', handleUp);
+    window.removeEventListener('pointermove', handleMove);
+    window.removeEventListener('pointerup', handleUp);
   };
 }, [isDraggingPad, dragOffset]);
 
@@ -1102,10 +1140,11 @@ useEffect(() => {
           >
             {/* Header (drag handle) */}
             <div
+              ref={padDragHandleRef}
               className="flex cursor-move items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3"
               data-drag-handle
-              style={{ cursor: 'move' }}
-              onMouseDown={handlePadMouseDown}
+              style={{ cursor: 'move', touchAction: 'none' }}
+              onPointerDown={handlePadPointerDown}
             >
               <div className="font-semibold text-gray-800">📝 Scratch Pad</div>
               <button
