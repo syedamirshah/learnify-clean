@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axiosInstance from "../../utils/axiosInstance";
+import axiosInstance from "../../../utils/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
