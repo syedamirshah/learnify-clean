@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 function DesktopChildItem({ child, onSelect }) {
@@ -29,10 +29,7 @@ function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
-            console.log("[PublicNav] parent menu click:", item.key || item.label);
-            onToggle();
-          }}
+          onClick={onToggle}
           className={baseClass}
           aria-expanded={isOpen}
           aria-controls={`desktop-menu-${item.key || item.label}`}
@@ -75,17 +72,38 @@ function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
 
 export default function PublicNav({ items = [], className = "" }) {
   const [openMenuKey, setOpenMenuKey] = useState(null);
+  const navRef = useRef(null);
 
   const handleToggle = (key) => {
     setOpenMenuKey((prev) => (prev === key ? null : key));
   };
 
   useEffect(() => {
-    console.log("[PublicNav] openMenuKey:", openMenuKey);
+    const handlePointerDown = (event) => {
+      if (!openMenuKey) return;
+      if (navRef.current && navRef.current.contains(event.target)) return;
+      setOpenMenuKey(null);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setOpenMenuKey(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [openMenuKey]);
 
   return (
-    <nav className={`hidden w-full border-t border-white/10 bg-[#42b72a] md:flex md:h-[52px] md:items-center ${className}`}>
+    <nav
+      ref={navRef}
+      className={`hidden w-full border-t border-white/10 bg-[#42b72a] md:flex md:h-[52px] md:items-center ${className}`}
+    >
       <div className="mx-auto flex h-full w-full flex-1 min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 md:flex-nowrap md:justify-evenly md:gap-x-0 lg:px-6">
         {items.map((item) => (
           <div key={item.key || item.label} className="relative">
