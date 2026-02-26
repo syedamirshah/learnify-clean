@@ -40,8 +40,8 @@ const HonorBoard = () => {
     const fetchHonorData = async () => {
       try {
         const [starsData, heroesData] = await Promise.all([
-          fetchWithFallback("honors/shining-stars/", "/honors/shining-stars/"),
-          fetchWithFallback("honors/national-heroes/", "/honors/national-heroes/"),
+          fetchWithFallback("/api/honors/shining-stars/", "/honors/shining-stars/"),
+          fetchWithFallback("/api/honors/national-heroes/", "/honors/national-heroes/"),
         ]);
         setShiningStars(starsData);
         setNationalHeroes(heroesData);
