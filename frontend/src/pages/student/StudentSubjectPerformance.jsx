@@ -112,14 +112,6 @@ const StudentSubjectPerformance = () => {
           </button>
         ) : null
       }
-      desktopHeaderAction={
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 rounded-xl border border-green-200 bg-white/70 px-4 py-2 font-bold text-green-900 shadow-sm transition hover:shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
-        >
-          ← Back to Home
-        </Link>
-      }
     >
       <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6] px-4 py-8 text-gray-800 md:px-6">
         <header className="mx-auto mb-6 max-w-[1100px]">
