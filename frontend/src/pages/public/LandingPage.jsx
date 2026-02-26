@@ -512,6 +512,15 @@ const chapterPalettes = [
       onSignInClick={handleLogin}
       onLogoutClick={handleLogout}
       onProfileClick={() => setProfileMenuOpen((prev) => !prev)}
+      desktopProfileDropdown={
+        role && profileMenuOpen ? (
+          <div className="w-44 rounded border bg-white text-black shadow-lg">
+            <Link to="/my-profile" className="block px-4 py-2 text-base hover:bg-gray-100">
+              My Profile
+            </Link>
+          </div>
+        ) : null
+      }
       mobileAuthContent={
         role ? (
           <button
@@ -532,18 +541,6 @@ const chapterPalettes = [
         )
       }
     >
-      {role && profileMenuOpen && (
-        <div className="hidden md:block">
-          <div className="mx-auto flex w-full max-w-[1200px] justify-end px-4 pt-2 md:px-6">
-            <div className="w-44 rounded border bg-white text-black shadow-lg">
-              <Link to="/my-profile" className="block px-4 py-2 text-base hover:bg-gray-100">
-                My Profile
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
       {!role && mobileAuthOpen && (
         <div className="md:hidden">
           <div className="mx-auto w-full max-w-[1200px] px-3 pt-2 sm:px-4">

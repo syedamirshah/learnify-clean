@@ -11,6 +11,7 @@ export default function PublicHeader({
   isMenuOpen = false,
   menuControlsId = "primary-mobile-drawer",
   desktopAuthContent = null,
+  desktopProfileDropdown = null,
   mobileActionContent = null,
   className = "",
 }) {
@@ -45,7 +46,14 @@ export default function PublicHeader({
           </div>
         </div>
 
-        <div className="ml-auto hidden min-w-0 flex-1 md:block">{desktopAuthContent}</div>
+        <div className="ml-auto hidden min-w-0 flex-1 md:block">
+          <div className="relative">
+            {desktopAuthContent}
+            {desktopProfileDropdown ? (
+              <div className="absolute right-0 top-full z-50 pt-2">{desktopProfileDropdown}</div>
+            ) : null}
+          </div>
+        </div>
 
         <div className="ml-auto md:hidden">{mobileActionContent}</div>
       </div>
