@@ -1226,15 +1226,15 @@ def get_top_performers(days):
         quiz_id = attempt.quiz.id
 
         # Prevent counting same quiz more than once
-        if quiz_id in student_scores[key]['counted_quizzes']:
+        if key in student_scores and quiz_id in student_scores[key]['counted_quizzes']:
             continue
-        student_scores[key]['counted_quizzes'].add(quiz_id)
 
         # Get the latest score (not the first)
         result = QuizAttempt.objects.filter(student=student, quiz=attempt.quiz).order_by('-id').first()
         if not result:
             continue
 
+        student_scores[key]['counted_quizzes'].add(quiz_id)
         student_scores[key]['user'] = student
         grade = student.grade
         student_scores[key]['grade'] = grade.name if hasattr(grade, 'name') else grade or "Unknown"
@@ -1250,6 +1250,8 @@ def get_top_performers(days):
     grade_wise = defaultdict(list)
     for data in student_scores.values():
         student = data['user']
+        if not student:
+            continue
         grade = data['grade']
         quizzes_attempted = len(data['quiz_ids'])
         average_score = (
