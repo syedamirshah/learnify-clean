@@ -140,19 +140,25 @@ const QuizAttempt = () => {
     startQuiz();
   }, [quizId]);
 
-  // Center Scratch Pad when it opens the first time
-  useEffect(() => {
-    if (!showRoughWork || !padRef.current) return;
-    if (padPosition.x !== null && padPosition.y !== null) return;
-
-    const rect = padRef.current.getBoundingClientRect();
+  const openScratchPad = () => {
     const { innerWidth, innerHeight } = window;
 
-    const x = (innerWidth - rect.width) / 2;
-    const y = (innerHeight - rect.height) / 2;
+    if (innerWidth < 768) {
+      const mobileWidth = Math.min(innerWidth * 0.92, 380);
+      const mobileHeight = 260;
+      const x = Math.max(12, (innerWidth - mobileWidth) / 2);
+      const y = Math.max(12, innerHeight - mobileHeight - 12);
+      setPadPosition({ x, y });
+    } else {
+      const desktopWidth = 420;
+      const desktopHeight = 320;
+      const x = Math.max(24, innerWidth - desktopWidth - 24);
+      const y = Math.max(24, innerHeight - desktopHeight - 24);
+      setPadPosition({ x, y });
+    }
 
-    setPadPosition({ x, y });
-  }, [showRoughWork, padPosition.x, padPosition.y]);
+    setShowRoughWork(true);
+  };
 
   // Start dragging when mouse is down on header
 const handlePadMouseDown = (e) => {
@@ -887,7 +893,7 @@ useEffect(() => {
                 <div className="mt-4" />
                 <button
                   type="button"
-                  onClick={() => setShowRoughWork(true)}
+                  onClick={openScratchPad}
                   aria-label="Open Scratch Pad"
                   title="Open Scratch Pad"
                   className="inline-flex w-[170px] items-center justify-center rounded py-3 text-white shadow-md transition hover:opacity-95 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
@@ -1076,30 +1082,27 @@ useEffect(() => {
         >
           <div
             ref={padRef}
-            className="bg-white rounded-xl shadow-2xl w-[92vw] max-w-3xl"
+            className="relative rounded-2xl border border-gray-200 bg-white shadow-xl h-[260px] md:h-[320px]"
             style={{
               fontFamily: 'calibri',
               position: 'absolute',
-              top: padPosition.y ?? '50%',
-              left: padPosition.x ?? '50%',
+              top: padPosition.y ?? 24,
+              left: padPosition.x ?? 24,
               display: 'flex',
               flexDirection: 'column',
               resize: 'both',
               overflow: 'hidden',
               minWidth: '320px',
-              minHeight: '280px',
+              minHeight: '260px',
               maxWidth: '95vw',
               maxHeight: '85vh',
-              transform:
-                padPosition.x == null || padPosition.y == null
-                  ? 'translate(-50%, -50%)'
-                  : 'none',
+              width: 'min(92vw, 420px)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header (drag handle) */}
             <div
-              className="flex cursor-move items-center justify-between border-b px-4 py-3"
+              className="flex cursor-move items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3"
               data-drag-handle
               style={{ cursor: 'move' }}
               onMouseDown={handlePadMouseDown}
@@ -1107,8 +1110,8 @@ useEffect(() => {
               <div className="font-semibold text-gray-800">📝 Scratch Pad</div>
               <button
                 type="button"
-                aria-label="Close Scratch Pad"
-                className="rounded-md bg-gray-100 px-3 py-1 font-semibold text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                aria-label="Close scratch pad"
+                className="rounded-full p-2 text-gray-600 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                 onClick={() => setShowRoughWork(false)}
               >
                 ✕
@@ -1123,6 +1126,12 @@ useEffect(() => {
               <div style={{ height: '100%' }}>
                 <RoughWorkBoard />
               </div>
+            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-1 right-1 text-xs leading-none text-gray-300"
+            >
+              ◢
             </div>
           </div>
         </div>
