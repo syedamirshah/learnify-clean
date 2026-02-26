@@ -595,7 +595,7 @@ const chapterPalettes = [
                     type="button"
                     onClick={() => toggleGrade(gradeItem.grade)}
                     className="
-                      flex items-center gap-3
+                      flex items-center justify-center gap-3 whitespace-nowrap
                       px-10 py-4
                       rounded-full
                       border-2 border-green-300
