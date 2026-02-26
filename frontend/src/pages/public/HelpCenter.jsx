@@ -1,11 +1,78 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../../assets/logo.png";
+import AppLayout from "../../components/layout/AppLayout";
 
 const HelpCenter = () => {
   const [openIndex, setOpenIndex] = useState(null);
+  const [role, setRole] = useState(localStorage.getItem("user_role"));
+  const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   const supportEmail = "support@learnifypakistan.com";
+
+  useEffect(() => {
+    setRole(localStorage.getItem("user_role"));
+    setUserFullName(localStorage.getItem("user_full_name") || "");
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_full_name");
+    localStorage.removeItem("account_status");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_grade");
+    navigate("/", { replace: true });
+  };
+
+  const navItems = [
+    { key: "home", label: "Home", href: "/" },
+    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
+    ...(role === "student"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/student/assessment",
+            children: [
+              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
+              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
+              { key: "tasks", label: "Tasks", href: "/student/tasks" },
+            ],
+          },
+        ]
+      : []),
+    ...(role === "teacher"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/teacher/assessment",
+            children: [
+              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
+              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
+              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
+            ],
+          },
+        ]
+      : []),
+    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
+    { key: "membership", label: "Membership", href: "/membership" },
+    { key: "help-center", label: "Help Center", href: "/help-center" },
+    ...(!role
+      ? [
+          {
+            key: "sign-up",
+            label: "Sign up",
+            href: "/signup",
+            children: [{ key: "create-account", label: "Create Account", href: "/signup" }],
+          },
+        ]
+      : []),
+  ];
 
   const categories = useMemo(
     () => [
@@ -181,67 +248,85 @@ const HelpCenter = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-800">
-      {/* Top Bar */}
-      <nav className="w-full bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src={logo}
-              alt="Learnify Pakistan"
-              className="h-14 w-auto hover:opacity-90 transition"
-              style={{ background: "transparent" }}
-            />
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/membership"
-              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition"
-            >
-              Membership
-            </Link>
-            <Link
-              to="/join"
-              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
-            >
-              Join Learnify
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle="Learnify Pakistan"
+      brandMotto="Learning with Responsibility"
+      isAuthenticated={Boolean(role)}
+      userFullName={userFullName}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onLogoutClick={handleLogout}
+      mobileAuthContent={
+        role ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+          >
+            Logout
+          </button>
+        ) : null
+      }
+    >
+      <div className="min-h-[calc(100vh-180px)] bg-white text-gray-800">
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 pt-10 pb-6">
-        <div className="rounded-2xl border bg-green-50 p-6 md:p-10">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 pt-8 pb-8">
+        <div className="overflow-hidden rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 sm:p-6 md:p-10 shadow-sm">
           <h1 className="text-3xl md:text-4xl font-extrabold text-green-900">
             Help Center
           </h1>
-          <p className="mt-2 text-gray-700 max-w-3xl">
+          <p className="mt-2 max-w-3xl text-sm sm:text-base text-gray-700">
             We’re here to help students, parents, and schools get the best learning
             experience from Learnify Pakistan — exercises, results, membership, and
             account settings.
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-col sm:flex-row sm:flex-wrap gap-3">
+            <Link
+              to="/membership"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white border border-green-200 hover:bg-gray-50 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+            >
+              Go to Membership
+            </Link>
+            <Link
+              to="/signup"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+            >
+              Create Account
+            </Link>
             <a
               href={`mailto:${supportEmail}`}
-              className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-800 transition"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-green-700 text-white hover:bg-green-800 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
             >
               Email Support
             </a>
-            <Link
-              to="/"
-              className="px-4 py-2 rounded-lg bg-white border hover:bg-gray-50 transition"
-            >
-              Back to Home
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link to="/" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+              Home
+            </Link>
+            <Link to="/membership" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+              Membership
+            </Link>
+            <Link to="/honor-board" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+              Honor Board
+            </Link>
+            <Link to="/signup" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+              Sign up
             </Link>
           </div>
         </div>
       </section>
 
       {/* Categories */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6">
         <h2 className="text-xl md:text-2xl font-bold text-gray-900">
           Quick Help Topics
         </h2>
@@ -251,7 +336,7 @@ const HelpCenter = () => {
 
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat, i) => (
-            <div key={i} className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div key={i} className="min-w-0 rounded-2xl border border-green-200 bg-white p-5 shadow-sm hover:shadow transition">
               <div className="text-lg font-bold text-green-900">{cat.title}</div>
 
               <ul className="mt-3 space-y-2 text-sm text-gray-700">
@@ -263,7 +348,7 @@ const HelpCenter = () => {
                     </span>
 
                     {/* Hover tooltip */}
-                    <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute z-20 left-0 top-full mt-2 w-[280px] rounded-xl border bg-white shadow-lg p-3 text-xs text-gray-700">
+                    <div className="pointer-events-none hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute z-20 left-0 top-full mt-2 w-[280px] rounded-xl border bg-white shadow-lg p-3 text-xs text-gray-700">
                       <div className="font-bold text-gray-900 mb-1">{t}</div>
                       <div className="leading-5">
                         {topicDetails[t] || "More details will be added here soon."}
@@ -285,7 +370,7 @@ const HelpCenter = () => {
       </section>
 
       {/* FAQs */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6">
         <h2 className="text-xl md:text-2xl font-bold text-gray-900">
           Frequently Asked Questions
         </h2>
@@ -301,7 +386,7 @@ const HelpCenter = () => {
                 <button
                   type="button"
                   onClick={() => toggleFAQ(idx)}
-                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4"
+                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   <span className="font-semibold text-gray-900">{f.q}</span>
                   <span className="text-green-800 font-bold">
@@ -320,7 +405,7 @@ const HelpCenter = () => {
       </section>
 
       {/* Contact Support */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-10">
+      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-10">
         <div className="rounded-2xl border bg-gray-50 p-6 md:p-8">
           <h3 className="text-xl font-bold text-gray-900">Still need help?</h3>
           <p className="text-gray-700 mt-2 max-w-3xl">
@@ -332,7 +417,7 @@ const HelpCenter = () => {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <a
               href={`mailto:${supportEmail}`}
-              className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-800 transition"
+              className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
             >
               {supportEmail}
             </a>
@@ -347,7 +432,8 @@ const HelpCenter = () => {
           reports are designed to help learning and practice.
         </p>
       </section>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
