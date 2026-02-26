@@ -12,6 +12,8 @@ const StudentQuizHistoryTable = () => {
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleCount, setVisibleCount] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +56,34 @@ const StudentQuizHistoryTable = () => {
       return { ...r, totalMarks };
     });
   }, [quizResults]);
+
+  const filteredRows = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return rows;
+
+    return rows.filter((row) => {
+      const quizTitle = String(row.quiz_title || "").toLowerCase();
+      const subject = String(row.subject || "").toLowerCase();
+      const chapter = String(row.chapter || "").toLowerCase();
+      return quizTitle.includes(query) || subject.includes(query) || chapter.includes(query);
+    });
+  }, [rows, searchTerm]);
+
+  const visibleMobileRows = useMemo(
+    () => filteredRows.slice(0, visibleCount),
+    [filteredRows, visibleCount]
+  );
+
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [searchTerm]);
+
+  const formatFriendlyDate = (value) => {
+    if (value === null || value === undefined || value === "") return "—";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString();
+  };
 
   const navItems = [
     { key: "home", label: "Home", href: "/" },
@@ -143,6 +173,20 @@ const StudentQuizHistoryTable = () => {
             </div>
 
             <div className="p-4 sm:p-5">
+              <div className="mb-4">
+                <label htmlFor="quiz-history-search" className="sr-only">
+                  Search quiz history by quiz title, subject, or chapter
+                </label>
+                <input
+                  id="quiz-history-search"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by quiz, subject, or chapter"
+                  className="w-full rounded-xl border border-green-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 md:text-base"
+                />
+              </div>
+
               {loading ? (
                 <div aria-live="polite" className="py-10 text-center font-semibold text-green-800">
                   Loading quiz history...
@@ -153,15 +197,35 @@ const StudentQuizHistoryTable = () => {
                     {error}
                   </div>
                 </div>
-              ) : rows.length === 0 ? (
-                <div aria-live="polite" className="py-10 text-center text-gray-700">
-                  No quiz history available.
+              ) : filteredRows.length === 0 ? (
+                <div aria-live="polite" className="py-10 text-center">
+                  <div className="mx-auto max-w-md rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-gray-700">
+                    <div className="font-semibold text-green-900">
+                      {rows.length === 0
+                        ? "No quiz history available yet."
+                        : "No quiz history matches your search."}
+                    </div>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                      <Link
+                        to="/"
+                        className="inline-flex items-center justify-center rounded-lg border border-green-200 bg-white px-3 py-2 text-sm font-semibold text-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                      >
+                        Go to Quizzes
+                      </Link>
+                      <Link
+                        to="/student/assessment"
+                        className="inline-flex items-center justify-center rounded-lg border border-green-200 bg-white px-3 py-2 text-sm font-semibold text-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                      >
+                        View Assessment
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <>
                   {/* Mobile cards */}
                   <div className="space-y-3 md:hidden">
-                    {rows.map((result, idx) => (
+                    {visibleMobileRows.map((result, idx) => (
                       <article
                         key={`card-${idx}`}
                         className={`rounded-xl border p-4 shadow-sm ${
@@ -202,20 +266,29 @@ const StudentQuizHistoryTable = () => {
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-gray-600">Completed</span>
-                            <span className="text-right font-semibold text-gray-900">{result.attempted_on}</span>
+                            <span className="text-right font-semibold text-gray-900">{formatFriendlyDate(result.attempted_on)}</span>
                           </div>
                         </div>
                       </article>
                     ))}
+                    {visibleMobileRows.length < filteredRows.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleCount((prev) => prev + 10)}
+                        className="w-full rounded-xl border border-green-200 bg-white px-4 py-3 text-sm font-semibold text-green-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                      >
+                        Show more
+                      </button>
+                    ) : null}
                   </div>
 
                   {/* Desktop table */}
-                  <div className="hidden overflow-x-auto md:block">
+                  <div className="hidden overflow-x-auto md:block md:max-h-[60vh]">
                     <table className="min-w-full text-sm md:text-base">
                       <caption className="sr-only">
                         Student quiz history table showing quiz, chapter, subject, grade, score, percentage, letter grade, and completion date.
                       </caption>
-                      <thead className="bg-green-100 text-green-900 font-bold">
+                      <thead className="sticky top-0 z-10 bg-green-100 text-green-900 font-bold">
                         <tr>
                           <th scope="col" className="px-4 py-3 border-b border-green-200 text-left">Quiz</th>
                           <th scope="col" className="px-4 py-3 border-b border-green-200 text-left">Chapter</th>
@@ -229,7 +302,7 @@ const StudentQuizHistoryTable = () => {
                       </thead>
 
                       <tbody>
-                        {rows.map((result, idx) => (
+                        {filteredRows.map((result, idx) => (
                           <tr
                             key={idx}
                             className={`transition ${
@@ -271,7 +344,7 @@ const StudentQuizHistoryTable = () => {
                             </td>
 
                             <td className="px-4 py-3 border-b border-green-100 text-center text-gray-800">
-                              {result.attempted_on}
+                              {formatFriendlyDate(result.attempted_on)}
                             </td>
                           </tr>
                         ))}
