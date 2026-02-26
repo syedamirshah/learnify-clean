@@ -1082,6 +1082,14 @@ useEffect(() => {
               position: 'absolute',
               top: padPosition.y ?? '50%',
               left: padPosition.x ?? '50%',
+              display: 'flex',
+              flexDirection: 'column',
+              resize: 'both',
+              overflow: 'hidden',
+              minWidth: '320px',
+              minHeight: '280px',
+              maxWidth: '95vw',
+              maxHeight: '85vh',
               transform:
                 padPosition.x == null || padPosition.y == null
                   ? 'translate(-50%, -50%)'
@@ -1108,16 +1116,11 @@ useEffect(() => {
             </div>
 
             {/* Body */}
-            <div className="p-3">
-              <div
-                className="max-h-[70vh] max-w-[95vw] md:max-h-[80vh] md:max-w-[90vw]"
-                style={{
-                  resize: 'both',
-                  overflow: 'auto',
-                  minWidth: '260px',
-                  minHeight: '220px',
-                }}
-              >
+            <div
+              className="p-3"
+              style={{ flex: 1, minHeight: 0, overflow: 'auto' }}
+            >
+              <div style={{ height: '100%' }}>
                 <RoughWorkBoard />
               </div>
             </div>
