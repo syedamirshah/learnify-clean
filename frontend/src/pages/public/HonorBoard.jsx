@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
@@ -13,14 +14,15 @@ const HonorBoard = () => {
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const publicAxios = axios.create({ baseURL: axiosInstance.defaults.baseURL });
 
   const fetchWithFallback = async (url1, url2) => {
     try {
-      const res = await axiosInstance.get(url1);
+      const res = await publicAxios.get(url1);
       return res.data;
     } catch (firstError) {
       try {
-        const fallbackRes = await axiosInstance.get(url2);
+        const fallbackRes = await publicAxios.get(url2);
         return fallbackRes.data;
       } catch (secondError) {
         console.error("Honor board fetch failed", {
