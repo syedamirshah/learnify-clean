@@ -18,9 +18,21 @@ const HonorBoard = () => {
     try {
       const res = await axiosInstance.get(url1);
       return res.data;
-    } catch {
-      const fallbackRes = await axiosInstance.get(url2);
-      return fallbackRes.data;
+    } catch (firstError) {
+      try {
+        const fallbackRes = await axiosInstance.get(url2);
+        return fallbackRes.data;
+      } catch (secondError) {
+        console.error("Honor board fetch failed", {
+          primaryUrl: url1,
+          fallbackUrl: url2,
+          primaryStatus: firstError?.response?.status || null,
+          fallbackStatus: secondError?.response?.status || null,
+          primaryMessage: firstError?.response?.data || firstError?.message || null,
+          fallbackMessage: secondError?.response?.data || secondError?.message || null,
+        });
+        throw secondError;
+      }
     }
   };
 
@@ -28,8 +40,8 @@ const HonorBoard = () => {
     const fetchHonorData = async () => {
       try {
         const [starsData, heroesData] = await Promise.all([
-          fetchWithFallback("/api/honors/shining-stars/", "/honors/shining-stars/"),
-          fetchWithFallback("/api/honors/national-heroes/", "/honors/national-heroes/"),
+          fetchWithFallback("honors/shining-stars/", "/honors/shining-stars/"),
+          fetchWithFallback("honors/national-heroes/", "/honors/national-heroes/"),
         ]);
         setShiningStars(starsData);
         setNationalHeroes(heroesData);
