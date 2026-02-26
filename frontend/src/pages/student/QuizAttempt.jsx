@@ -673,9 +673,6 @@ useEffect(() => {
                 className="mb-4 text-gray-900"
                 style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
                 >
-                <div className="mb-2 text-sm font-semibold text-gray-600 md:hidden">
-                  Question {currentIndex + 1} of {totalQuestions}
-                </div>
                 {(currentQuestion.type === 'scq' || currentQuestion.type === 'mcq') && (
                   <div className="mt-2">
                     {/* Question text */}
@@ -821,7 +818,6 @@ useEffect(() => {
                                     data-blank={key}
                                     inputMode="text"
                                     aria-label={`Blank ${key}`}
-                                    placeholder={key}
                                     value={value}
                                     disabled={isLocked}
                                     onChange={(e) =>
@@ -907,7 +903,7 @@ useEffect(() => {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+          <div className="mt-4 hidden flex-col justify-center gap-3 sm:flex-row sm:gap-4 md:flex">
             {/* Previous only in learning mode or preview */}
             {(attemptMode === 'learning' || previewMode) && (
               <button
