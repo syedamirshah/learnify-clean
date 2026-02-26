@@ -131,6 +131,11 @@ export default function TeacherAssignTask() {
 
     setSelectedQuizIds(visibleIds);
   };
+
+  const selectChapterQuizzes = (chapterQuizIds) => {
+    setSelectedQuizIds((prev) => Array.from(new Set([...prev, ...chapterQuizIds])));
+  };
+
   const clearAll = () => setSelectedQuizIds([]);
 
   const validate = () => {
@@ -254,6 +259,20 @@ export default function TeacherAssignTask() {
     });
   }, [quizzes, subjectFilter, chapterFilter]);
 
+  const visibleQuizCount = useMemo(
+    () => groupedQuizzes.reduce((sum, subj) => sum + subj.chapters.reduce((cSum, ch) => cSum + ch.quizzes.length, 0), 0),
+    [groupedQuizzes]
+  );
+
+  const selectedQuizSummary = useMemo(() => {
+    const selectedSet = new Set(selectedQuizIds);
+    return (quizzes || []).filter((q) => selectedSet.has(q.id));
+  }, [selectedQuizIds, quizzes]);
+
+  const appendTemplate = (template) => {
+    setMessage((prev) => (prev.trim() ? `${prev} ${template}` : template));
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
@@ -313,7 +332,7 @@ export default function TeacherAssignTask() {
         ) : null
       }
     >
-      <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6] text-gray-800">
+      <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6] pb-24 text-gray-800 md:pb-0">
         <section className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <h1 className="text-2xl font-extrabold text-green-900 sm:text-3xl">Assign Task</h1>
@@ -356,6 +375,23 @@ export default function TeacherAssignTask() {
                     placeholder="e.g., Complete these quizzes before Friday."
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
+                  {!message.trim() ? (
+                    <p className="mt-1 text-xs text-amber-700">Message is required before submitting.</p>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {["Complete before due date.", "Attempt all selected quizzes.", "Review incorrect answers after attempt."].map(
+                      (template) => (
+                        <button
+                          key={template}
+                          type="button"
+                          onClick={() => appendTemplate(template)}
+                          className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-800 transition hover:bg-green-100"
+                        >
+                          + {template}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Due Date</label>
@@ -365,6 +401,10 @@ export default function TeacherAssignTask() {
                     onChange={(e) => setDueDate(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
+                  {!dueDate ? (
+                    <p className="mt-1 text-xs text-amber-700">Due date is required before submitting.</p>
+                  ) : null}
+                  <p className="mt-1 text-xs text-gray-500">Set a clear deadline so students can plan their attempts.</p>
                 </div>
               </div>
             </section>
@@ -415,6 +455,10 @@ export default function TeacherAssignTask() {
                   ))}
                 </select>
 
+                {!gradeId ? (
+                  <p className="mt-1 text-xs text-amber-700">Select a grade to load quizzes for assignment.</p>
+                ) : null}
+
                 {loadingGrades && (
                   <div className="mt-2 text-sm text-gray-500">Loading grades...</div>
                 )}
@@ -441,6 +485,9 @@ export default function TeacherAssignTask() {
                     placeholder="e.g., ali123, sara55, hamza7"
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
+                  {studentsList.length === 0 ? (
+                    <p className="mt-1 text-xs text-amber-700">Enter at least one username in student-specific mode.</p>
+                  ) : null}
                   <div className="mt-2 text-xs text-gray-500">
                     Only students in your <b>school + city</b> will be accepted by the backend.
                   </div>
@@ -480,6 +527,33 @@ export default function TeacherAssignTask() {
                   </button>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  Visible quizzes: <span className="font-semibold">{visibleQuizCount}</span>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  Selected quizzes: <span className="font-semibold">{selectedQuizIds.length}</span>
+                </div>
+              </div>
+
+              {selectedQuizSummary.length > 0 ? (
+                <div>
+                  <div className="mb-2 text-sm font-semibold text-gray-700">Selection Summary</div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedQuizSummary.map((q) => (
+                      <span
+                        key={`summary-${q.id}`}
+                        className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs text-green-800"
+                      >
+                        {q.title}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-amber-700">Please select at least 1 quiz before submitting.</p>
+              )}
 
               {/* ✅ Filters: Subject + Chapter */}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -558,7 +632,16 @@ export default function TeacherAssignTask() {
                       <div className="space-y-5 p-4">
                         {sub.chapters.map((ch) => (
                           <div key={ch.chapter}>
-                            <div className="mb-2 text-sm font-semibold text-gray-700">{ch.chapter}</div>
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                              <div className="text-sm font-semibold text-gray-700">{ch.chapter}</div>
+                              <button
+                                type="button"
+                                onClick={() => selectChapterQuizzes(ch.quizzes.map((q) => q.id))}
+                                className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                              >
+                                Select chapter
+                              </button>
+                            </div>
 
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                               {ch.quizzes.map((q) => {
@@ -595,7 +678,7 @@ export default function TeacherAssignTask() {
               )}
             </section>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="hidden flex-col gap-3 sm:flex sm:flex-row sm:justify-end">
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
@@ -604,6 +687,21 @@ export default function TeacherAssignTask() {
                 {submitting ? "Creating..." : "Create Task"}
               </button>
             </div>
+          </div>
+        </div>
+
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-6px_16px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            <div className="text-sm text-gray-700">
+              Selected: <span className="font-semibold text-green-900">{selectedQuizIds.length}</span>
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-60"
+            >
+              {submitting ? "Creating..." : "Create Task"}
+            </button>
           </div>
         </div>
       </div>
