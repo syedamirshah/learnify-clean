@@ -1,12 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import axiosInstance from '../../utils/axiosInstance';
-import { Link } from 'react-router-dom';
-import logo from "@/assets/logo.png";
+import React, { useEffect, useMemo, useState } from "react";
+import axiosInstance from "../../utils/axiosInstance";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../../assets/logo.png";
+import AppLayout from "../../components/layout/AppLayout";
 
 const HonorBoard = () => {
   const [shiningStars, setShiningStars] = useState([]);
   const [nationalHeroes, setNationalHeroes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [role, setRole] = useState(localStorage.getItem("user_role"));
+  const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   const fetchWithFallback = async (url1, url2) => {
     try {
@@ -22,14 +28,15 @@ const HonorBoard = () => {
     const fetchHonorData = async () => {
       try {
         const [starsData, heroesData] = await Promise.all([
-          fetchWithFallback('/api/honors/shining-stars/', '/honors/shining-stars/'),
-          fetchWithFallback('/api/honors/national-heroes/', '/honors/national-heroes/')
+          fetchWithFallback("/api/honors/shining-stars/", "/honors/shining-stars/"),
+          fetchWithFallback("/api/honors/national-heroes/", "/honors/national-heroes/"),
         ]);
         setShiningStars(starsData);
         setNationalHeroes(heroesData);
         setLoading(false);
-      } catch (error) {
-        console.error('Failed to load honor board:', error);
+      } catch (fetchError) {
+        console.error("Failed to load honor board:", fetchError);
+        setError("Failed to load honor board.");
         setLoading(false);
       }
     };
@@ -37,13 +44,78 @@ const HonorBoard = () => {
     fetchHonorData();
   }, []);
 
-  const palettes = useMemo(() => ([
-    { cardBg: "bg-emerald-50", border: "border-emerald-200", headBg: "bg-emerald-100", accent: "text-emerald-800" },
-    { cardBg: "bg-lime-50",    border: "border-lime-200",    headBg: "bg-lime-100",    accent: "text-lime-800" },
-    { cardBg: "bg-sky-50",     border: "border-sky-200",     headBg: "bg-sky-100",     accent: "text-sky-800" },
-    { cardBg: "bg-amber-50",   border: "border-amber-200",   headBg: "bg-amber-100",   accent: "text-amber-800" },
-    { cardBg: "bg-rose-50",    border: "border-rose-200",    headBg: "bg-rose-100",    accent: "text-rose-800" },
-  ]), []);
+  useEffect(() => {
+    setRole(localStorage.getItem("user_role"));
+    setUserFullName(localStorage.getItem("user_full_name") || "");
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_full_name");
+    localStorage.removeItem("account_status");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_grade");
+    navigate("/", { replace: true });
+  };
+
+  const navItems = [
+    { key: "home", label: "Home", href: "/" },
+    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
+    ...(role === "student"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/student/assessment",
+            children: [
+              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
+              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
+              { key: "tasks", label: "Tasks", href: "/student/tasks" },
+            ],
+          },
+        ]
+      : []),
+    ...(role === "teacher"
+      ? [
+          {
+            key: "assessment",
+            label: "Assessment",
+            href: "/teacher/assessment",
+            children: [
+              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
+              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
+              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
+            ],
+          },
+        ]
+      : []),
+    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
+    { key: "membership", label: "Membership", href: "/membership" },
+    { key: "help-center", label: "Help Center", href: "/help-center" },
+    ...(!role
+      ? [
+          {
+            key: "sign-up",
+            label: "Sign up",
+            href: "/signup",
+            children: [{ key: "create-account", label: "Create Account", href: "/signup" }],
+          },
+        ]
+      : []),
+  ];
+
+  const palettes = useMemo(
+    () => [
+      { cardBg: "bg-emerald-50", border: "border-emerald-200", headBg: "bg-emerald-100", accent: "text-emerald-800" },
+      { cardBg: "bg-lime-50", border: "border-lime-200", headBg: "bg-lime-100", accent: "text-lime-800" },
+      { cardBg: "bg-sky-50", border: "border-sky-200", headBg: "bg-sky-100", accent: "text-sky-800" },
+      { cardBg: "bg-amber-50", border: "border-amber-200", headBg: "bg-amber-100", accent: "text-amber-800" },
+      { cardBg: "bg-rose-50", border: "border-rose-200", headBg: "bg-rose-100", accent: "text-rose-800" },
+    ],
+    []
+  );
 
   const getPalette = (i) => palettes[i % palettes.length];
 
@@ -51,13 +123,13 @@ const HonorBoard = () => {
     <div className="mb-14">
       <div className="flex items-center justify-center gap-2 mb-5">
         <span className="text-2xl">{icon}</span>
-        <h2 className="text-xl md:text-2xl font-extrabold text-green-900">
+        <h2 className="text-xl md:text-2xl font-extrabold text-green-900 text-center">
           {title}
         </h2>
       </div>
 
       {data.length === 0 ? (
-        <div className="bg-white border border-green-200 rounded-2xl shadow-sm p-8 text-center">
+        <div aria-live="polite" className="bg-white border border-green-200 rounded-2xl shadow-sm p-8 text-center">
           <div className="text-green-800 font-semibold">No data available.</div>
         </div>
       ) : (
@@ -77,45 +149,92 @@ const HonorBoard = () => {
                   </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto">
+                {/* Mobile cards */}
+                <div className="space-y-3 p-4 md:hidden">
+                  {group.top_students.map((student, idx) => (
+                    <article
+                      key={`m-${idx}`}
+                      className="rounded-2xl border border-green-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-900">
+                          Rank #{idx + 1}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-gray-900">
+                          {student.average_score != null ? `${student.average_score}%` : "-"}
+                        </span>
+                      </div>
+                      <h3 className="break-words text-base font-bold text-gray-900">
+                        {student.full_name || "N/A"}
+                      </h3>
+                      <div className="mt-3 grid grid-cols-1 gap-1.5 text-sm">
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-gray-600">School</span>
+                          <span className="min-w-0 break-words text-right font-semibold text-gray-800">{student.school || "-"}</span>
+                        </div>
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-gray-600">City</span>
+                          <span className="min-w-0 break-words text-right font-semibold text-gray-800">{student.city || "-"}</span>
+                        </div>
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-gray-600">Province</span>
+                          <span className="min-w-0 break-words text-right font-semibold text-gray-800">{student.province || "-"}</span>
+                        </div>
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-gray-600">Quizzes</span>
+                          <span className="font-semibold text-gray-800">{student.quizzes_attempted ?? "-"}</span>
+                        </div>
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-gray-600">Total Marks</span>
+                          <span className="font-extrabold text-gray-900">{student.total_marks ?? "-"}</span>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                   <table className="min-w-full text-sm">
+                    <caption className="sr-only">
+                      {title} table showing rank, name, school, city, province, quizzes, average score, and total marks.
+                    </caption>
                     <thead>
-                    <tr className="bg-white text-green-900">
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Rank</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Name</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">School</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">City</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Province</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Quizzes</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Avg. Score</th>
-                      <th className="px-4 py-3 border-b text-center font-extrabold">Total Marks</th>
-                    </tr>
+                      <tr className="bg-white text-green-900">
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Rank</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Name</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">School</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">City</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Province</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Quizzes</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Avg. Score</th>
+                        <th scope="col" className="px-4 py-3 border-b text-center font-extrabold">Total Marks</th>
+                      </tr>
                     </thead>
 
                     <tbody>
                       {group.top_students.map((student, idx) => (
                         <tr
                           key={idx}
-                          className="border-b hover:bg-green-50/60 transition"
+                          className="border-b transition hover:bg-green-50/60"
                         >
                           <td className="px-4 py-3 text-center font-bold">
                             {idx + 1}
                           </td>
-                          <td className="px-4 py-3 font-semibold">
-                            {student.full_name || 'N/A'}
+                          <td className="px-4 py-3 font-semibold break-words">
+                            {student.full_name || "N/A"}
                           </td>
-                          <td className="px-4 py-3">{student.school}</td>
-                          <td className="px-4 py-3">{student.city}</td>
-                          <td className="px-4 py-3">{student.province}</td>
+                          <td className="px-4 py-3 break-words">{student.school}</td>
+                          <td className="px-4 py-3 break-words">{student.city}</td>
+                          <td className="px-4 py-3 break-words">{student.province}</td>
                           <td className="px-4 py-3 text-center font-semibold">
-                            {student.quizzes_attempted ?? '-'}
+                            {student.quizzes_attempted ?? "-"}
                           </td>
                           <td className="px-4 py-3 text-center font-semibold">
-                            {student.average_score != null ? `${student.average_score}%` : '-'}
+                            {student.average_score != null ? `${student.average_score}%` : "-"}
                           </td>
                           <td className="px-4 py-3 text-center font-extrabold">
-                            {student.total_marks ?? '-'}
+                            {student.total_marks ?? "-"}
                           </td>
                         </tr>
                       ))}
@@ -138,44 +257,78 @@ const HonorBoard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f6fff6] pb-16">
-      {/* Logo */}
-      <div className="px-4 pt-4">
-        <Link to="/">
-          <img
-            src={logo}
-            alt="Learnify Home"
-            className="h-24 hover:opacity-80 transition"
-          />
-        </Link>
-      </div>
-
-      {/* Title */}
-      <div className="max-w-5xl mx-auto mt-3 px-4">
-        <div className="bg-white/70 border border-green-200 rounded-2xl shadow-sm px-6 py-8 text-center">
-          <h1 className="text-4xl font-extrabold text-green-900 flex justify-center gap-2">
-            🏆 Learnify Heroes
-          </h1>
-          <p className="mt-2 text-green-800 text-lg font-semibold">
-            Celebrating our Shining Stars and National Heroes
-          </p>
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle="Learnify Pakistan"
+      brandMotto="Learning with Responsibility"
+      isAuthenticated={Boolean(role)}
+      userFullName={userFullName}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onLogoutClick={handleLogout}
+      mobileAuthContent={
+        role ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+          >
+            Logout
+          </button>
+        ) : null
+      }
+    >
+      <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6]">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6 md:py-8">
+          <div className="bg-white/70 border border-green-200 rounded-2xl shadow-sm px-5 sm:px-6 py-6 sm:py-8 text-center">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-green-900 flex justify-center gap-2">
+              🏆 Honor Board
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-green-800 font-semibold">
+              Celebrating our Shining Stars and National Heroes
+            </p>
+          </div>
+          <div className="mt-8">
+            {loading ? (
+              <div aria-live="polite" className="bg-white border border-green-200 rounded-2xl shadow-sm p-10 text-center">
+                <div className="text-green-900 font-bold">Loading…</div>
+              </div>
+            ) : error ? (
+              <div aria-live="polite" className="bg-white border border-red-200 rounded-2xl shadow-sm p-10 text-center">
+                <div className="font-semibold text-red-700">{error}</div>
+              </div>
+            ) : shiningStars.length === 0 && nationalHeroes.length === 0 ? (
+              <div aria-live="polite" className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
+                <div className="font-semibold text-green-900">No honor board data available right now.</div>
+                <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                  <Link
+                    to="/"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
+                    Go to Home
+                  </Link>
+                  <Link
+                    to="/membership"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
+                    View Membership
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {renderTable("Shining Stars (Top Performers of the Month)", shiningStars, "🌟")}
+                {renderTable("National Heroes (Top Performers of the Quarter)", nationalHeroes, "🏅")}
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 mt-10">
-        {loading ? (
-          <div className="bg-white border border-green-200 rounded-2xl shadow-sm p-10 text-center">
-            <div className="text-green-900 font-bold">Loading…</div>
-          </div>
-        ) : (
-          <>
-            {renderTable('Shining Stars (Top Performers of the Month)', shiningStars, '🌟')}
-            {renderTable('National Heroes (Top Performers of the Quarter)', nationalHeroes, '🏅')}
-          </>
-        )}
-      </div>
-    </div>
+    </AppLayout>
   );
 };
 
