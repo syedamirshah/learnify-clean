@@ -27,6 +27,7 @@ export default function AppLayout({
   onLogoutClick,
   onProfileClick,
   desktopProfileDropdown = null,
+  desktopHeaderAction = null,
   mobileAuthContent = null,
   className = "",
 }) {
@@ -61,6 +62,7 @@ export default function AppLayout({
         menuControlsId={drawerId}
         desktopAuthContent={desktopAuth}
         desktopProfileDropdown={desktopProfileDropdown}
+        desktopHeaderAction={desktopHeaderAction}
         mobileActionContent={mobileAuthContent}
       />
 
