@@ -49,6 +49,8 @@ from .views import (
     student_subject_performance as student_subject_performance_view,  # keep the alias only
     student_quiz_history_view,
     get_all_grades,
+    privacy_policy,   # ✅ add this
+
 )
 
 from core.views import (
@@ -158,4 +160,6 @@ urlpatterns = [
     path('api/teacher/tasks/create/', teacher_create_task, name='teacher-create-task'),
     path('api/teacher/tasks/', teacher_tasks_list, name='teacher-tasks-list'),
     path('api/student/tasks/', student_tasks_list, name='student-tasks-list'),
+
+    path("privacy-policy/", privacy_policy, name="privacy_policy"),
 ]

@@ -2071,3 +2071,6 @@ def student_tasks_list(request):
             "pending_quiz_count": pending_quiz_count,
         }
     }, status=200)
+
+def privacy_policy(request):
+    return render(request, "privacy_policy.html")
