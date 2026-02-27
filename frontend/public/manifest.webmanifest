@@ -9,7 +9,8 @@
   "dir": "ltr",
   "orientation": "portrait",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": ["standalone", "window-controls-overlay"],
+  "prefer_related_applications": false,
   "theme_color": "#118C4F",
   "background_color": "#FFFFFF",
   "categories": ["education", "kids"],
@@ -60,6 +61,14 @@
           "type": "image/png"
         }
       ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
