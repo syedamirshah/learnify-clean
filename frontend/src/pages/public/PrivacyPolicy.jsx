@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
 
 <h2>Contact</h2>
 <p>For any privacy concerns, contact:</p>
-<p>Email: polscience.uob@gmail.com</p>
+<p>Email: learnifypakistan81@gmail.com</p>
 
 <p>Effective Date: 2026</p>
 

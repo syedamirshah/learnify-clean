@@ -59,6 +59,7 @@ from core.views import (
     teacher_tasks_list,
     student_tasks_list,
 )
+from django.views.generic import TemplateView
 
 urlpatterns = [
 
@@ -162,4 +163,5 @@ urlpatterns = [
     path('api/student/tasks/', student_tasks_list, name='student-tasks-list'),
 
     path("privacy-policy/", privacy_policy, name="privacy_policy"),
+    path("delete-account/", TemplateView.as_view(template_name="delete_account.html"), name="delete_account"),
 ]
