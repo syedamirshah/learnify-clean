@@ -25,6 +25,9 @@ import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import OfflineOverlay from "./components/OfflineOverlay";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import IosInstallPrompt from "./components/IosInstallPrompt";
+import PrivacyPolicy from "./pages/public/PrivacyPolicy";
+import DeleteAccount from "./pages/public/DeleteAccount";
+
 
 
 
@@ -59,6 +62,8 @@ function App() {
           <Route path="/teacher/assign-task" element={<TeacherAssignTask />} />
           <Route path="/teacher/tasks" element={<TeacherTasks />} />
           <Route path="/my-profile" element={<MyProfile />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/delete-account" element={<DeleteAccount />} />
         </Routes>
         <PwaInstallPrompt />
         <IosInstallPrompt />
