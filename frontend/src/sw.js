@@ -2,7 +2,7 @@
 import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute, matchPrecache } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies';
+import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 self.addEventListener('message', (event) => {
@@ -28,17 +28,6 @@ const staticCacheFirst = new CacheFirst({
     }),
   ],
 });
-const navigationNetworkFirst = new NetworkFirst({
-  cacheName: 'learnify-pages',
-  networkTimeoutSeconds: 5,
-  plugins: [
-    {
-      // Never use cached navigation responses (prevents offline index shell fallback)
-      cachedResponseWillBeUsed: async () => null,
-      cacheWillUpdate: async () => null,
-    },
-  ],
-});
 
 const sensitivePathPattern = /(token|refresh|user\/me|quiz|submit-answer|finalize|quiz-result|quiz-history|payments)/i;
 
@@ -62,8 +51,9 @@ registerRoute(
   ({ request }) => request.mode === 'navigate',
   async ({ event }) => {
     try {
-      return await navigationNetworkFirst.handle({ event });
-    } catch {
+      // Force real network for navigations (no SW cache)
+      return await fetch(event.request);
+    } catch (e) {
       return (await matchPrecache('/offline.html')) || Response.error();
     }
   }

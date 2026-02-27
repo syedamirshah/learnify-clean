@@ -68,7 +68,7 @@
       const statusEl = document.getElementById("offline-status");
 
       function goHomeWithStamp(param) {
-        window.location.href = "/?" + param + "=1&t=" + Date.now();
+        window.location.replace("/?" + param + "=1&t=" + Date.now());
       }
 
       function retryOnline() {

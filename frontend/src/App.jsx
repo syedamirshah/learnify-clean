@@ -22,6 +22,7 @@ import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
 import MyProfile from "./pages/public/MyProfile";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
+import OfflineOverlay from "./components/OfflineOverlay";
 
 
 
@@ -31,6 +32,7 @@ function App() {
 
   return (
     <Router>
+      <OfflineOverlay />
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/login" element={<Login />} />
