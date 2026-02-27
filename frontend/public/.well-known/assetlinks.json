@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.learnifypk.app",
-      "sha256_cert_fingerprints": ["__REPLACE_WITH_SHA256__"]
+      "sha256_cert_fingerprints": ["7E:2E:C2:78:15:6B:81:43:87:A5:EA:9B:AC:E7:C5:46:0A:E7:01:A9:C1:C3:4E:57:C7:55:78:73:63:33:93:6F"]
     }
   }
 ]
