@@ -58,3 +58,20 @@ registerRoute(
     }
   }
 );
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const allow = new Set(['learnify-static-assets', 'learnify-pages']);
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.map((key) =>
+          allow.has(key) || key.startsWith('workbox-precache')
+            ? Promise.resolve()
+            : caches.delete(key)
+        )
+      );
+      await self.clients.claim();
+    })()
+  );
+});

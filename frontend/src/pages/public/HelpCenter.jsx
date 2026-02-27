@@ -2,12 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
+import { resetPwaAndReload } from "../../utils/pwaReset";
 
 const HelpCenter = () => {
   const [openIndex, setOpenIndex] = useState(null);
   const [role, setRole] = useState(localStorage.getItem("user_role"));
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showResetButton, setShowResetButton] = useState(false);
   const navigate = useNavigate();
 
   const supportEmail = "support@learnifypakistan.com";
@@ -15,6 +17,9 @@ const HelpCenter = () => {
   useEffect(() => {
     setRole(localStorage.getItem("user_role"));
     setUserFullName(localStorage.getItem("user_full_name") || "");
+    if (window.location.hostname.includes("learnifypakistan")) {
+      setShowResetButton(true);
+    }
   }, []);
 
   const handleLogout = () => {
@@ -425,6 +430,22 @@ const HelpCenter = () => {
               Response time: usually 24–48 hours on working days.
             </span>
           </div>
+
+          {showResetButton && (
+            <div className="mt-6 rounded-xl border border-green-200 bg-white p-4">
+              <p className="text-sm font-semibold text-gray-900">Troubleshooting</p>
+              <p className="mt-1 text-xs text-gray-600">
+                If the app feels stuck after updates, you can safely reset app cache.
+              </p>
+              <button
+                type="button"
+                onClick={resetPwaAndReload}
+                className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+              >
+                Reset App Cache
+              </button>
+            </div>
+          )}
         </div>
 
         <p className="text-xs text-gray-500 mt-4">
