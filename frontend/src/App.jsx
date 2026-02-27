@@ -23,6 +23,7 @@ import TeacherTasks from "./pages/teacher/TeacherTasks";
 import MyProfile from "./pages/public/MyProfile";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import OfflineOverlay from "./components/OfflineOverlay";
+import PwaInstallPrompt from "./components/PwaInstallPrompt";
 
 
 
@@ -59,6 +60,7 @@ function App() {
           <Route path="/my-profile" element={<MyProfile />} />
         </Routes>
         <PwaUpdatePrompt />
+        <PwaInstallPrompt />
       </div>
     </Router>
   );
