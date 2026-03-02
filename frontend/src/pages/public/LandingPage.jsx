@@ -6,6 +6,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 import AppLayout from "../../components/layout/AppLayout";
 import AuthPanel from "../../components/layout/AuthPanel";
+import { persistStudentGrade } from "../../utils/auth";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -67,6 +68,8 @@ const navLinkClass = () =>
       localStorage.removeItem("account_status");
       localStorage.removeItem("role");
       localStorage.removeItem("user_grade");
+      localStorage.removeItem("user_grade_id");
+      localStorage.removeItem("grade_id");
 
       // 🔹 Reset React state
       setRole(null);
@@ -229,16 +232,17 @@ const navLinkClass = () =>
       const fullName = me.data.full_name || me.data.username;
       const status = me.data.account_status;
 
-      // ✅ NEW: store student grade
-      const studentGrade =
-        me.data.grade ||          // if backend sends grade directly
-        me.data.grade_name ||     // fallback
-        me.data.grade?.name ||    // fallback if object
-        null;
-
-      if (studentGrade) {
-        localStorage.setItem("user_grade", studentGrade);
-        setUserGrade(studentGrade); // ✅ ADD THIS LINE
+      // ✅ Store student grade + grade_id for grade-restricted pages
+      const persistedGradeId = persistStudentGrade(me.data);
+      const studentGradeName =
+        me.data.grade_name ||
+        me.data.grade?.name ||
+        me.data.grade ||
+        "";
+      if (studentGradeName) setUserGrade(studentGradeName);
+      if (persistedGradeId && !studentGradeName) {
+        // keep state in sync even if only numeric id is returned
+        setUserGrade(localStorage.getItem("user_grade") || null);
       }
 
       if (role === "admin" || role === "manager") {
@@ -280,6 +284,8 @@ const navLinkClass = () =>
   
     // 🔹 ✅ CLEAR STUDENT GRADE (THIS IS STEP 3)
     localStorage.removeItem("user_grade");
+    localStorage.removeItem("user_grade_id");
+    localStorage.removeItem("grade_id");
   
     // 🔹 Reset React state
     setRole(null);

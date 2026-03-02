@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
-import { clearAuth, getAuthSnapshot } from "../../utils/auth";
+import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import axiosInstance from "../../utils/axiosInstance";
 
@@ -14,17 +14,44 @@ const displayQuizTitle = (title) => {
 };
 
 const TopicIndexPage = () => {
-  const auth = useMemo(() => getAuthSnapshot(), []);
+  const [auth, setAuth] = useState(() => getAuthSnapshot());
   const { role, userFullName, gradeId, isStudent, isAuthed, accessToken } = auth;
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [topics, setTopics] = useState([]);
   const [historyMap, setHistoryMap] = useState({});
+  const [resolvingGradeId, setResolvingGradeId] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const navItems = useMemo(() => buildPublicNavItems(role), [role]);
+
+  useEffect(() => {
+    let active = true;
+
+    const resolveStudentGrade = async () => {
+      if (!isStudent || gradeId) return;
+      setResolvingGradeId(true);
+
+      const result = await hydrateStudentGradeIdFromProfile(API);
+      if (!active) return;
+
+      if (result?.unauthorized) {
+        clearAuth();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      setAuth(getAuthSnapshot());
+      setResolvingGradeId(false);
+    };
+
+    resolveStudentGrade();
+    return () => {
+      active = false;
+    };
+  }, [isStudent, gradeId, navigate]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -35,7 +62,11 @@ const TopicIndexPage = () => {
 
       if (isStudent && !gradeId) {
         setTopics([]);
-        setError("Your grade is not set. Please contact admin.");
+        if (resolvingGradeId) {
+          setError("");
+        } else {
+          setError("Your grade is not set. Please contact admin.");
+        }
         setLoading(false);
         return;
       }
@@ -61,7 +92,7 @@ const TopicIndexPage = () => {
 
     fetchTopics();
     return () => controller.abort();
-  }, [isStudent, gradeId]);
+  }, [isStudent, gradeId, resolvingGradeId]);
 
   useEffect(() => {
     if (!isStudent || !accessToken) return;

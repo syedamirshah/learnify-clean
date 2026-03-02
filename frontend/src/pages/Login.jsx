@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
+import { persistStudentGrade } from "../utils/auth";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -65,6 +66,7 @@ const Login = () => {
       localStorage.setItem("account_status", status);
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("user_role", role);
+      persistStudentGrade(userData);
 
       console.log("üì¶ /me ‚Üí Role:", role, "Status:", status);
 
