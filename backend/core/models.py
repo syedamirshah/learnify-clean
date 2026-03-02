@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -298,6 +299,34 @@ class WeekQuiz(models.Model):
 
     def __str__(self):
         return f"{self.week.name} → {self.quiz.title}"
+
+
+class TopicProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    topic = models.ForeignKey('Topic', on_delete=models.CASCADE)
+    completed_quizzes = models.PositiveIntegerField(default=0)
+    total_quizzes = models.PositiveIntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'topic')
+
+    def __str__(self):
+        return f"{self.user} - {self.topic} ({self.completed_quizzes}/{self.total_quizzes})"
+
+
+class WeekProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    week = models.ForeignKey('Week', on_delete=models.CASCADE)
+    completed_quizzes = models.PositiveIntegerField(default=0)
+    total_quizzes = models.PositiveIntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'week')
+
+    def __str__(self):
+        return f"{self.user} - {self.week} ({self.completed_quizzes}/{self.total_quizzes})"
 
 
 class StudentQuizAttempt(models.Model):

@@ -10,7 +10,10 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django.utils.safestring import mark_safe
 from django.shortcuts import redirect , render , get_object_or_404
 from .models import Quiz, QuizQuestionAssignment, StudentQuizAttempt
-from .models import Grade, Subject, Chapter, Topic, Week, TopicQuiz, WeekQuiz
+from .models import (
+    Grade, Subject, Chapter, Topic, Week, TopicQuiz, WeekQuiz,
+    TopicProgress, WeekProgress
+)
 from django.contrib import messages
 from django import forms
 from .admin_views import QuizFormattingForm
@@ -485,6 +488,34 @@ class WeekQuizAdmin(admin.ModelAdmin):
     search_fields = ['week__name', 'quiz__title']
     list_filter = ['week__grade']
 
+
+@admin.register(TopicProgress)
+class TopicProgressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'topic', 'completed_quizzes', 'total_quizzes', 'last_updated']
+    search_fields = ['user__username', 'topic__name']
+    list_filter = ['topic__grade']
+    readonly_fields = ['user', 'topic', 'completed_quizzes', 'total_quizzes', 'last_updated']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(WeekProgress)
+class WeekProgressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'week', 'completed_quizzes', 'total_quizzes', 'last_updated']
+    search_fields = ['user__username', 'week__name']
+    list_filter = ['week__grade']
+    readonly_fields = ['user', 'week', 'completed_quizzes', 'total_quizzes', 'last_updated']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 def quiz_formatting_view(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)
 
@@ -501,5 +532,4 @@ def quiz_formatting_view(request, quiz_id):
         'quiz': quiz,
         'form': form
     })
-
 

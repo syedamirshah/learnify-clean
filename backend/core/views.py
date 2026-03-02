@@ -28,7 +28,7 @@ from rest_framework import status
 from .models import (
     StudentQuizAttempt,
     SCQQuestion, MCQQuestion, FIBQuestion,
-    QuizAttempt, User
+    QuizAttempt, User, TopicQuiz, WeekQuiz, TopicProgress, WeekProgress
 )
 import numpy as np
 from collections import defaultdict
@@ -927,6 +927,60 @@ def submit_answer(request):
         return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
+def update_topic_progress(user, quiz):
+    topic_ids = list(
+        TopicQuiz.objects.filter(quiz=quiz).values_list('topic_id', flat=True).distinct()
+    )
+    if not topic_ids:
+        return
+
+    for topic_id in topic_ids:
+        assigned_quiz_ids = TopicQuiz.objects.filter(topic_id=topic_id).values_list('quiz_id', flat=True)
+        total_quizzes = assigned_quiz_ids.count()
+        completed_quizzes = (
+            StudentQuizAttempt.objects
+            .filter(student=user, completed_at__isnull=False, quiz_id__in=assigned_quiz_ids)
+            .values('quiz_id')
+            .distinct()
+            .count()
+        )
+        TopicProgress.objects.update_or_create(
+            user=user,
+            topic_id=topic_id,
+            defaults={
+                'completed_quizzes': completed_quizzes,
+                'total_quizzes': total_quizzes,
+            }
+        )
+
+
+def update_week_progress(user, quiz):
+    week_ids = list(
+        WeekQuiz.objects.filter(quiz=quiz).values_list('week_id', flat=True).distinct()
+    )
+    if not week_ids:
+        return
+
+    for week_id in week_ids:
+        assigned_quiz_ids = WeekQuiz.objects.filter(week_id=week_id).values_list('quiz_id', flat=True)
+        total_quizzes = assigned_quiz_ids.count()
+        completed_quizzes = (
+            StudentQuizAttempt.objects
+            .filter(student=user, completed_at__isnull=False, quiz_id__in=assigned_quiz_ids)
+            .values('quiz_id')
+            .distinct()
+            .count()
+        )
+        WeekProgress.objects.update_or_create(
+            user=user,
+            week_id=week_id,
+            defaults={
+                'completed_quizzes': completed_quizzes,
+                'total_quizzes': total_quizzes,
+            }
+        )
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def finalize_quiz(request):
@@ -1076,6 +1130,10 @@ def finalize_quiz(request):
     attempt.score = result.marks_obtained
     attempt.completed_at = timezone.now()
     attempt.save()
+
+    # Progress tracking hook (no scoring/attempt logic change).
+    update_topic_progress(user, quiz)
+    update_week_progress(user, quiz)
 
     return Response({
         "message": "Quiz finalized.",
