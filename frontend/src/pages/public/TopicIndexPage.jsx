@@ -20,7 +20,7 @@ const TopicIndexPage = () => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [topics, setTopics] = useState([]);
   const [historyMap, setHistoryMap] = useState({});
-  const [resolvingGradeId, setResolvingGradeId] = useState(false);
+  const [hydratingGrade, setHydratingGrade] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -30,28 +30,48 @@ const TopicIndexPage = () => {
   useEffect(() => {
     let active = true;
 
-    const resolveStudentGrade = async () => {
-      if (!isStudent || gradeId) return;
-      setResolvingGradeId(true);
+    async function resolveGrade() {
+      const snapshot = getAuthSnapshot();
 
-      const result = await hydrateStudentGradeIdFromProfile(API);
-      if (!active) return;
-
-      if (result?.unauthorized) {
-        clearAuth();
-        navigate("/login", { replace: true });
+      if (snapshot.role !== "student") {
+        if (active) setHydratingGrade(false);
         return;
       }
 
-      setAuth(getAuthSnapshot());
-      setResolvingGradeId(false);
-    };
+      if (snapshot.gradeId) {
+        if (active) {
+          setAuth(snapshot);
+          setHydratingGrade(false);
+        }
+        return;
+      }
 
-    resolveStudentGrade();
+      try {
+        const result = await hydrateStudentGradeIdFromProfile(API);
+        if (!active) return;
+
+        if (result?.unauthorized) {
+          clearAuth();
+          window.location.href = "/login";
+          return;
+        }
+      } catch {
+        clearAuth();
+        window.location.href = "/login";
+        return;
+      }
+
+      if (active) {
+        setAuth(getAuthSnapshot());
+        setHydratingGrade(false);
+      }
+    }
+
+    resolveGrade();
     return () => {
       active = false;
     };
-  }, [isStudent, gradeId, navigate]);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,11 +82,7 @@ const TopicIndexPage = () => {
 
       if (isStudent && !gradeId) {
         setTopics([]);
-        if (resolvingGradeId) {
-          setError("");
-        } else {
-          setError("Your grade is not set. Please contact admin.");
-        }
+        setError("");
         setLoading(false);
         return;
       }
@@ -92,7 +108,7 @@ const TopicIndexPage = () => {
 
     fetchTopics();
     return () => controller.abort();
-  }, [isStudent, gradeId, resolvingGradeId]);
+  }, [isStudent, gradeId]);
 
   useEffect(() => {
     if (!isStudent || !accessToken) return;
@@ -166,7 +182,13 @@ const TopicIndexPage = () => {
         </header>
 
         <section className="space-y-4">
-          {loading ? (
+          {isStudent && hydratingGrade ? (
+            <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
+          ) : isStudent && !hydratingGrade && !gradeId ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-4">
+              Your grade is not set. Please contact admin.
+            </div>
+          ) : loading ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">Loading topics...</div>
           ) : error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
