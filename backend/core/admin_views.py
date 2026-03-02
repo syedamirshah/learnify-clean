@@ -25,11 +25,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.conf import settings
 from django.http import FileResponse, Http404
 from .models import Grade, Subject, Chapter
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Cast
 from django import forms
 from django.core.paginator import Paginator
 from core.utils import send_account_notification_email  # ‚úÖ Add this at the top
-from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When
+from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When, F, Func
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
@@ -983,13 +983,34 @@ def _quiz_filter_context(selected_grade, selected_subject, selected_chapter):
     subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.none()
     chapters = Chapter.objects.filter(subject_id=selected_subject).order_by('name') if selected_subject else Chapter.objects.none()
 
-    quizzes = Quiz.objects.select_related('grade', 'subject', 'chapter').all().order_by('title')
+    quizzes = Quiz.objects.select_related('grade', 'subject', 'chapter').all()
     if selected_grade:
         quizzes = quizzes.filter(grade_id=selected_grade)
     if selected_subject:
         quizzes = quizzes.filter(subject_id=selected_subject)
     if selected_chapter:
         quizzes = quizzes.filter(chapter_id=selected_chapter)
+
+    # Numeric-first ordering for titles like "1 - ...", "2 - ...", "10 - ...".
+    # Non-numbered titles are pushed to the end.
+    quizzes = quizzes.annotate(
+        order_num=Case(
+            When(
+                title__regex=r'^\d+',
+                then=Cast(
+                    Func(
+                        F('title'),
+                        Value(r'^(\d+).*'),
+                        Value(r'\1'),
+                        function='REGEXP_REPLACE',
+                    ),
+                    IntegerField(),
+                ),
+            ),
+            default=Value(2147483647),
+            output_field=IntegerField(),
+        )
+    ).order_by('order_num', 'title')
 
     return grades, subjects, chapters, quizzes
 
@@ -1014,7 +1035,11 @@ def manage_topics_view(request):
                 messages.success(request, f"Topic '{name}' created successfully.")
         return redirect('manage-topics')
 
-    topics = Topic.objects.select_related('grade').order_by('grade__name', 'name')
+    topics = (
+        Topic.objects.select_related('grade')
+        .annotate(quiz_count=Count('topic_quizzes'))
+        .order_by('grade__name', 'name')
+    )
     grades = Grade.objects.all().order_by('name')
     return render(request, 'admin/core/manage_topics.html', {
         'topics': topics,
