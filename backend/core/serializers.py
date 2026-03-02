@@ -151,3 +151,41 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+
+class GradeMiniSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class SubjectMiniSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class ChapterMiniSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class QuizMiniSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    grade = GradeMiniSerializer(allow_null=True)
+    subject = SubjectMiniSerializer(allow_null=True)
+    chapter = ChapterMiniSerializer(allow_null=True)
+
+
+class TopicLandingSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    grade = GradeMiniSerializer(allow_null=True)
+    quiz_count = serializers.IntegerField()
+    quizzes = QuizMiniSerializer(many=True, required=False)
+
+
+class WeekLandingSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    grade = GradeMiniSerializer(allow_null=True)
+    quiz_count = serializers.IntegerField()
+    quizzes = QuizMiniSerializer(many=True, required=False)

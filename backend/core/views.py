@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import SelfRegistrationForm, UploadSCQForm, UploadMCQForm, UploadFIBForm
@@ -16,7 +17,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.utils.timezone import localtime
 from django.db import models
-from .serializers import QuizListSerializer
+from django.db.models import Prefetch
+from django.db.utils import ProgrammingError, OperationalError
+from .serializers import (
+    QuizListSerializer,
+    TopicLandingSerializer,
+    WeekLandingSerializer,
+)
 from rest_framework import status
 from .models import (
     StudentQuizAttempt,
@@ -45,7 +52,7 @@ from .serializers import PublicSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 from .serializers import EditProfileSerializer, ChangePasswordSerializer
-from .models import Grade
+from .models import Grade, Topic, Week, TopicQuiz, WeekQuiz
 from django.utils.timezone import localtime
 import pytz
 from core.utils import normalize_text, normalize_numeric_commas
@@ -60,6 +67,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 
 # Define the Pakistan time zone once
 pk_timezone = pytz.timezone('Asia/Karachi')
+logger = logging.getLogger(__name__)
 
 
 
@@ -1806,6 +1814,128 @@ def list_public_quizzes(request):
         result.append(grade_block)
 
     return Response(result)
+
+
+def _is_missing_topic_week_table_error(exc):
+    msg = str(exc).lower()
+    markers = (
+        'core_topic',
+        'core_topicquiz',
+        'core_week',
+        'core_weekquiz',
+        'no such table',
+        'undefinedtable',
+        'relation',
+    )
+    return any(m in msg for m in markers)
+
+
+def _quiz_leaf_payload(quiz):
+    return {
+        'id': quiz.id,
+        'title': quiz.title,
+        'grade': {'id': quiz.grade.id, 'name': quiz.grade.name} if quiz.grade else None,
+        'subject': {'id': quiz.subject.id, 'name': quiz.subject.name} if quiz.subject else None,
+        'chapter': {'id': quiz.chapter.id, 'name': quiz.chapter.name} if quiz.chapter else None,
+    }
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def landing_topics_view(request):
+    grade_id = request.GET.get("grade")
+    subject_id = request.GET.get("subject")
+    chapter_id = request.GET.get("chapter")
+    include_quizzes = str(request.GET.get("include_quizzes", "1")).lower() in ("1", "true")
+
+    try:
+        topics_qs = Topic.objects.select_related("grade").order_by("grade__name", "name")
+        if grade_id:
+            topics_qs = topics_qs.filter(grade_id=grade_id)
+
+        topicquiz_qs = TopicQuiz.objects.select_related(
+            "quiz", "quiz__grade", "quiz__subject", "quiz__chapter"
+        ).order_by("quiz__title")
+        if grade_id:
+            topicquiz_qs = topicquiz_qs.filter(quiz__grade_id=grade_id)
+        if subject_id:
+            topicquiz_qs = topicquiz_qs.filter(quiz__subject_id=subject_id)
+        if chapter_id:
+            topicquiz_qs = topicquiz_qs.filter(quiz__chapter_id=chapter_id)
+
+        topics = topics_qs.prefetch_related(
+            Prefetch("topic_quizzes", queryset=topicquiz_qs)
+        )
+
+        results = []
+        for topic in topics:
+            quizzes = [link.quiz for link in topic.topic_quizzes.all() if link.quiz]
+            item = {
+                "id": topic.id,
+                "name": topic.name,
+                "grade": {"id": topic.grade.id, "name": topic.grade.name} if topic.grade else None,
+                "quiz_count": len(quizzes),
+            }
+            if include_quizzes:
+                item["quizzes"] = [_quiz_leaf_payload(q) for q in quizzes]
+            results.append(item)
+
+        serializer = TopicLandingSerializer(results, many=True)
+        return Response({"results": serializer.data})
+    except (ProgrammingError, OperationalError) as exc:
+        if _is_missing_topic_week_table_error(exc):
+            logger.warning("landing_topics_view fallback due to missing topic/week tables: %s", exc)
+            return Response({"results": [], "warning": "topic/week tables not available"})
+        raise
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def landing_weeks_view(request):
+    grade_id = request.GET.get("grade")
+    subject_id = request.GET.get("subject")
+    chapter_id = request.GET.get("chapter")
+    include_quizzes = str(request.GET.get("include_quizzes", "1")).lower() in ("1", "true")
+
+    try:
+        weeks_qs = Week.objects.select_related("grade").order_by("grade__name", "name")
+        if grade_id:
+            weeks_qs = weeks_qs.filter(grade_id=grade_id)
+
+        weekquiz_qs = WeekQuiz.objects.select_related(
+            "quiz", "quiz__grade", "quiz__subject", "quiz__chapter"
+        ).order_by("quiz__title")
+        if grade_id:
+            weekquiz_qs = weekquiz_qs.filter(quiz__grade_id=grade_id)
+        if subject_id:
+            weekquiz_qs = weekquiz_qs.filter(quiz__subject_id=subject_id)
+        if chapter_id:
+            weekquiz_qs = weekquiz_qs.filter(quiz__chapter_id=chapter_id)
+
+        weeks = weeks_qs.prefetch_related(
+            Prefetch("week_quizzes", queryset=weekquiz_qs)
+        )
+
+        results = []
+        for week in weeks:
+            quizzes = [link.quiz for link in week.week_quizzes.all() if link.quiz]
+            item = {
+                "id": week.id,
+                "name": week.name,
+                "grade": {"id": week.grade.id, "name": week.grade.name} if week.grade else None,
+                "quiz_count": len(quizzes),
+            }
+            if include_quizzes:
+                item["quizzes"] = [_quiz_leaf_payload(q) for q in quizzes]
+            results.append(item)
+
+        serializer = WeekLandingSerializer(results, many=True)
+        return Response({"results": serializer.data})
+    except (ProgrammingError, OperationalError) as exc:
+        if _is_missing_topic_week_table_error(exc):
+            logger.warning("landing_weeks_view fallback due to missing topic/week tables: %s", exc)
+            return Response({"results": [], "warning": "topic/week tables not available"})
+        raise
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

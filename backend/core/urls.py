@@ -13,6 +13,7 @@ from core.views import (
     start_quiz, submit_answer, finalize_quiz, get_quiz_result,
     # honors & listings
     get_shining_stars, get_national_heroes, list_all_quizzes, list_public_quizzes,
+    landing_topics_view, landing_weeks_view,
     # teacher lists
     teacher_student_list,
     # admin history view actually lives here
@@ -152,6 +153,8 @@ urlpatterns = [
 
     # ---------- Public landing data ----------
     path('api/landing/quizzes/', list_public_quizzes, name='list_public_quizzes'),
+    path('landing/topics/', landing_topics_view, name='landing-topics'),
+    path('landing/weeks/', landing_weeks_view, name='landing-weeks'),
 
     # ---------- Grades for public signup ----------
     path('api/grades/', get_all_grades, name='get_all_grades'),
