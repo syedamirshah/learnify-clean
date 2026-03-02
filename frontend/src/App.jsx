@@ -27,6 +27,8 @@ import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import IosInstallPrompt from "./components/IosInstallPrompt";
 import PrivacyPolicy from "./pages/public/PrivacyPolicy";
 import DeleteAccount from "./pages/public/DeleteAccount";
+import TopicIndexPage from "./pages/public/TopicIndexPage";
+import WeeklyPlanPage from "./pages/public/WeeklyPlanPage";
 
 
 
@@ -64,6 +66,8 @@ function App() {
           <Route path="/my-profile" element={<MyProfile />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/delete-account" element={<DeleteAccount />} />
+          <Route path="/topic-index" element={<TopicIndexPage />} />
+          <Route path="/weekly-plan" element={<WeeklyPlanPage />} />
         </Routes>
         <PwaInstallPrompt />
         <IosInstallPrompt />

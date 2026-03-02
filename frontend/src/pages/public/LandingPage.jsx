@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from "../../utils/axiosInstance";
@@ -16,16 +16,6 @@ const LandingPage = () => {
   const [userFullName, setFullName] = useState("");
   const [userGrade, setUserGrade] = useState(null);
   const [quizData, setQuizData] = useState([]);
-  const [selectedGradeId, setSelectedGradeId] = useState("");
-  const [gradeOptions, setGradeOptions] = useState([]);
-  const [topics, setTopics] = useState([]);
-  const [weeks, setWeeks] = useState([]);
-  const [loadingTopics, setLoadingTopics] = useState(false);
-  const [loadingWeeks, setLoadingWeeks] = useState(false);
-  const [errorTopics, setErrorTopics] = useState(null);
-  const [errorWeeks, setErrorWeeks] = useState(null);
-  const topicsAbortRef = useRef(null);
-  const weeksAbortRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -128,100 +118,6 @@ const navLinkClass = () =>
         .catch((err) => console.error("❌ Error fetching quizzes:", err));
     });
   }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchGrades = async () => {
-      try {
-        const res = await fetch(`${API}grades/`, { signal: controller.signal });
-        if (!res.ok) throw new Error("Failed to fetch grades");
-        const data = await res.json();
-        setGradeOptions(Array.isArray(data) ? data : []);
-      } catch (err) {
-        if (err?.name !== "AbortError") {
-          console.error("❌ Error fetching grades:", err);
-          setGradeOptions([]);
-        }
-      }
-    };
-
-    fetchGrades();
-    return () => controller.abort();
-  }, []);
-
-  const fetchTopics = async ({ gradeId = "", includeQuizzes = true, signal }) => {
-    const params = new URLSearchParams();
-    params.set("include_quizzes", includeQuizzes ? "1" : "0");
-    if (gradeId) params.set("grade", String(gradeId));
-
-    setLoadingTopics(true);
-    setErrorTopics(null);
-    try {
-      const res = await fetch(`${API}landing/topics/?${params.toString()}`, { signal });
-      if (!res.ok) throw new Error(`Topics API failed (${res.status})`);
-      const data = await res.json();
-      setTopics(Array.isArray(data?.results) ? data.results : []);
-    } catch (err) {
-      if (err?.name !== "AbortError") {
-        console.error("❌ Error fetching topics:", err);
-        setErrorTopics("Failed to load topics.");
-        setTopics([]);
-      }
-    } finally {
-      if (!signal?.aborted) setLoadingTopics(false);
-    }
-  };
-
-  const fetchWeeks = async ({ gradeId = "", includeQuizzes = true, signal }) => {
-    const params = new URLSearchParams();
-    params.set("include_quizzes", includeQuizzes ? "1" : "0");
-    if (gradeId) params.set("grade", String(gradeId));
-
-    setLoadingWeeks(true);
-    setErrorWeeks(null);
-    try {
-      const res = await fetch(`${API}landing/weeks/?${params.toString()}`, { signal });
-      if (!res.ok) throw new Error(`Weeks API failed (${res.status})`);
-      const data = await res.json();
-      setWeeks(Array.isArray(data?.results) ? data.results : []);
-    } catch (err) {
-      if (err?.name !== "AbortError") {
-        console.error("❌ Error fetching weeks:", err);
-        setErrorWeeks("Failed to load weeks.");
-        setWeeks([]);
-      }
-    } finally {
-      if (!signal?.aborted) setLoadingWeeks(false);
-    }
-  };
-
-  useEffect(() => {
-    if (topicsAbortRef.current) topicsAbortRef.current.abort();
-    if (weeksAbortRef.current) weeksAbortRef.current.abort();
-
-    const topicsController = new AbortController();
-    const weeksController = new AbortController();
-    topicsAbortRef.current = topicsController;
-    weeksAbortRef.current = weeksController;
-
-    const includeQuizzes = Boolean(selectedGradeId);
-    fetchTopics({ gradeId: selectedGradeId, includeQuizzes, signal: topicsController.signal });
-    fetchWeeks({ gradeId: selectedGradeId, includeQuizzes, signal: weeksController.signal });
-
-    return () => {
-      topicsController.abort();
-      weeksController.abort();
-    };
-  }, [selectedGradeId]);
-
-  useEffect(() => {
-    if (role !== "student" || !gradeOptions.length) return;
-    const raw = String(userGrade || localStorage.getItem("user_grade") || "").trim().toLowerCase();
-    if (!raw) return;
-    const match = gradeOptions.find((g) => String(g?.name || "").trim().toLowerCase() === raw);
-    if (match?.id) setSelectedGradeId(String(match.id));
-  }, [role, userGrade, gradeOptions]);
 
   // ✅ NEW: fetch student quiz history (for score + grade on cards)
   useEffect(() => {
@@ -679,173 +575,21 @@ const chapterPalettes = [
         </div>
       </section>
 
-      {/* Browse Topics & Weeks */}
+      {/* Browse Shortcuts */}
       <section className="mt-8 px-3 md:px-4 max-w-[1400px] mx-auto">
-        <div className="rounded-2xl border border-green-200 bg-white p-4 sm:p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-extrabold text-green-900">Browse Quizzes by Topics & Weeks</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Select a grade to load assigned quizzes under topic and week groupings.
-              </p>
-            </div>
-            <div className="w-full sm:w-72">
-              <label htmlFor="browse-grade" className="mb-1 block text-sm font-semibold text-gray-700">
-                Grade
-              </label>
-              <select
-                id="browse-grade"
-                value={selectedGradeId}
-                onChange={(e) => setSelectedGradeId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="">All Grades</option>
-                {gradeOptions.map((grade) => (
-                  <option key={grade.id} value={grade.id}>
-                    {grade.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <h3 className="text-lg font-bold text-green-900">Topics</h3>
-              {loadingTopics ? (
-                <p className="mt-3 text-sm text-gray-600">Loading topics...</p>
-              ) : errorTopics ? (
-                <p className="mt-3 text-sm text-red-600">{errorTopics}</p>
-              ) : topics.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-600">No topics created yet.</p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {topics.map((topic) => (
-                    <div key={`topic-${topic.id}`} className="rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-gray-900">{topic.name}</p>
-                          <p className="text-xs text-gray-500">{topic.grade?.name || "Unknown Grade"}</p>
-                          {topic.progress_percent !== null && topic.progress_percent !== undefined && (
-                            <div className="mt-2">
-                              <div className="text-xs text-gray-600">
-                                {topic.completed_quizzes} / {topic.total_quizzes} completed
-                              </div>
-                              <div className="w-full bg-gray-200 h-2 rounded mt-1">
-                                <div
-                                  className="bg-green-500 h-2 rounded"
-                                  style={{ width: `${topic.progress_percent}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                          {topic.quiz_count || 0} quizzes
-                        </span>
-                      </div>
-
-                      {Array.isArray(topic.quizzes) && (
-                        <div className="mt-3 space-y-2">
-                          {topic.quizzes.length === 0 ? (
-                            <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                          ) : (
-                            topic.quizzes.map((quiz, index) => (
-                              <div
-                                key={`topic-quiz-${topic.id}-${quiz.id}`}
-                                className="flex flex-col gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-gray-800">Lesson {index + 1}: {quiz.title}</p>
-                                  <p className="truncate text-[11px] text-gray-500">
-                                    {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
-                                  </p>
-                                </div>
-                                <Link
-                                  to={`/student/attempt-quiz/${quiz.id}`}
-                                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                                >
-                                  Attempt
-                                </Link>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <h3 className="text-lg font-bold text-green-900">Weeks</h3>
-              {loadingWeeks ? (
-                <p className="mt-3 text-sm text-gray-600">Loading weeks...</p>
-              ) : errorWeeks ? (
-                <p className="mt-3 text-sm text-red-600">{errorWeeks}</p>
-              ) : weeks.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-600">No weeks created yet.</p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {weeks.map((week) => (
-                    <div key={`week-${week.id}`} className="rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-gray-900">{week.name}</p>
-                          <p className="text-xs text-gray-500">{week.grade?.name || "Unknown Grade"}</p>
-                          {week.progress_percent !== null && week.progress_percent !== undefined && (
-                            <div className="mt-2">
-                              <div className="text-xs text-gray-600">
-                                {week.completed_quizzes} / {week.total_quizzes} completed
-                              </div>
-                              <div className="w-full bg-gray-200 h-2 rounded mt-1">
-                                <div
-                                  className="bg-green-500 h-2 rounded"
-                                  style={{ width: `${week.progress_percent}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                          {week.quiz_count || 0} quizzes
-                        </span>
-                      </div>
-
-                      {Array.isArray(week.quizzes) && (
-                        <div className="mt-3 space-y-2">
-                          {week.quizzes.length === 0 ? (
-                            <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                          ) : (
-                            week.quizzes.map((quiz, index) => (
-                              <div
-                                key={`week-quiz-${week.id}-${quiz.id}`}
-                                className="flex flex-col gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-gray-800">Lesson {index + 1}: {quiz.title}</p>
-                                  <p className="truncate text-[11px] text-gray-500">
-                                    {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
-                                  </p>
-                                </div>
-                                <Link
-                                  to={`/student/attempt-quiz/${quiz.id}`}
-                                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                                >
-                                  Attempt
-                                </Link>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+          <Link
+            to="/topic-index"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-50 px-8 py-3 text-lg font-extrabold text-green-800 shadow-sm transition hover:bg-green-100 hover:shadow"
+          >
+            Topic Index 📚
+          </Link>
+          <Link
+            to="/weekly-plan"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-50 px-8 py-3 text-lg font-extrabold text-green-800 shadow-sm transition hover:bg-green-100 hover:shadow"
+          >
+            Weekly Plan 🗓️
+          </Link>
         </div>
       </section>
         {/* Content Explorer */}
