@@ -1,0 +1,197 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../../assets/logo.png";
+import AppLayout from "../../components/layout/AppLayout";
+import { clearAuth, getAuthSnapshot } from "../../utils/auth";
+import { buildPublicNavItems } from "../../utils/publicNav";
+
+const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
+
+const TopicIndexPage = () => {
+  const auth = useMemo(() => getAuthSnapshot(), []);
+  const { role, userFullName, gradeId, isStudent, isAuthed } = auth;
+
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [grades, setGrades] = useState([]);
+  const [selectedGradeId, setSelectedGradeId] = useState("");
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const navItems = useMemo(() => buildPublicNavItems(role), [role]);
+
+  useEffect(() => {
+    if (isStudent) return undefined;
+
+    const controller = new AbortController();
+
+    const fetchGrades = async () => {
+      try {
+        const res = await fetch(`${API}grades/`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`Failed to fetch grades (${res.status})`);
+        const data = await res.json();
+        setGrades(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (err?.name !== "AbortError") {
+          setGrades([]);
+        }
+      }
+    };
+
+    fetchGrades();
+    return () => controller.abort();
+  }, [isStudent]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchTopics = async () => {
+      setLoading(true);
+      setError("");
+
+      if (isStudent && !gradeId) {
+        setTopics([]);
+        setError("Your grade is not set. Please contact admin.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        const effectiveGradeId = isStudent ? gradeId : selectedGradeId;
+        const includeQuizzes = Boolean(effectiveGradeId);
+
+        params.set("include_quizzes", includeQuizzes ? "1" : "0");
+        if (effectiveGradeId) params.set("grade", effectiveGradeId);
+
+        const res = await fetch(`${API}landing/topics/?${params.toString()}`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`Failed to fetch topics (${res.status})`);
+        const data = await res.json();
+        setTopics(Array.isArray(data?.results) ? data.results : []);
+      } catch (err) {
+        if (err?.name !== "AbortError") {
+          setError("Failed to load topics.");
+          setTopics([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    fetchTopics();
+    return () => controller.abort();
+  }, [isStudent, gradeId, selectedGradeId]);
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/", { replace: true });
+  };
+
+  return (
+    <AppLayout
+      className="font-[Nunito]"
+      logoSrc={logo}
+      logoAlt="Learnify Pakistan Logo"
+      brandTitle="Learnify Pakistan"
+      brandMotto="Learning with Responsibility"
+      isAuthenticated={isAuthed}
+      userFullName={userFullName}
+      navItems={navItems}
+      isMobileDrawerOpen={mobileDrawerOpen}
+      onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+      onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+      onLogoutClick={handleLogout}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
+        <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Topic Index</h1>
+          <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped by topic and start practice instantly.</p>
+        </header>
+
+        {!isStudent && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <label htmlFor="topic-grade" className="block text-sm font-semibold text-gray-700 mb-2">
+              Filter by Grade
+            </label>
+            <select
+              id="topic-grade"
+              value={selectedGradeId}
+              onChange={(e) => setSelectedGradeId(e.target.value)}
+              className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">All Grades</option>
+              {grades.map((grade) => (
+                <option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <section className="space-y-4">
+          {loading ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">Loading topics...</div>
+          ) : error ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
+          ) : topics.length === 0 ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No topics created yet.</div>
+          ) : (
+            topics.map((topic) => (
+              <article key={topic.id} className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{topic.name}</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">{topic.grade?.name || "Unknown Grade"}</p>
+                    {topic.progress_percent !== null && topic.progress_percent !== undefined && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-600">{topic.completed_quizzes} / {topic.total_quizzes} completed</p>
+                        <div className="mt-1 h-2 w-full rounded bg-gray-200">
+                          <div className="h-2 rounded bg-green-500" style={{ width: `${topic.progress_percent}%` }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                    {topic.quiz_count || 0} quizzes
+                  </span>
+                </div>
+
+                {Array.isArray(topic.quizzes) && (
+                  <div className="mt-3 space-y-2">
+                    {topic.quizzes.length === 0 ? (
+                      <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
+                    ) : (
+                      topic.quizzes.map((quiz, index) => (
+                        <div
+                          key={`topic-quiz-${topic.id}-${quiz.id}`}
+                          className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-800">Lesson {index + 1}: {quiz.title}</p>
+                            <p className="truncate text-[11px] text-gray-500">
+                              {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
+                            </p>
+                          </div>
+                          <Link
+                            to={`/student/attempt-quiz/${quiz.id}`}
+                            className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+                          >
+                            Attempt
+                          </Link>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </article>
+            ))
+          )}
+        </section>
+      </div>
+    </AppLayout>
+  );
+};
+
+export default TopicIndexPage;
