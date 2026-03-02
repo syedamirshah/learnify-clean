@@ -1,0 +1,104 @@
+{% extends "admin/core/base.html" %}
+
+{% block title %}Assign Topic Quizzes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Assign Quizzes to Topic</h1>
+        <p class="mt-1 text-sm text-gray-600">
+          Topic: <span class="font-semibold text-green-700">{{ topic.name }}</span> ({{ topic.grade.name }})
+        </p>
+      </div>
+      <a href="{% url 'manage-topics' %}" class="text-sm font-semibold text-green-700 hover:underline">← Back to Manage Topics</a>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
+    <form method="get" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700">Grade</label>
+        <select name="grade" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <option value="">All grades</option>
+          {% for grade in grades %}
+            <option value="{{ grade.id }}" {% if selected_grade == grade.id|stringformat:'s' %}selected{% endif %}>{{ grade.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700">Subject</label>
+        <select name="subject" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <option value="">All subjects</option>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}" {% if selected_subject == subject.id|stringformat:'s' %}selected{% endif %}>{{ subject.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700">Chapter</label>
+        <select name="chapter" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <option value="">All chapters</option>
+          {% for chapter in chapters %}
+            <option value="{{ chapter.id }}" {% if selected_chapter == chapter.id|stringformat:'s' %}selected{% endif %}>{{ chapter.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100">
+          Apply
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-sm">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Select</th>
+              <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Quiz Title</th>
+              <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Grade</th>
+              <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Subject</th>
+              <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Chapter</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for quiz in quizzes %}
+              <tr>
+                <td class="border border-gray-200 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    name="quiz_ids"
+                    value="{{ quiz.id }}"
+                    {% if quiz.id in assigned_quiz_ids %}checked{% endif %}
+                    class="h-4 w-4 rounded border-gray-300 text-green-600"
+                  />
+                </td>
+                <td class="border border-gray-200 px-3 py-2">{{ quiz.title }}</td>
+                <td class="border border-gray-200 px-3 py-2">{{ quiz.grade.name|default:"—" }}</td>
+                <td class="border border-gray-200 px-3 py-2">{{ quiz.subject.name|default:"—" }}</td>
+                <td class="border border-gray-200 px-3 py-2">{{ quiz.chapter.name|default:"—" }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="border border-gray-200 px-3 py-6 text-center text-gray-500">No quizzes found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+          Save Assignments
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

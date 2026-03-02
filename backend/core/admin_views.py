@@ -10,7 +10,10 @@ from django.utils.html import format_html
 from .forms import UploadSCQForm
 from .models import SCQQuestion, QuestionBank
 from core.forms import UploadSCQForm, UploadMCQForm, UploadFIBForm
-from core.models import SCQQuestion, MCQQuestion, FIBQuestion, QuestionBank , QuizQuestionAssignment , Quiz
+from core.models import (
+    SCQQuestion, MCQQuestion, FIBQuestion, QuestionBank,
+    QuizQuestionAssignment, Quiz, Topic, Week, TopicQuiz, WeekQuiz
+)
 from django.contrib.admin.views.decorators import staff_member_required
 import uuid
 from django.urls import reverse
@@ -37,6 +40,7 @@ import io
 from django.http import HttpResponse
 import json
 from django.core.files.storage import default_storage
+from urllib.parse import urlencode
 
 
 
@@ -953,6 +957,217 @@ def get_chapters_by_subject(request):
         chapters = Chapter.objects.filter(subject_id=subject_id).values('id', 'name')
         return JsonResponse(list(chapters), safe=False)
     return JsonResponse([], safe=False)
+
+
+def _is_platform_admin(user):
+    return user.is_authenticated and (user.is_superuser or getattr(user, 'role', None) == 'admin')
+
+
+def _require_platform_admin(request):
+    if not _is_platform_admin(request.user):
+        return HttpResponseForbidden("Only admins are allowed to access this page.")
+    return None
+
+
+def _redirect_with_filters(route_name, route_kwargs, grade_id, subject_id, chapter_id):
+    query = urlencode({
+        "grade": grade_id or "",
+        "subject": subject_id or "",
+        "chapter": chapter_id or "",
+    })
+    return redirect(f"{reverse(route_name, kwargs=route_kwargs)}?{query}")
+
+
+def _quiz_filter_context(selected_grade, selected_subject, selected_chapter):
+    grades = Grade.objects.all().order_by('name')
+    subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.none()
+    chapters = Chapter.objects.filter(subject_id=selected_subject).order_by('name') if selected_subject else Chapter.objects.none()
+
+    quizzes = Quiz.objects.select_related('grade', 'subject', 'chapter').all().order_by('title')
+    if selected_grade:
+        quizzes = quizzes.filter(grade_id=selected_grade)
+    if selected_subject:
+        quizzes = quizzes.filter(subject_id=selected_subject)
+    if selected_chapter:
+        quizzes = quizzes.filter(chapter_id=selected_chapter)
+
+    return grades, subjects, chapters, quizzes
+
+
+@staff_member_required
+def manage_topics_view(request):
+    guard = _require_platform_admin(request)
+    if guard:
+        return guard
+
+    if request.method == 'POST':
+        name = (request.POST.get('name') or '').strip()
+        grade_id = request.POST.get('grade')
+        if not name or not grade_id:
+            messages.error(request, "Topic name and grade are required.")
+        else:
+            grade = Grade.objects.filter(id=grade_id).first()
+            if not grade:
+                messages.error(request, "Invalid grade selected.")
+            else:
+                Topic.objects.create(name=name, grade=grade)
+                messages.success(request, f"Topic '{name}' created successfully.")
+        return redirect('manage-topics')
+
+    topics = Topic.objects.select_related('grade').order_by('grade__name', 'name')
+    grades = Grade.objects.all().order_by('name')
+    return render(request, 'admin/core/manage_topics.html', {
+        'topics': topics,
+        'grades': grades,
+    })
+
+
+@staff_member_required
+def topic_detail_assign_view(request, topic_id):
+    guard = _require_platform_admin(request)
+    if guard:
+        return guard
+
+    topic = get_object_or_404(Topic.objects.select_related('grade'), id=topic_id)
+
+    selected_grade = request.GET.get('grade') or str(topic.grade_id)
+    selected_subject = request.GET.get('subject') or ''
+    selected_chapter = request.GET.get('chapter') or ''
+
+    grades, subjects, chapters, quizzes = _quiz_filter_context(selected_grade, selected_subject, selected_chapter)
+
+    if request.method == 'POST':
+        selected_ids = {
+            int(qid) for qid in request.POST.getlist('quiz_ids')
+            if str(qid).isdigit()
+        }
+        existing_ids = set(
+            TopicQuiz.objects.filter(topic=topic).values_list('quiz_id', flat=True)
+        )
+
+        to_add = selected_ids - existing_ids
+        to_remove = existing_ids - selected_ids
+
+        if to_add:
+            TopicQuiz.objects.bulk_create(
+                [TopicQuiz(topic=topic, quiz_id=qid) for qid in to_add],
+                ignore_conflicts=True,
+            )
+        if to_remove:
+            TopicQuiz.objects.filter(topic=topic, quiz_id__in=to_remove).delete()
+
+        messages.success(request, "Topic quiz assignments updated.")
+        return _redirect_with_filters(
+            'topic-assign',
+            {'topic_id': topic.id},
+            selected_grade,
+            selected_subject,
+            selected_chapter,
+        )
+
+    assigned_quiz_ids = set(
+        TopicQuiz.objects.filter(topic=topic).values_list('quiz_id', flat=True)
+    )
+
+    return render(request, 'admin/core/topic_assign_quizzes.html', {
+        'topic': topic,
+        'grades': grades,
+        'subjects': subjects,
+        'chapters': chapters,
+        'quizzes': quizzes,
+        'assigned_quiz_ids': assigned_quiz_ids,
+        'selected_grade': selected_grade,
+        'selected_subject': selected_subject,
+        'selected_chapter': selected_chapter,
+    })
+
+
+@staff_member_required
+def manage_weeks_view(request):
+    guard = _require_platform_admin(request)
+    if guard:
+        return guard
+
+    if request.method == 'POST':
+        name = (request.POST.get('name') or '').strip()
+        grade_id = request.POST.get('grade')
+        if not name or not grade_id:
+            messages.error(request, "Week name and grade are required.")
+        else:
+            grade = Grade.objects.filter(id=grade_id).first()
+            if not grade:
+                messages.error(request, "Invalid grade selected.")
+            else:
+                Week.objects.create(name=name, grade=grade)
+                messages.success(request, f"Week '{name}' created successfully.")
+        return redirect('manage-weeks')
+
+    weeks = Week.objects.select_related('grade').order_by('grade__name', 'name')
+    grades = Grade.objects.all().order_by('name')
+    return render(request, 'admin/core/manage_weeks.html', {
+        'weeks': weeks,
+        'grades': grades,
+    })
+
+
+@staff_member_required
+def week_detail_assign_view(request, week_id):
+    guard = _require_platform_admin(request)
+    if guard:
+        return guard
+
+    week = get_object_or_404(Week.objects.select_related('grade'), id=week_id)
+
+    selected_grade = request.GET.get('grade') or str(week.grade_id)
+    selected_subject = request.GET.get('subject') or ''
+    selected_chapter = request.GET.get('chapter') or ''
+
+    grades, subjects, chapters, quizzes = _quiz_filter_context(selected_grade, selected_subject, selected_chapter)
+
+    if request.method == 'POST':
+        selected_ids = {
+            int(qid) for qid in request.POST.getlist('quiz_ids')
+            if str(qid).isdigit()
+        }
+        existing_ids = set(
+            WeekQuiz.objects.filter(week=week).values_list('quiz_id', flat=True)
+        )
+
+        to_add = selected_ids - existing_ids
+        to_remove = existing_ids - selected_ids
+
+        if to_add:
+            WeekQuiz.objects.bulk_create(
+                [WeekQuiz(week=week, quiz_id=qid) for qid in to_add],
+                ignore_conflicts=True,
+            )
+        if to_remove:
+            WeekQuiz.objects.filter(week=week, quiz_id__in=to_remove).delete()
+
+        messages.success(request, "Week quiz assignments updated.")
+        return _redirect_with_filters(
+            'week-assign',
+            {'week_id': week.id},
+            selected_grade,
+            selected_subject,
+            selected_chapter,
+        )
+
+    assigned_quiz_ids = set(
+        WeekQuiz.objects.filter(week=week).values_list('quiz_id', flat=True)
+    )
+
+    return render(request, 'admin/core/week_assign_quizzes.html', {
+        'week': week,
+        'grades': grades,
+        'subjects': subjects,
+        'chapters': chapters,
+        'quizzes': quizzes,
+        'assigned_quiz_ids': assigned_quiz_ids,
+        'selected_grade': selected_grade,
+        'selected_subject': selected_subject,
+        'selected_chapter': selected_chapter,
+    })
 
 @staff_member_required
 @require_POST

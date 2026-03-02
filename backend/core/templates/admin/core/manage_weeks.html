@@ -1,0 +1,77 @@
+{% extends "admin/core/base.html" %}
+
+{% block title %}Manage Weeks{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h1 class="text-2xl font-bold text-gray-900">Manage Weeks</h1>
+    <p class="mt-1 text-sm text-gray-600">Create week records under a grade, then assign quizzes.</p>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-gray-900">Create Week</h2>
+    <form method="post" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+      {% csrf_token %}
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-sm font-medium text-gray-700">Week Name</label>
+        <input
+          type="text"
+          name="name"
+          required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+          placeholder="e.g. Week 25 / Revision Week"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700">Grade</label>
+        <select name="grade" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <option value="">Select grade</option>
+          {% for grade in grades %}
+            <option value="{{ grade.id }}">{{ grade.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="md:col-span-3 flex justify-end">
+        <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+          Create Week
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-gray-900">Existing Weeks</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full border-collapse text-sm">
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Week</th>
+            <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Grade</th>
+            <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Created</th>
+            <th class="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for week in weeks %}
+            <tr>
+              <td class="border border-gray-200 px-3 py-2">{{ week.name }}</td>
+              <td class="border border-gray-200 px-3 py-2">{{ week.grade.name }}</td>
+              <td class="border border-gray-200 px-3 py-2">{{ week.created_at|date:"Y-m-d H:i" }}</td>
+              <td class="border border-gray-200 px-3 py-2">
+                <a href="{% url 'week-assign' week.id %}" class="inline-flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100">
+                  Assign Quizzes
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="border border-gray-200 px-3 py-6 text-center text-gray-500">No weeks created yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

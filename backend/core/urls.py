@@ -33,6 +33,8 @@ from core.admin_views import (
     edit_question_bank, delete_question_bank, delete_question,
     bulk_delete_users,
     duplicate_question_bank,
+    manage_topics_view, topic_detail_assign_view,
+    manage_weeks_view, week_detail_assign_view,
 )
 
 # --- Stats dashboard ---
@@ -89,12 +91,16 @@ urlpatterns = [
     path('users/', user_list, name='user-list'),
 
     # ---------- Quiz Management ----------
-    path('admin/quizzes/', list_all_quizzes, name='admin-list-quizzes'),
+    path('admin/quizzes/', list_all_quizzes, name='admin-list-quizzes-legacy'),
     path('internal/quiz-list/', admin_list_quizzes_view, name='admin-quiz-list'),
     path('admin/quizzes/create-metadata/', create_metadata_view, name='create-metadata'),
     path('admin/core/list-quizzes/', admin_list_quizzes_view, name='admin-list-quizzes'),
     path('admin/core/quiz-format/<int:quiz_id>/', quiz_formatting_view, name='quiz-format'),
     path('admin/core/quiz-question-assignments/', quiz_question_assignment_view, name='quiz-question-assignments'),
+    path('admin/core/manage-topics/', manage_topics_view, name='manage-topics'),
+    path('admin/core/topics/<int:topic_id>/', topic_detail_assign_view, name='topic-assign'),
+    path('admin/core/manage-weeks/', manage_weeks_view, name='manage-weeks'),
+    path('admin/core/weeks/<int:week_id>/', week_detail_assign_view, name='week-assign'),
     path('admin/dashboard/quizzes/', admin_quiz_dashboard, name='admin-quiz-dashboard'),
 
     # ---------- Question Bank ----------
