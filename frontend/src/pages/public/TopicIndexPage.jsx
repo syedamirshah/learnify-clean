@@ -4,27 +4,30 @@ import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { clearAuth, getAuthSnapshot } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import axiosInstance from "../../utils/axiosInstance";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
-const groupBySubject = (quizzes = []) => {
-  const groups = {};
-  quizzes.forEach((q) => {
-    const subject = q?.subject?.name || "General";
-    if (!groups[subject]) groups[subject] = [];
-    groups[subject].push(q);
-  });
-  return groups;
+const displayQuizTitle = (title) => {
+  const t = String(title || "").trim();
+  return t.replace(/^\s*\d+\s*[-–—.:]\s*/, "");
+};
+
+const getLetter = (name) => {
+  const ch = String(name || "").trim().charAt(0).toUpperCase();
+  return /^[A-Z]$/.test(ch) ? ch : "#";
 };
 
 const TopicIndexPage = () => {
   const auth = useMemo(() => getAuthSnapshot(), []);
-  const { role, userFullName, gradeId, isStudent, isAuthed } = auth;
+  const { role, userFullName, gradeId, isStudent, isAuthed, accessToken } = auth;
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [grades, setGrades] = useState([]);
   const [selectedGradeId, setSelectedGradeId] = useState("");
   const [topics, setTopics] = useState([]);
+  const [openTopicIds, setOpenTopicIds] = useState(new Set());
+  const [historyMap, setHistoryMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -93,6 +96,75 @@ const TopicIndexPage = () => {
     return () => controller.abort();
   }, [isStudent, gradeId, selectedGradeId]);
 
+  useEffect(() => {
+    if (!isStudent || !accessToken) return;
+
+    let mounted = true;
+    const fetchHistory = async () => {
+      try {
+        const res = await axiosInstance.get("student/quiz-history/");
+        const results = Array.isArray(res?.data?.results) ? res.data.results : [];
+        const map = {};
+        results.forEach((row) => {
+          const key = String(row.quiz_id || "");
+          if (key) map[key] = row;
+        });
+        if (mounted) setHistoryMap(map);
+      } catch {
+        if (mounted) setHistoryMap({});
+      }
+    };
+
+    fetchHistory();
+    return () => {
+      mounted = false;
+    };
+  }, [isStudent, accessToken]);
+
+  const sortedTopics = useMemo(
+    () =>
+      [...topics].sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" })
+      ),
+    [topics]
+  );
+
+  const sectionEntries = useMemo(() => {
+    const grouped = {};
+    sortedTopics.forEach((topic) => {
+      const letter = getLetter(topic?.name);
+      if (!grouped[letter]) grouped[letter] = [];
+      grouped[letter].push(topic);
+    });
+
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").filter((l) => grouped[l]?.length);
+    if (grouped["#"]?.length) letters.push("#");
+    return letters.map((letter) => [letter, grouped[letter]]);
+  }, [sortedTopics]);
+
+  const showSelectGradeHint = !isStudent && !selectedGradeId;
+
+  const toggleTopic = (topicId) => {
+    setOpenTopicIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(topicId)) next.delete(topicId);
+      else next.add(topicId);
+      return next;
+    });
+  };
+
+  const scoreTextForQuiz = (quizId) => {
+    if (!isStudent) return null;
+    const row = historyMap[String(quizId)];
+    if (!row) return null;
+
+    const marks = row.marks_obtained ?? row.score ?? null;
+    const total = row.total_marks ?? (((row.total_questions || 0) * (row.marks_per_question || 0)) || null);
+    if (marks !== null && total) return `Score: ${marks}/${total}`;
+    if (row.percentage !== null && row.percentage !== undefined) return `Score: ${row.percentage}%`;
+    return null;
+  };
+
   const handleLogout = () => {
     clearAuth();
     navigate("/", { replace: true });
@@ -116,7 +188,7 @@ const TopicIndexPage = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
         <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Topic Index</h1>
-          <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped by topic and start practice instantly.</p>
+          <p className="mt-1 text-sm text-gray-600">Browse by Topic (A–Z).</p>
         </header>
 
         {!isStudent && (
@@ -148,62 +220,72 @@ const TopicIndexPage = () => {
           ) : topics.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No topics created yet.</div>
           ) : (
-            topics.map((topic) => (
-              <article key={topic.id} className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{topic.name}</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">{topic.grade?.name || "Unknown Grade"}</p>
-                    {topic.progress_percent !== null && topic.progress_percent !== undefined && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-600">{topic.completed_quizzes} / {topic.total_quizzes} completed</p>
-                        <div className="mt-1 h-2 w-full rounded bg-gray-200">
-                          <div className="h-2 rounded bg-green-500" style={{ width: `${topic.progress_percent}%` }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                    {topic.quiz_count || 0} quizzes
-                  </span>
-                </div>
-
-                {Array.isArray(topic.quizzes) && (
-                  <div className="mt-3 space-y-2">
-                    {topic.quizzes.length === 0 ? (
-                      <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                    ) : (
-                      Object.entries(groupBySubject(topic.quizzes)).map(([subjectName, quizzes]) => (
-                        <div key={`topic-subject-${topic.id}-${subjectName}`} className="mt-3">
-                          <h3 className="mb-1 text-sm font-semibold text-green-800">{subjectName}</h3>
-                          <div className="space-y-2">
-                            {quizzes.map((quiz, index) => (
-                              <div
-                                key={`topic-quiz-${topic.id}-${quiz.id}`}
-                                className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-semibold text-gray-800">Lesson {index + 1}: {quiz.title}</p>
-                                  <p className="truncate text-[11px] text-gray-500">
-                                    {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
-                                  </p>
-                                </div>
-                                <Link
-                                  to={`/student/attempt-quiz/${quiz.id}`}
-                                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                                >
-                                  Attempt
-                                </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {sectionEntries.map(([letter, letterTopics]) => (
+                <div key={letter} className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="pt-0.5 text-2xl font-extrabold text-green-800">{letter}.</div>
+                    <div className="flex-1 space-y-2">
+                      {letterTopics.map((topic) => {
+                        const isOpen = openTopicIds.has(topic.id);
+                        return (
+                          <article key={topic.id} className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() => toggleTopic(topic.id)}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-green-50"
+                            >
+                              <div className="min-w-0">
+                                <h2 className="truncate text-sm font-bold text-gray-900">{topic.name}</h2>
+                                <p className="text-[11px] text-gray-500">{topic.grade?.name || "Unknown Grade"}</p>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+                                  {topic.quiz_count || 0}
+                                </span>
+                                <span className="text-gray-500 text-sm">{isOpen ? "▾" : "▸"}</span>
+                              </div>
+                            </button>
+
+                            {isOpen && (
+                              <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+                                {showSelectGradeHint ? (
+                                  <p className="text-xs text-gray-500">Select a grade to load quizzes.</p>
+                                ) : Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
+                                  topic.quizzes.map((quiz, index) => {
+                                    const scoreText = scoreTextForQuiz(quiz.id);
+                                    return (
+                                      <Link
+                                        key={`topic-quiz-${topic.id}-${quiz.id}`}
+                                        to={`/student/attempt-quiz/${quiz.id}`}
+                                        className="block rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 hover:bg-green-50"
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          <p className="truncate text-sm font-semibold text-gray-800">
+                                            Lesson {index + 1}: {displayQuizTitle(quiz.title)}
+                                          </p>
+                                          {scoreText ? (
+                                            <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+                                              {scoreText}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                      </Link>
+                                    );
+                                  })
+                                ) : (
+                                  <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
+                                )}
+                              </div>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
                   </div>
-                )}
-              </article>
-            ))
+                </div>
+              ))}
+            </div>
           )}
         </section>
       </div>
