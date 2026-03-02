@@ -19,13 +19,14 @@ const groupBySubject = (quizzes = []) => {
 
 const WeeklyPlanPage = () => {
   const [auth, setAuth] = useState(() => getAuthSnapshot());
-  const { role, userFullName, gradeId, isStudent, isAuthed } = auth;
+  const { role, userFullName, isStudent, isAuthed } = auth;
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [grades, setGrades] = useState([]);
   const [selectedGradeId, setSelectedGradeId] = useState("");
+  const [gradeId, setGradeId] = useState("");
   const [weeks, setWeeks] = useState([]);
-  const [resolvingGradeId, setResolvingGradeId] = useState(false);
+  const [hydratingGrade, setHydratingGrade] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -33,30 +34,70 @@ const WeeklyPlanPage = () => {
   const navItems = useMemo(() => buildPublicNavItems(role), [role]);
 
   useEffect(() => {
-    let active = true;
+    const snap = getAuthSnapshot();
+    const initialGradeId =
+      snap.gradeId ||
+      localStorage.getItem("user_grade_id") ||
+      localStorage.getItem("grade_id") ||
+      "";
+    setGradeId(initialGradeId ? String(initialGradeId) : "");
+    setAuth(snap);
+  }, []);
 
-    const resolveStudentGrade = async () => {
-      if (!isStudent || gradeId) return;
-      setResolvingGradeId(true);
+  useEffect(() => {
+    let alive = true;
 
-      const result = await hydrateStudentGradeIdFromProfile(API);
-      if (!active) return;
+    async function resolveStudentGrade() {
+      const snap = getAuthSnapshot();
+      const studentRole = snap.role === "student";
 
-      if (result?.unauthorized) {
-        clearAuth();
-        navigate("/login", { replace: true });
+      if (!studentRole) {
+        if (alive) setHydratingGrade(false);
         return;
       }
 
-      setAuth(getAuthSnapshot());
-      setResolvingGradeId(false);
-    };
+      const existing =
+        gradeId ||
+        localStorage.getItem("user_grade_id") ||
+        localStorage.getItem("grade_id");
+
+      if (existing) {
+        if (alive) {
+          setGradeId(String(existing));
+          setHydratingGrade(false);
+        }
+        return;
+      }
+
+      try {
+        const result = await hydrateStudentGradeIdFromProfile(API);
+        if (result?.unauthorized) {
+          clearAuth();
+          window.location.href = "/login";
+          return;
+        }
+        const hydrated =
+          localStorage.getItem("user_grade_id") ||
+          localStorage.getItem("grade_id") ||
+          "";
+        if (alive) {
+          setGradeId(hydrated ? String(hydrated) : "");
+          setAuth(getAuthSnapshot());
+        }
+      } catch {
+        clearAuth();
+        window.location.href = "/login";
+        return;
+      } finally {
+        if (alive) setHydratingGrade(false);
+      }
+    }
 
     resolveStudentGrade();
     return () => {
-      active = false;
+      alive = false;
     };
-  }, [isStudent, gradeId, navigate]);
+  }, [gradeId]);
 
   useEffect(() => {
     if (isStudent) return undefined;
@@ -89,7 +130,7 @@ const WeeklyPlanPage = () => {
 
       if (isStudent && !gradeId) {
         setWeeks([]);
-        if (resolvingGradeId) {
+        if (hydratingGrade) {
           setError("");
         } else {
           setError("Your grade is not set. Please contact admin.");
@@ -122,7 +163,7 @@ const WeeklyPlanPage = () => {
 
     fetchWeeks();
     return () => controller.abort();
-  }, [isStudent, gradeId, selectedGradeId, resolvingGradeId]);
+  }, [isStudent, gradeId, selectedGradeId, hydratingGrade]);
 
   const handleLogout = () => {
     clearAuth();
@@ -172,7 +213,13 @@ const WeeklyPlanPage = () => {
         )}
 
         <section className="space-y-4">
-          {loading ? (
+          {isStudent && hydratingGrade ? (
+            <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
+          ) : isStudent && !hydratingGrade && !gradeId ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-4">
+              Your grade is not set. Please contact admin.
+            </div>
+          ) : loading ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">Loading weeks...</div>
           ) : error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>

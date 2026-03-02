@@ -15,11 +15,12 @@ const displayQuizTitle = (title) => {
 
 const TopicIndexPage = () => {
   const [auth, setAuth] = useState(() => getAuthSnapshot());
-  const { role, userFullName, gradeId, isStudent, isAuthed, accessToken } = auth;
+  const { role, userFullName, isStudent, isAuthed, accessToken } = auth;
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [topics, setTopics] = useState([]);
   const [historyMap, setHistoryMap] = useState({});
+  const [gradeId, setGradeId] = useState("");
   const [hydratingGrade, setHydratingGrade] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -28,19 +29,36 @@ const TopicIndexPage = () => {
   const navItems = useMemo(() => buildPublicNavItems(role), [role]);
 
   useEffect(() => {
-    let active = true;
+    const snap = getAuthSnapshot();
+    const initialGradeId =
+      snap.gradeId ||
+      localStorage.getItem("user_grade_id") ||
+      localStorage.getItem("grade_id") ||
+      "";
+    setGradeId(initialGradeId ? String(initialGradeId) : "");
+    setAuth(snap);
+  }, []);
 
-    async function resolveGrade() {
-      const snapshot = getAuthSnapshot();
+  useEffect(() => {
+    let alive = true;
 
-      if (snapshot.role !== "student") {
-        if (active) setHydratingGrade(false);
+    async function resolveStudentGrade() {
+      const snap = getAuthSnapshot();
+      const studentRole = snap.role === "student";
+
+      if (!studentRole) {
+        if (alive) setHydratingGrade(false);
         return;
       }
 
-      if (snapshot.gradeId) {
-        if (active) {
-          setAuth(snapshot);
+      const existing =
+        gradeId ||
+        localStorage.getItem("user_grade_id") ||
+        localStorage.getItem("grade_id");
+
+      if (existing) {
+        if (alive) {
+          setGradeId(String(existing));
           setHydratingGrade(false);
         }
         return;
@@ -48,30 +66,33 @@ const TopicIndexPage = () => {
 
       try {
         const result = await hydrateStudentGradeIdFromProfile(API);
-        if (!active) return;
-
         if (result?.unauthorized) {
           clearAuth();
           window.location.href = "/login";
           return;
         }
+        const hydrated =
+          localStorage.getItem("user_grade_id") ||
+          localStorage.getItem("grade_id") ||
+          "";
+        if (alive) {
+          setGradeId(hydrated ? String(hydrated) : "");
+          setAuth(getAuthSnapshot());
+        }
       } catch {
         clearAuth();
         window.location.href = "/login";
         return;
-      }
-
-      if (active) {
-        setAuth(getAuthSnapshot());
-        setHydratingGrade(false);
+      } finally {
+        if (alive) setHydratingGrade(false);
       }
     }
 
-    resolveGrade();
+    resolveStudentGrade();
     return () => {
-      active = false;
+      alive = false;
     };
-  }, []);
+  }, [gradeId]);
 
   useEffect(() => {
     const controller = new AbortController();
