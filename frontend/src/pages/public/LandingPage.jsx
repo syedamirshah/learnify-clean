@@ -576,20 +576,37 @@ const chapterPalettes = [
       </section>
 
       {/* Browse Shortcuts */}
-      <section className="mt-8 px-3 md:px-4 max-w-[1400px] mx-auto">
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-          <Link
-            to="/topic-index"
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-50 px-8 py-3 text-lg font-extrabold text-green-800 shadow-sm transition hover:bg-green-100 hover:shadow"
-          >
-            Topic Index 📚
-          </Link>
-          <Link
-            to="/weekly-plan"
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-50 px-8 py-3 text-lg font-extrabold text-green-800 shadow-sm transition hover:bg-green-100 hover:shadow"
-          >
-            Weekly Plan 🗓️
-          </Link>
+      <section className="mt-6 px-3 md:px-4 max-w-[1400px] mx-auto">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            <div className="h-[2px] w-14 sm:w-20 bg-green-300 rounded-full" />
+            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-green-700">
+              Learning Paths
+            </p>
+            <div className="h-[2px] w-14 sm:w-20 bg-green-300 rounded-full" />
+          </div>
+
+          <div className="mt-2 text-center">
+            <h2 className="text-lg sm:text-xl font-bold text-green-900">Choose Your Learning Path</h2>
+            <p className="mt-1 text-xs sm:text-sm text-gray-600">
+              Browse exercises by Topic Index or Weekly Plan.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link
+              to="/topic-index"
+              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
+            >
+              Topic Index 📚
+            </Link>
+            <Link
+              to="/weekly-plan"
+              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
+            >
+              Weekly Plan 🗓️
+            </Link>
+          </div>
         </div>
       </section>
         {/* Content Explorer */}
