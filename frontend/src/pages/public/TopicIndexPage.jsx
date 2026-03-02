@@ -7,6 +7,16 @@ import { buildPublicNavItems } from "../../utils/publicNav";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
+const groupBySubject = (quizzes = []) => {
+  const groups = {};
+  quizzes.forEach((q) => {
+    const subject = q?.subject?.name || "General";
+    if (!groups[subject]) groups[subject] = [];
+    groups[subject].push(q);
+  });
+  return groups;
+};
+
 const TopicIndexPage = () => {
   const auth = useMemo(() => getAuthSnapshot(), []);
   const { role, userFullName, gradeId, isStudent, isAuthed } = auth;
@@ -163,23 +173,30 @@ const TopicIndexPage = () => {
                     {topic.quizzes.length === 0 ? (
                       <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
                     ) : (
-                      topic.quizzes.map((quiz, index) => (
-                        <div
-                          key={`topic-quiz-${topic.id}-${quiz.id}`}
-                          className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-gray-800">Lesson {index + 1}: {quiz.title}</p>
-                            <p className="truncate text-[11px] text-gray-500">
-                              {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
-                            </p>
+                      Object.entries(groupBySubject(topic.quizzes)).map(([subjectName, quizzes]) => (
+                        <div key={`topic-subject-${topic.id}-${subjectName}`} className="mt-3">
+                          <h3 className="mb-1 text-sm font-semibold text-green-800">{subjectName}</h3>
+                          <div className="space-y-2">
+                            {quizzes.map((quiz, index) => (
+                              <div
+                                key={`topic-quiz-${topic.id}-${quiz.id}`}
+                                className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                              >
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-gray-800">Lesson {index + 1}: {quiz.title}</p>
+                                  <p className="truncate text-[11px] text-gray-500">
+                                    {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
+                                  </p>
+                                </div>
+                                <Link
+                                  to={`/student/attempt-quiz/${quiz.id}`}
+                                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+                                >
+                                  Attempt
+                                </Link>
+                              </div>
+                            ))}
                           </div>
-                          <Link
-                            to={`/student/attempt-quiz/${quiz.id}`}
-                            className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                          >
-                            Attempt
-                          </Link>
                         </div>
                       ))
                     )}
