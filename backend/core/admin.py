@@ -10,7 +10,7 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django.utils.safestring import mark_safe
 from django.shortcuts import redirect , render , get_object_or_404
 from .models import Quiz, QuizQuestionAssignment, StudentQuizAttempt
-from .models import Grade, Subject, Chapter
+from .models import Grade, Subject, Chapter, Topic, Week, TopicQuiz, WeekQuiz
 from django.contrib import messages
 from django import forms
 from .admin_views import QuizFormattingForm
@@ -453,6 +453,34 @@ class SubjectAdmin(admin.ModelAdmin):
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ['name', 'subject']
 
+
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
+    list_display = ['name', 'grade', 'created_at']
+    search_fields = ['name', 'grade__name']
+    list_filter = ['grade']
+
+
+@admin.register(Week)
+class WeekAdmin(admin.ModelAdmin):
+    list_display = ['name', 'grade', 'created_at']
+    search_fields = ['name', 'grade__name']
+    list_filter = ['grade']
+
+
+@admin.register(TopicQuiz)
+class TopicQuizAdmin(admin.ModelAdmin):
+    list_display = ['topic', 'quiz']
+    search_fields = ['topic__name', 'quiz__title']
+    list_filter = ['topic__grade']
+
+
+@admin.register(WeekQuiz)
+class WeekQuizAdmin(admin.ModelAdmin):
+    list_display = ['week', 'quiz']
+    search_fields = ['week__name', 'quiz__title']
+    list_filter = ['week__grade']
+
 def quiz_formatting_view(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)
 
@@ -469,7 +497,6 @@ def quiz_formatting_view(request, quiz_id):
         'quiz': quiz,
         'form': form
     })
-
 
 
 

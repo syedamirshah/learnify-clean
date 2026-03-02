@@ -218,6 +218,30 @@ class Chapter(models.Model):
         return f"{self.name} ({self.subject.name})"
 
 
+class Topic(models.Model):
+    name = models.CharField(max_length=150)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='topics')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return f"{self.name} ({self.grade.name})"
+
+
+class Week(models.Model):
+    name = models.CharField(max_length=150)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='weeks')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('grade__name', 'name')
+
+    def __str__(self):
+        return f"{self.name} ({self.grade.name})"
+
+
 class Quiz(models.Model):
     title = models.CharField(max_length=255)
     grade = models.ForeignKey(Grade, on_delete=models.SET_NULL, null=True)
@@ -246,6 +270,28 @@ class QuizQuestionAssignment(models.Model):
 
     def __str__(self):
         return f"{self.quiz.title} ‚Üí {self.question_bank.title} ({self.num_questions} questions)"
+
+
+class TopicQuiz(models.Model):
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='topic_quizzes')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='quiz_topics')
+
+    class Meta:
+        unique_together = ('topic', 'quiz')
+
+    def __str__(self):
+        return f"{self.topic.name} → {self.quiz.title}"
+
+
+class WeekQuiz(models.Model):
+    week = models.ForeignKey(Week, on_delete=models.CASCADE, related_name='week_quizzes')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='quiz_weeks')
+
+    class Meta:
+        unique_together = ('week', 'quiz')
+
+    def __str__(self):
+        return f"{self.week.name} → {self.quiz.title}"
 
 
 class StudentQuizAttempt(models.Model):
