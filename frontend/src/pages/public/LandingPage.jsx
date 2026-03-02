@@ -737,13 +737,13 @@ const chapterPalettes = [
                           {topic.quizzes.length === 0 ? (
                             <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
                           ) : (
-                            topic.quizzes.map((quiz) => (
+                            topic.quizzes.map((quiz, index) => (
                               <div
                                 key={`topic-quiz-${topic.id}-${quiz.id}`}
                                 className="flex flex-col gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                               >
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-gray-800">{quiz.title}</p>
+                                  <p className="truncate text-sm font-medium text-gray-800">Lesson {index + 1}: {quiz.title}</p>
                                   <p className="truncate text-[11px] text-gray-500">
                                     {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
                                   </p>
@@ -792,13 +792,13 @@ const chapterPalettes = [
                           {week.quizzes.length === 0 ? (
                             <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
                           ) : (
-                            week.quizzes.map((quiz) => (
+                            week.quizzes.map((quiz, index) => (
                               <div
                                 key={`week-quiz-${week.id}-${quiz.id}`}
                                 className="flex flex-col gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                               >
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-gray-800">{quiz.title}</p>
+                                  <p className="truncate text-sm font-medium text-gray-800">Lesson {index + 1}: {quiz.title}</p>
                                   <p className="truncate text-[11px] text-gray-500">
                                     {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
                                   </p>

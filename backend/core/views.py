@@ -1849,13 +1849,13 @@ def landing_topics_view(request):
     include_quizzes = str(request.GET.get("include_quizzes", "1")).lower() in ("1", "true")
 
     try:
-        topics_qs = Topic.objects.select_related("grade").order_by("grade__name", "name")
+        topics_qs = Topic.objects.select_related("grade").all()
         if grade_id:
             topics_qs = topics_qs.filter(grade_id=grade_id)
 
         topicquiz_qs = TopicQuiz.objects.select_related(
             "quiz", "quiz__grade", "quiz__subject", "quiz__chapter"
-        ).order_by("quiz__title")
+        ).order_by("order", "quiz__title")
         if grade_id:
             topicquiz_qs = topicquiz_qs.filter(quiz__grade_id=grade_id)
         if subject_id:
@@ -1898,13 +1898,13 @@ def landing_weeks_view(request):
     include_quizzes = str(request.GET.get("include_quizzes", "1")).lower() in ("1", "true")
 
     try:
-        weeks_qs = Week.objects.select_related("grade").order_by("grade__name", "name")
+        weeks_qs = Week.objects.select_related("grade").all()
         if grade_id:
             weeks_qs = weeks_qs.filter(grade_id=grade_id)
 
         weekquiz_qs = WeekQuiz.objects.select_related(
             "quiz", "quiz__grade", "quiz__subject", "quiz__chapter"
-        ).order_by("quiz__title")
+        ).order_by("order", "quiz__title")
         if grade_id:
             weekquiz_qs = weekquiz_qs.filter(quiz__grade_id=grade_id)
         if subject_id:

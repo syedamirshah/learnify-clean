@@ -456,28 +456,32 @@ class ChapterAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    list_display = ['name', 'grade', 'created_at']
+    list_display = ['name', 'grade', 'order', 'created_at']
+    list_editable = ('order',)
     search_fields = ['name', 'grade__name']
     list_filter = ['grade']
 
 
 @admin.register(Week)
 class WeekAdmin(admin.ModelAdmin):
-    list_display = ['name', 'grade', 'created_at']
+    list_display = ['name', 'grade', 'order', 'created_at']
+    list_editable = ('order',)
     search_fields = ['name', 'grade__name']
     list_filter = ['grade']
 
 
 @admin.register(TopicQuiz)
 class TopicQuizAdmin(admin.ModelAdmin):
-    list_display = ['topic', 'quiz']
+    list_display = ['topic', 'quiz', 'order']
+    list_editable = ('order',)
     search_fields = ['topic__name', 'quiz__title']
     list_filter = ['topic__grade']
 
 
 @admin.register(WeekQuiz)
 class WeekQuizAdmin(admin.ModelAdmin):
-    list_display = ['week', 'quiz']
+    list_display = ['week', 'quiz', 'order']
+    list_editable = ('order',)
     search_fields = ['week__name', 'quiz__title']
     list_filter = ['week__grade']
 
@@ -497,6 +501,5 @@ def quiz_formatting_view(request, quiz_id):
         'quiz': quiz,
         'form': form
     })
-
 
 

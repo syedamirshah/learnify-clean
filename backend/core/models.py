@@ -221,10 +221,11 @@ class Chapter(models.Model):
 class Topic(models.Model):
     name = models.CharField(max_length=150)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='topics')
+    order = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('grade', 'order', 'name')
 
     def __str__(self):
         return f"{self.name} ({self.grade.name})"
@@ -233,10 +234,11 @@ class Topic(models.Model):
 class Week(models.Model):
     name = models.CharField(max_length=150)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='weeks')
+    order = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ('grade__name', 'name')
+        ordering = ('grade', 'order', 'name')
 
     def __str__(self):
         return f"{self.name} ({self.grade.name})"
@@ -275,9 +277,11 @@ class QuizQuestionAssignment(models.Model):
 class TopicQuiz(models.Model):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='topic_quizzes')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='quiz_topics')
+    order = models.PositiveIntegerField(default=1)
 
     class Meta:
         unique_together = ('topic', 'quiz')
+        ordering = ('order',)
 
     def __str__(self):
         return f"{self.topic.name} → {self.quiz.title}"
@@ -286,9 +290,11 @@ class TopicQuiz(models.Model):
 class WeekQuiz(models.Model):
     week = models.ForeignKey(Week, on_delete=models.CASCADE, related_name='week_quizzes')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='quiz_weeks')
+    order = models.PositiveIntegerField(default=1)
 
     class Meta:
         unique_together = ('week', 'quiz')
+        ordering = ('order',)
 
     def __str__(self):
         return f"{self.week.name} → {self.quiz.title}"
