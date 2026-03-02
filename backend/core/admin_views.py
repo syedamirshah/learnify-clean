@@ -952,9 +952,13 @@ def get_subjects_by_grade(request):
     return JsonResponse([], safe=False)
 
 def get_chapters_by_subject(request):
-    subject_id = request.GET.get('subject_id')
+    subject_id = request.GET.get('subject_id') or request.GET.get('subject')
+    grade_id = request.GET.get('grade_id') or request.GET.get('grade')
     if subject_id:
-        chapters = Chapter.objects.filter(subject_id=subject_id).values('id', 'name')
+        chapters = Chapter.objects.filter(subject_id=subject_id)
+        if grade_id:
+            chapters = chapters.filter(subject__grade_id=grade_id)
+        chapters = chapters.values('id', 'name')
         return JsonResponse(list(chapters), safe=False)
     return JsonResponse([], safe=False)
 
@@ -981,7 +985,11 @@ def _redirect_with_filters(route_name, route_kwargs, grade_id, subject_id, chapt
 def _quiz_filter_context(selected_grade, selected_subject, selected_chapter):
     grades = Grade.objects.all().order_by('name')
     subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.none()
-    chapters = Chapter.objects.filter(subject_id=selected_subject).order_by('name') if selected_subject else Chapter.objects.none()
+    chapters = (
+        Chapter.objects.filter(subject_id=selected_subject, subject__grade_id=selected_grade).order_by('name')
+        if selected_grade and selected_subject
+        else Chapter.objects.none()
+    )
 
     quizzes = Quiz.objects.select_related('grade', 'subject', 'chapter').all()
     if selected_grade:

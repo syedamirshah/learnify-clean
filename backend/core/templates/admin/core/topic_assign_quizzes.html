@@ -21,7 +21,7 @@
     <form method="get" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
         <label class="mb-1 block text-sm font-medium text-gray-700">Grade</label>
-        <select name="grade" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+        <select id="filter-grade" name="grade" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
           <option value="">All grades</option>
           {% for grade in grades %}
             <option value="{{ grade.id }}" {% if selected_grade == grade.id|stringformat:'s' %}selected{% endif %}>{{ grade.name }}</option>
@@ -30,7 +30,7 @@
       </div>
       <div>
         <label class="mb-1 block text-sm font-medium text-gray-700">Subject</label>
-        <select name="subject" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+        <select id="filter-subject" name="subject" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
           <option value="">All subjects</option>
           {% for subject in subjects %}
             <option value="{{ subject.id }}" {% if selected_subject == subject.id|stringformat:'s' %}selected{% endif %}>{{ subject.name }}</option>
@@ -39,7 +39,7 @@
       </div>
       <div>
         <label class="mb-1 block text-sm font-medium text-gray-700">Chapter</label>
-        <select name="chapter" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+        <select id="filter-chapter" name="chapter" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
           <option value="">All chapters</option>
           {% for chapter in chapters %}
             <option value="{{ chapter.id }}" {% if selected_chapter == chapter.id|stringformat:'s' %}selected{% endif %}>{{ chapter.name }}</option>
@@ -101,4 +101,70 @@
     </form>
   </div>
 </div>
+<script>
+  (function () {
+    const gradeSelect = document.getElementById("filter-grade");
+    const subjectSelect = document.getElementById("filter-subject");
+    const chapterSelect = document.getElementById("filter-chapter");
+
+    if (!gradeSelect || !subjectSelect || !chapterSelect) return;
+
+    const resetSelect = (selectEl, placeholder) => {
+      selectEl.innerHTML = "";
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = placeholder;
+      selectEl.appendChild(opt);
+    };
+
+    const fetchSubjects = async (gradeId) => {
+      resetSelect(subjectSelect, "All subjects");
+      resetSelect(chapterSelect, "All chapters");
+      if (!gradeId) return;
+
+      try {
+        const res = await fetch(`/admin/api/subjects/?grade_id=${encodeURIComponent(gradeId)}`);
+        const data = await res.json();
+        (Array.isArray(data) ? data : []).forEach((subject) => {
+          const opt = document.createElement("option");
+          opt.value = subject.id;
+          opt.textContent = subject.name;
+          subjectSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error("Failed to fetch subjects:", err);
+      }
+    };
+
+    const fetchChapters = async (gradeId, subjectId) => {
+      resetSelect(chapterSelect, "All chapters");
+      if (!gradeId || !subjectId) return;
+
+      try {
+        const params = new URLSearchParams({
+          grade_id: gradeId,
+          subject_id: subjectId,
+        });
+        const res = await fetch(`/admin/api/chapters/?${params.toString()}`);
+        const data = await res.json();
+        (Array.isArray(data) ? data : []).forEach((chapter) => {
+          const opt = document.createElement("option");
+          opt.value = chapter.id;
+          opt.textContent = chapter.name;
+          chapterSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error("Failed to fetch chapters:", err);
+      }
+    };
+
+    gradeSelect.addEventListener("change", async () => {
+      await fetchSubjects(gradeSelect.value);
+    });
+
+    subjectSelect.addEventListener("change", async () => {
+      await fetchChapters(gradeSelect.value, subjectSelect.value);
+    });
+  })();
+</script>
 {% endblock %}
