@@ -588,9 +588,6 @@ const chapterPalettes = [
 
           <div className="mt-2 text-center">
             <h2 className="text-lg sm:text-xl font-bold text-green-900">Choose Your Learning Path</h2>
-            <p className="mt-1 text-xs sm:text-sm text-gray-600">
-              Browse exercises by Topic Index or Weekly Plan.
-            </p>
           </div>
 
           <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -598,13 +595,13 @@ const chapterPalettes = [
               to="/topic-index"
               className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
             >
-              Topic Index 📚
+              Topic Index
             </Link>
             <Link
               to="/weekly-plan"
               className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
             >
-              Weekly Plan 🗓️
+              Weekly Plan
             </Link>
           </div>
         </div>
