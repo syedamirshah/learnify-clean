@@ -726,6 +726,19 @@ const chapterPalettes = [
                         <div>
                           <p className="font-semibold text-gray-900">{topic.name}</p>
                           <p className="text-xs text-gray-500">{topic.grade?.name || "Unknown Grade"}</p>
+                          {topic.progress_percent !== null && topic.progress_percent !== undefined && (
+                            <div className="mt-2">
+                              <div className="text-xs text-gray-600">
+                                {topic.completed_quizzes} / {topic.total_quizzes} completed
+                              </div>
+                              <div className="w-full bg-gray-200 h-2 rounded mt-1">
+                                <div
+                                  className="bg-green-500 h-2 rounded"
+                                  style={{ width: `${topic.progress_percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
                           {topic.quiz_count || 0} quizzes
@@ -781,6 +794,19 @@ const chapterPalettes = [
                         <div>
                           <p className="font-semibold text-gray-900">{week.name}</p>
                           <p className="text-xs text-gray-500">{week.grade?.name || "Unknown Grade"}</p>
+                          {week.progress_percent !== null && week.progress_percent !== undefined && (
+                            <div className="mt-2">
+                              <div className="text-xs text-gray-600">
+                                {week.completed_quizzes} / {week.total_quizzes} completed
+                              </div>
+                              <div className="w-full bg-gray-200 h-2 rounded mt-1">
+                                <div
+                                  className="bg-green-500 h-2 rounded"
+                                  style={{ width: `${week.progress_percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
                           {week.quiz_count || 0} quizzes

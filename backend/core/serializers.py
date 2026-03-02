@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Quiz, QuizQuestionAssignment
+from .models import (
+    Quiz, QuizQuestionAssignment, Topic, Week, TopicProgress, WeekProgress
+)
 from .models import User
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -175,17 +177,107 @@ class QuizMiniSerializer(serializers.Serializer):
     chapter = ChapterMiniSerializer(allow_null=True)
 
 
-class TopicLandingSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    name = serializers.CharField()
+class TopicLandingSerializer(serializers.ModelSerializer):
     grade = GradeMiniSerializer(allow_null=True)
-    quiz_count = serializers.IntegerField()
-    quizzes = QuizMiniSerializer(many=True, required=False)
+    quiz_count = serializers.SerializerMethodField()
+    quizzes = serializers.SerializerMethodField()
+    progress_percent = serializers.SerializerMethodField()
+    completed_quizzes = serializers.SerializerMethodField()
+    total_quizzes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Topic
+        fields = [
+            'id', 'name', 'grade', 'quiz_count', 'quizzes',
+            'progress_percent', 'completed_quizzes', 'total_quizzes',
+        ]
+
+    def _prefetched_topic_links(self, obj):
+        return list(getattr(obj, 'topic_quizzes', []).all()) if hasattr(obj, 'topic_quizzes') else []
+
+    def get_quiz_count(self, obj):
+        return len(self._prefetched_topic_links(obj))
+
+    def get_quizzes(self, obj):
+        include_quizzes = self.context.get("include_quizzes", True)
+        if not include_quizzes:
+            return []
+        quizzes = [link.quiz for link in self._prefetched_topic_links(obj) if getattr(link, 'quiz', None)]
+        return QuizMiniSerializer(quizzes, many=True).data
+
+    def get_progress_percent(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+
+        progress = TopicProgress.objects.filter(user=user, topic=obj).first()
+        if not progress or progress.total_quizzes == 0:
+            return 0
+        return int((progress.completed_quizzes / progress.total_quizzes) * 100)
+
+    def get_completed_quizzes(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+        progress = TopicProgress.objects.filter(user=user, topic=obj).first()
+        return progress.completed_quizzes if progress else 0
+
+    def get_total_quizzes(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+        progress = TopicProgress.objects.filter(user=user, topic=obj).first()
+        return progress.total_quizzes if progress else 0
 
 
-class WeekLandingSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    name = serializers.CharField()
+class WeekLandingSerializer(serializers.ModelSerializer):
     grade = GradeMiniSerializer(allow_null=True)
-    quiz_count = serializers.IntegerField()
-    quizzes = QuizMiniSerializer(many=True, required=False)
+    quiz_count = serializers.SerializerMethodField()
+    quizzes = serializers.SerializerMethodField()
+    progress_percent = serializers.SerializerMethodField()
+    completed_quizzes = serializers.SerializerMethodField()
+    total_quizzes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Week
+        fields = [
+            'id', 'name', 'grade', 'quiz_count', 'quizzes',
+            'progress_percent', 'completed_quizzes', 'total_quizzes',
+        ]
+
+    def _prefetched_week_links(self, obj):
+        return list(getattr(obj, 'week_quizzes', []).all()) if hasattr(obj, 'week_quizzes') else []
+
+    def get_quiz_count(self, obj):
+        return len(self._prefetched_week_links(obj))
+
+    def get_quizzes(self, obj):
+        include_quizzes = self.context.get("include_quizzes", True)
+        if not include_quizzes:
+            return []
+        quizzes = [link.quiz for link in self._prefetched_week_links(obj) if getattr(link, 'quiz', None)]
+        return QuizMiniSerializer(quizzes, many=True).data
+
+    def get_progress_percent(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+
+        progress = WeekProgress.objects.filter(user=user, week=obj).first()
+        if not progress or progress.total_quizzes == 0:
+            return 0
+        return int((progress.completed_quizzes / progress.total_quizzes) * 100)
+
+    def get_completed_quizzes(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+        progress = WeekProgress.objects.filter(user=user, week=obj).first()
+        return progress.completed_quizzes if progress else 0
+
+    def get_total_quizzes(self, obj):
+        user = self.context.get("user")
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+        progress = WeekProgress.objects.filter(user=user, week=obj).first()
+        return progress.total_quizzes if progress else 0

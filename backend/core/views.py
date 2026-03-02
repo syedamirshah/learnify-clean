@@ -1925,20 +1925,15 @@ def landing_topics_view(request):
             Prefetch("topic_quizzes", queryset=topicquiz_qs)
         )
 
-        results = []
-        for topic in topics:
-            quizzes = [link.quiz for link in topic.topic_quizzes.all() if link.quiz]
-            item = {
-                "id": topic.id,
-                "name": topic.name,
-                "grade": {"id": topic.grade.id, "name": topic.grade.name} if topic.grade else None,
-                "quiz_count": len(quizzes),
+        serializer = TopicLandingSerializer(
+            topics,
+            many=True,
+            context={
+                "request": request,
+                "user": request.user,
+                "include_quizzes": include_quizzes,
             }
-            if include_quizzes:
-                item["quizzes"] = [_quiz_leaf_payload(q) for q in quizzes]
-            results.append(item)
-
-        serializer = TopicLandingSerializer(results, many=True)
+        )
         return Response({"results": serializer.data})
     except (ProgrammingError, OperationalError) as exc:
         if _is_missing_topic_week_table_error(exc):
@@ -1974,20 +1969,15 @@ def landing_weeks_view(request):
             Prefetch("week_quizzes", queryset=weekquiz_qs)
         )
 
-        results = []
-        for week in weeks:
-            quizzes = [link.quiz for link in week.week_quizzes.all() if link.quiz]
-            item = {
-                "id": week.id,
-                "name": week.name,
-                "grade": {"id": week.grade.id, "name": week.grade.name} if week.grade else None,
-                "quiz_count": len(quizzes),
+        serializer = WeekLandingSerializer(
+            weeks,
+            many=True,
+            context={
+                "request": request,
+                "user": request.user,
+                "include_quizzes": include_quizzes,
             }
-            if include_quizzes:
-                item["quizzes"] = [_quiz_leaf_payload(q) for q in quizzes]
-            results.append(item)
-
-        serializer = WeekLandingSerializer(results, many=True)
+        )
         return Response({"results": serializer.data})
     except (ProgrammingError, OperationalError) as exc:
         if _is_missing_topic_week_table_error(exc):
