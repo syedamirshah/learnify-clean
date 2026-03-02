@@ -22,6 +22,7 @@ const TopicIndexPage = () => {
   const [historyMap, setHistoryMap] = useState({});
   const [gradeId, setGradeId] = useState("");
   const [hydrating, setHydrating] = useState(false);
+  const [hydrationChecked, setHydrationChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -43,12 +44,20 @@ const TopicIndexPage = () => {
     let alive = true;
 
     const resolveStudentGrade = async () => {
-      if (!isStudent || gradeId || !accessToken) return;
+      if (!isStudent || !accessToken) {
+        if (alive) setHydrationChecked(true);
+        return;
+      }
+
+      if (gradeId) {
+        if (alive) setHydrationChecked(true);
+        return;
+      }
 
       setHydrating(true);
       try {
         const result = await hydrateStudentGradeIdFromProfile(API);
-        if (result?.unauthorized) {
+        if (result?.reason === "401") {
           clearAuth();
           window.location.href = "/login";
           return;
@@ -68,7 +77,10 @@ const TopicIndexPage = () => {
       } catch {
         if (alive) setAuth(getAuthSnapshot());
       } finally {
-        if (alive) setHydrating(false);
+        if (alive) {
+          setHydrating(false);
+          setHydrationChecked(true);
+        }
       }
     };
 
@@ -82,7 +94,7 @@ const TopicIndexPage = () => {
     const controller = new AbortController();
 
     const fetchTopics = async () => {
-      if (isStudent && !gradeId && accessToken && hydrating) return;
+      if (isStudent && !gradeId && accessToken && (hydrating || !hydrationChecked)) return;
 
       setLoading(true);
       setError("");
@@ -115,7 +127,7 @@ const TopicIndexPage = () => {
 
     fetchTopics();
     return () => controller.abort();
-  }, [isStudent, gradeId, accessToken, hydrating]);
+  }, [isStudent, gradeId, accessToken, hydrating, hydrationChecked]);
 
   useEffect(() => {
     if (!isStudent || !accessToken) return;
@@ -189,9 +201,9 @@ const TopicIndexPage = () => {
         </header>
 
         <section className="space-y-4">
-          {isStudent && !gradeId && accessToken && hydrating ? (
+          {isStudent && !gradeId && accessToken && (hydrating || !hydrationChecked) ? (
             <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
-          ) : isStudent && !gradeId ? (
+          ) : isStudent && !gradeId && accessToken && hydrationChecked ? (
             <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-4">
               Your grade is not set. Please contact admin.
             </div>
