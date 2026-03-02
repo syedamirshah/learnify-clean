@@ -21,7 +21,7 @@ const TopicIndexPage = () => {
   const [topics, setTopics] = useState([]);
   const [historyMap, setHistoryMap] = useState({});
   const [gradeId, setGradeId] = useState("");
-  const [hydratingGrade, setHydratingGrade] = useState(true);
+  const [hydrating, setHydrating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -42,28 +42,10 @@ const TopicIndexPage = () => {
   useEffect(() => {
     let alive = true;
 
-    async function resolveStudentGrade() {
-      const snap = getAuthSnapshot();
-      const studentRole = snap.role === "student";
+    const resolveStudentGrade = async () => {
+      if (!isStudent || gradeId || !accessToken) return;
 
-      if (!studentRole) {
-        if (alive) setHydratingGrade(false);
-        return;
-      }
-
-      const existing =
-        gradeId ||
-        localStorage.getItem("user_grade_id") ||
-        localStorage.getItem("grade_id");
-
-      if (existing) {
-        if (alive) {
-          setGradeId(String(existing));
-          setHydratingGrade(false);
-        }
-        return;
-      }
-
+      setHydrating(true);
       try {
         const result = await hydrateStudentGradeIdFromProfile(API);
         if (result?.unauthorized) {
@@ -71,33 +53,37 @@ const TopicIndexPage = () => {
           window.location.href = "/login";
           return;
         }
-        const hydrated =
+
+        const refreshedAuth = getAuthSnapshot();
+        const hydratedGradeId =
+          refreshedAuth.gradeId ||
           localStorage.getItem("user_grade_id") ||
           localStorage.getItem("grade_id") ||
           "";
+
         if (alive) {
-          setGradeId(hydrated ? String(hydrated) : "");
-          setAuth(getAuthSnapshot());
+          setAuth(refreshedAuth);
+          setGradeId(hydratedGradeId ? String(hydratedGradeId) : "");
         }
       } catch {
-        clearAuth();
-        window.location.href = "/login";
-        return;
+        if (alive) setAuth(getAuthSnapshot());
       } finally {
-        if (alive) setHydratingGrade(false);
+        if (alive) setHydrating(false);
       }
-    }
+    };
 
     resolveStudentGrade();
     return () => {
       alive = false;
     };
-  }, [gradeId]);
+  }, [isStudent, accessToken, gradeId]);
 
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchTopics = async () => {
+      if (isStudent && !gradeId && accessToken && hydrating) return;
+
       setLoading(true);
       setError("");
 
@@ -129,7 +115,7 @@ const TopicIndexPage = () => {
 
     fetchTopics();
     return () => controller.abort();
-  }, [isStudent, gradeId]);
+  }, [isStudent, gradeId, accessToken, hydrating]);
 
   useEffect(() => {
     if (!isStudent || !accessToken) return;
@@ -203,9 +189,9 @@ const TopicIndexPage = () => {
         </header>
 
         <section className="space-y-4">
-          {isStudent && hydratingGrade ? (
+          {isStudent && !gradeId && accessToken && hydrating ? (
             <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
-          ) : isStudent && !hydratingGrade && !gradeId ? (
+          ) : isStudent && !gradeId ? (
             <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-4">
               Your grade is not set. Please contact admin.
             </div>
