@@ -1090,13 +1090,7 @@ def topic_detail_assign_view(request, topic_id):
             TopicQuiz.objects.filter(topic=topic, quiz_id__in=to_remove).delete()
 
         messages.success(request, "Topic quiz assignments updated.")
-        return _redirect_with_filters(
-            'topic-assign',
-            {'topic_id': topic.id},
-            selected_grade,
-            selected_subject,
-            selected_chapter,
-        )
+        return redirect('manage-topics')
 
     assigned_quiz_ids = set(
         TopicQuiz.objects.filter(topic=topic).values_list('quiz_id', flat=True)
