@@ -1079,15 +1079,12 @@ def topic_detail_assign_view(request, topic_id):
         )
 
         to_add = selected_ids - existing_ids
-        to_remove = existing_ids - selected_ids
 
         if to_add:
             TopicQuiz.objects.bulk_create(
                 [TopicQuiz(topic=topic, quiz_id=qid) for qid in to_add],
                 ignore_conflicts=True,
             )
-        if to_remove:
-            TopicQuiz.objects.filter(topic=topic, quiz_id__in=to_remove).delete()
 
         messages.success(request, "Topic quiz assignments updated.")
         return redirect('manage-topics')
