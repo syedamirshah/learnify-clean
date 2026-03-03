@@ -1039,8 +1039,9 @@ def manage_topics_view(request):
             if not grade:
                 messages.error(request, "Invalid grade selected.")
             else:
-                Topic.objects.create(name=name, grade=grade)
+                topic = Topic.objects.create(name=name, grade=grade)
                 messages.success(request, f"Topic '{name}' created successfully.")
+                return redirect('topic-assign', topic_id=topic.id)
         return redirect('manage-topics')
 
     topics = (
