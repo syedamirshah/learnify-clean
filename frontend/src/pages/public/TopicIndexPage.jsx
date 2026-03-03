@@ -154,13 +154,24 @@ const TopicIndexPage = () => {
     };
   }, [isStudent, accessToken]);
 
-  const sortedTopics = useMemo(
-    () =>
-      [...topics].sort((a, b) =>
+  const topicsByGrade = useMemo(() => {
+    const grouped = topics.reduce((acc, topic) => {
+      const gradeName = String(topic?.grade?.name || "Unknown Grade");
+      if (!acc[gradeName]) acc[gradeName] = [];
+      acc[gradeName].push(topic);
+      return acc;
+    }, {});
+
+    Object.keys(grouped).forEach((gradeName) => {
+      grouped[gradeName].sort((a, b) =>
         String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" })
-      ),
-    [topics]
-  );
+      );
+    });
+
+    return Object.entries(grouped).sort(([gradeA], [gradeB]) =>
+      gradeA.localeCompare(gradeB, undefined, { sensitivity: "base" })
+    );
+  }, [topics]);
 
   const scoreTextForQuiz = (quizId) => {
     if (!isStudent) return null;
@@ -214,46 +225,51 @@ const TopicIndexPage = () => {
           ) : topics.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No topics created yet.</div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {sortedTopics.map((topic) => (
-                <article key={topic.id} className="pb-2">
-                  <div className="flex items-baseline gap-3">
-                    <h2 className="text-2xl font-bold text-green-700">{topic.name}</h2>
-                  </div>
+            topicsByGrade.map(([gradeName, gradeTopics]) => (
+              <div key={gradeName} className="space-y-4">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-green-900">{gradeName}</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {gradeTopics.map((topic) => (
+                    <article key={topic.id} className="pb-2">
+                      <div className="flex items-baseline gap-3">
+                        <h3 className="text-2xl font-bold text-green-700">{topic.name}</h3>
+                      </div>
 
-                  <div className="mt-2 space-y-1.5">
-                    {Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
-                      topic.quizzes.map((quiz, index) => {
-                        const scoreText = scoreTextForQuiz(quiz.id);
-                        return (
-                          <Link
-                            key={`topic-quiz-${topic.id}-${quiz.id}`}
-                            to={`/student/attempt-quiz/${quiz.id}`}
-                            className="group block rounded-md px-2 py-1 hover:bg-green-50"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm sm:text-[1.05rem] leading-snug text-gray-900">
-                                <span className="mr-2 text-black">{index + 1}</span>
-                                <span className="text-green-800 group-hover:text-green-900">
-                                  {displayQuizTitle(quiz.title)}
-                                </span>
-                              </p>
-                              {scoreText ? (
-                                <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
-                                  {scoreText}
-                                </span>
-                              ) : null}
-                            </div>
-                          </Link>
-                        );
-                      })
-                    ) : (
-                      <p className="text-sm text-gray-500">No quizzes assigned yet.</p>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
+                      <div className="mt-2 space-y-1.5">
+                        {Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
+                          topic.quizzes.map((quiz, index) => {
+                            const scoreText = scoreTextForQuiz(quiz.id);
+                            return (
+                              <Link
+                                key={`topic-quiz-${topic.id}-${quiz.id}`}
+                                to={`/student/attempt-quiz/${quiz.id}`}
+                                className="group block rounded-md px-2 py-1 hover:bg-green-50"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-sm sm:text-[1.05rem] leading-snug text-gray-900">
+                                    <span className="mr-2 text-black">{index + 1}</span>
+                                    <span className="text-green-800 group-hover:text-green-900">
+                                      {displayQuizTitle(quiz.title)}
+                                    </span>
+                                  </p>
+                                  {scoreText ? (
+                                    <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+                                      {scoreText}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </Link>
+                            );
+                          })
+                        ) : (
+                          <p className="text-sm text-gray-500">No quizzes assigned yet.</p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ))
           )}
         </section>
       </div>
