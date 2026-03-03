@@ -1030,18 +1030,49 @@ def manage_topics_view(request):
         return guard
 
     if request.method == 'POST':
-        name = (request.POST.get('name') or '').strip()
-        grade_id = request.POST.get('grade')
-        if not name or not grade_id:
-            messages.error(request, "Topic name and grade are required.")
-        else:
-            grade = Grade.objects.filter(id=grade_id).first()
-            if not grade:
-                messages.error(request, "Invalid grade selected.")
+        action = (request.POST.get('action') or 'create').strip()
+
+        if action == 'create':
+            name = (request.POST.get('name') or '').strip()
+            grade_id = request.POST.get('grade')
+            if not name or not grade_id:
+                messages.error(request, "Topic name and grade are required.")
             else:
-                topic = Topic.objects.create(name=name, grade=grade)
-                messages.success(request, f"Topic '{name}' created successfully.")
-                return redirect('topic-assign', topic_id=topic.id)
+                grade = Grade.objects.filter(id=grade_id).first()
+                if not grade:
+                    messages.error(request, "Invalid grade selected.")
+                else:
+                    topic = Topic.objects.create(name=name, grade=grade)
+                    messages.success(request, f"Topic '{name}' created successfully.")
+                    return redirect('topic-assign', topic_id=topic.id)
+        elif action == 'edit':
+            topic_id = request.POST.get('topic_id')
+            name = (request.POST.get('name') or '').strip()
+            if not topic_id:
+                messages.error(request, "Invalid topic selected.")
+            elif not name:
+                messages.error(request, "Topic name is required.")
+            else:
+                topic = Topic.objects.filter(id=topic_id).first()
+                if not topic:
+                    messages.error(request, "Topic not found.")
+                else:
+                    topic.name = name
+                    topic.save(update_fields=['name'])
+                    messages.success(request, "Topic updated successfully.")
+        elif action == 'delete':
+            topic_id = request.POST.get('topic_id')
+            if not topic_id:
+                messages.error(request, "Invalid topic selected.")
+            else:
+                topic = Topic.objects.filter(id=topic_id).first()
+                if not topic:
+                    messages.error(request, "Topic not found.")
+                else:
+                    topic.delete()
+                    messages.success(request, "Topic deleted successfully.")
+        else:
+            messages.error(request, "Invalid action.")
         return redirect('manage-topics')
 
     topics = (
