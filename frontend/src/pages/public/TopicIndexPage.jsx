@@ -217,11 +217,8 @@ const TopicIndexPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {sortedTopics.map((topic) => (
                 <article key={topic.id} className="pb-2">
-                  <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex items-baseline gap-3">
                     <h2 className="text-2xl font-bold text-green-700">{topic.name}</h2>
-                    <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
-                      {topic.quiz_count || 0}
-                    </span>
                   </div>
 
                   <div className="mt-2 space-y-1.5">
