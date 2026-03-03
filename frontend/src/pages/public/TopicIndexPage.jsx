@@ -227,7 +227,25 @@ const TopicIndexPage = () => {
           ) : (
             topicsByGrade.map(([gradeName, gradeTopics]) => (
               <div key={gradeName} className="space-y-4">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-green-900">{gradeName}</h2>
+                <div className="flex items-center justify-center gap-6 mt-4 mb-6">
+                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+                  <div
+                    className="
+                      flex items-center justify-center whitespace-nowrap
+                      px-10 py-4
+                      rounded-full
+                      border-2 border-green-300
+                      bg-green-100
+                      shadow-md
+                      text-3xl
+                      font-extrabold
+                      text-green-900
+                    "
+                  >
+                    {gradeName}
+                  </div>
+                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {gradeTopics.map((topic) => (
                     <article key={topic.id} className="pb-2">
