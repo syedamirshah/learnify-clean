@@ -29,6 +29,7 @@ const WeeklyPlanPage = () => {
   const [hydrating, setHydrating] = useState(false);
   const [hydrationChecked, setHydrationChecked] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState(null);
+  const [lockMessage, setLockMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -180,6 +181,56 @@ const WeeklyPlanPage = () => {
     ).length;
   }, [sortedWeeks]);
 
+  const currentWeek = useMemo(() => {
+    if (!isStudent || sortedWeeks.length === 0) return null;
+
+    const firstIncomplete = sortedWeeks.find((week) => {
+      const completed = Number(week?.completed_quizzes ?? 0);
+      const total = Number(week?.total_quizzes ?? 0);
+      return total > 0 && completed < total;
+    });
+    if (firstIncomplete) return firstIncomplete;
+
+    const week30 = sortedWeeks.find((week) => Number(week?.order) === 30);
+    return week30 || sortedWeeks[sortedWeeks.length - 1];
+  }, [isStudent, sortedWeeks]);
+
+  const allWeeksCompleted = useMemo(() => {
+    if (!isStudent || sortedWeeks.length === 0) return false;
+    const weeksWithTotals = sortedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
+    if (weeksWithTotals.length === 0) return false;
+    return weeksWithTotals.every(
+      (week) => Number(week?.completed_quizzes ?? 0) === Number(week?.total_quizzes ?? 0)
+    );
+  }, [isStudent, sortedWeeks]);
+
+  const canOpenWeek = (week) => {
+    if (!isStudent) return true;
+    if (!currentWeek) return false;
+    if (allWeeksCompleted) return Number(week?.order) === 30;
+    return week.id === currentWeek.id;
+  };
+
+  const weekStatus = (week) => {
+    if (!isStudent) return "Browse";
+    const completed = Number(week?.completed_quizzes ?? 0);
+    const total = Number(week?.total_quizzes ?? 0);
+    const isComplete = total > 0 && completed === total;
+    if (allWeeksCompleted) return Number(week?.order) === 30 ? "Completed" : "Locked";
+    if (currentWeek && week.id === currentWeek.id) return "Active";
+    if (isComplete) return "Completed";
+    return "Locked";
+  };
+
+  const handleWeekToggle = (week) => {
+    setLockMessage("");
+    if (!canOpenWeek(week)) {
+      setLockMessage("Locked. Complete your current week first.");
+      return;
+    }
+    setExpandedWeek(expandedWeek === week.id ? null : week.id);
+  };
+
   return (
     <AppLayout
       className="font-[Nunito]"
@@ -199,7 +250,12 @@ const WeeklyPlanPage = () => {
         <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Weekly Plan</h1>
           <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
-          <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
+          {isStudent && (
+            <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
+          )}
+          {isStudent && allWeeksCompleted && (
+            <p className="mt-1 text-xs font-semibold text-green-700">Completed all weeks. Great work!</p>
+          )}
         </header>
 
         {!isStudent && (
@@ -235,40 +291,79 @@ const WeeklyPlanPage = () => {
           ) : error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
           ) : weeks.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No weeks created yet.</div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+              Weekly plan is not generated yet. Please ask admin to regenerate.
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <>
+              {lockMessage && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  {lockMessage}
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedWeeks.map((week) => {
                 const completed = Number(week?.completed_quizzes || 0);
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                 const percent = Number(week?.progress_percent ?? 0);
-                const isComplete = total > 0 && completed === total;
+                const status = weekStatus(week);
+                const isComplete = status === "Completed";
+                const isActive = status === "Active";
+                const isLocked = status === "Locked";
                 const isExpanded = expandedWeek === week.id;
 
                 return (
                   <article
                     key={week.id}
                     className={`border rounded-xl p-4 shadow-sm transition ${
-                      isComplete ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                      !isStudent
+                        ? "bg-white border-gray-200"
+                        : isComplete
+                        ? "bg-green-50 border-green-200"
+                        : isActive
+                        ? "bg-white border-green-300"
+                        : "bg-gray-50 border-gray-200"
                     }`}
                   >
                     <button
                       type="button"
-                      onClick={() => setExpandedWeek(isExpanded ? null : week.id)}
+                      onClick={() => handleWeekToggle(week)}
                       className="w-full text-left"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                        <span className="text-xs font-semibold text-gray-700">{isExpanded ? "Hide" : "View"}</span>
+                        <div className="flex items-center gap-2">
+                          {isLocked && isStudent ? <span className="text-xs">🔒</span> : null}
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              status === "Completed"
+                                ? "bg-green-100 text-green-800"
+                                : status === "Active"
+                                ? "bg-blue-100 text-blue-800"
+                                : status === "Locked"
+                                ? "bg-gray-200 text-gray-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {status}
+                          </span>
+                          <span className="text-xs font-semibold text-gray-700">
+                            {isExpanded && canOpenWeek(week) ? "Hide" : "View"}
+                          </span>
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">Completed {completed} / {total}</p>
+                      <p className="mt-1 text-xs text-gray-600">
+                        {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
+                      </p>
                     </button>
 
-                    {isExpanded && (
+                    {isExpanded && canOpenWeek(week) && (
                       <div className="mt-3">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
-                        </div>
+                        {isStudent && (
+                          <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
+                          </div>
+                        )}
 
                         {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
                           Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
@@ -301,7 +396,8 @@ const WeeklyPlanPage = () => {
                   </article>
                 );
               })}
-            </div>
+              </div>
+            </>
           )}
         </section>
       </div>
