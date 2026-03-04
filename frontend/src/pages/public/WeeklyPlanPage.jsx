@@ -29,7 +29,7 @@ const WeeklyPlanPage = () => {
   const [hydrating, setHydrating] = useState(false);
   const [hydrationChecked, setHydrationChecked] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState(null);
-  const [lockMessage, setLockMessage] = useState("");
+  const [lockedWeekId, setLockedWeekId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -135,15 +135,25 @@ const WeeklyPlanPage = () => {
         return;
       }
 
+      if (!isStudent && !selectedGradeId) {
+        setWeeks([]);
+        setError("Select a grade to view weekly plan.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const params = new URLSearchParams();
         const effectiveGradeId = isStudent ? gradeId : selectedGradeId;
         params.set("include_quizzes", "1");
         if (effectiveGradeId) params.set("grade", effectiveGradeId);
+        if (effectiveGradeId) params.set("subject", effectiveGradeId);
 
         const res = await fetch(`${API}landing/weeks/?${params.toString()}`, { signal: controller.signal });
         if (!res.ok) throw new Error(`Failed to fetch weeks (${res.status})`);
         const data = await res.json();
+        setExpandedWeek(null);
+        setLockedWeekId(null);
         setWeeks(Array.isArray(data?.results) ? data.results : []);
       } catch (err) {
         if (err?.name !== "AbortError") {
@@ -177,55 +187,69 @@ const WeeklyPlanPage = () => {
     return sortedWeeks.filter(
       (week) =>
         Number(week?.total_quizzes || 0) > 0 &&
-        Number(week?.completed_quizzes || 0) === Number(week?.total_quizzes || 0)
+        Number(week?.completed_quizzes || 0) >= Number(week?.total_quizzes || 0)
     ).length;
   }, [sortedWeeks]);
 
-  const currentWeek = useMemo(() => {
-    if (!isStudent || sortedWeeks.length === 0) return null;
-
-    const firstIncomplete = sortedWeeks.find((week) => {
-      const completed = Number(week?.completed_quizzes ?? 0);
-      const total = Number(week?.total_quizzes ?? 0);
-      return total > 0 && completed < total;
-    });
-    if (firstIncomplete) return firstIncomplete;
-
-    const week30 = sortedWeeks.find((week) => Number(week?.order) === 30);
-    return week30 || sortedWeeks[sortedWeeks.length - 1];
-  }, [isStudent, sortedWeeks]);
-
-  const allWeeksCompleted = useMemo(() => {
+  const studentProgressAvailable = useMemo(() => {
     if (!isStudent || sortedWeeks.length === 0) return false;
-    const weeksWithTotals = sortedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
-    if (weeksWithTotals.length === 0) return false;
-    return weeksWithTotals.every(
-      (week) => Number(week?.completed_quizzes ?? 0) === Number(week?.total_quizzes ?? 0)
+    return sortedWeeks.every(
+      (week) =>
+        week?.completed_quizzes !== null &&
+        week?.completed_quizzes !== undefined &&
+        week?.total_quizzes !== null &&
+        week?.total_quizzes !== undefined
     );
   }, [isStudent, sortedWeeks]);
 
+  const currentWeekOrder = useMemo(() => {
+    if (!isStudent || !studentProgressAvailable || sortedWeeks.length === 0) return null;
+
+    const meaningfulWeeks = sortedWeeks.filter((week) => Number(week?.total_quizzes || 0) > 0);
+    if (meaningfulWeeks.length === 0) return null;
+
+    const allComplete = meaningfulWeeks.every(
+      (week) => Number(week?.completed_quizzes || 0) >= Number(week?.total_quizzes || 0)
+    );
+    if (allComplete) return 30;
+
+    const firstIncomplete = meaningfulWeeks.find(
+      (week) => Number(week?.completed_quizzes || 0) < Number(week?.total_quizzes || 0)
+    );
+    return Number(firstIncomplete?.order || 30);
+  }, [isStudent, studentProgressAvailable, sortedWeeks]);
+
+  const allWeeksCompleted = useMemo(() => {
+    if (!isStudent || !studentProgressAvailable || sortedWeeks.length === 0) return false;
+    const weeksWithTotals = sortedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
+    if (weeksWithTotals.length === 0) return false;
+    return weeksWithTotals.every(
+      (week) => Number(week?.completed_quizzes ?? 0) >= Number(week?.total_quizzes ?? 0)
+    );
+  }, [isStudent, studentProgressAvailable, sortedWeeks]);
+
   const canOpenWeek = (week) => {
-    if (!isStudent) return true;
-    if (!currentWeek) return false;
+    if (!isStudent || !studentProgressAvailable) return true;
+    if (currentWeekOrder === null) return true;
     if (allWeeksCompleted) return Number(week?.order) === 30;
-    return week.id === currentWeek.id;
+    return Number(week?.order) === currentWeekOrder;
   };
 
   const weekStatus = (week) => {
-    if (!isStudent) return "Browse";
+    if (!isStudent || !studentProgressAvailable) return "Browse";
     const completed = Number(week?.completed_quizzes ?? 0);
     const total = Number(week?.total_quizzes ?? 0);
-    const isComplete = total > 0 && completed === total;
+    const isComplete = total === 0 || completed >= total;
     if (allWeeksCompleted) return Number(week?.order) === 30 ? "Completed" : "Locked";
-    if (currentWeek && week.id === currentWeek.id) return "Active";
+    if (currentWeekOrder !== null && Number(week?.order) === currentWeekOrder) return "Active";
     if (isComplete) return "Completed";
     return "Locked";
   };
 
   const handleWeekToggle = (week) => {
-    setLockMessage("");
+    setLockedWeekId(null);
     if (!canOpenWeek(week)) {
-      setLockMessage("Locked. Complete your current week first.");
+      setLockedWeekId(week.id);
       return;
     }
     setExpandedWeek(expandedWeek === week.id ? null : week.id);
@@ -252,6 +276,9 @@ const WeeklyPlanPage = () => {
           <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
           {isStudent && (
             <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
+          )}
+          {isStudent && currentWeekOrder !== null && (
+            <p className="mt-1 text-xs font-semibold text-green-700">Your current week: Week {currentWeekOrder}</p>
           )}
           {isStudent && allWeeksCompleted && (
             <p className="mt-1 text-xs font-semibold text-green-700">Completed all weeks. Great work!</p>
@@ -287,7 +314,15 @@ const WeeklyPlanPage = () => {
               Your grade is not set. Please contact admin.
             </div>
           ) : loading ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">Loading weeks...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div key={`week-skeleton-${idx}`} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm animate-pulse">
+                  <div className="h-5 w-24 bg-gray-200 rounded mb-3" />
+                  <div className="h-3 w-28 bg-gray-200 rounded mb-2" />
+                  <div className="h-2 w-full bg-gray-200 rounded" />
+                </div>
+              ))}
+            </div>
           ) : error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
           ) : weeks.length === 0 ? (
@@ -296,11 +331,6 @@ const WeeklyPlanPage = () => {
             </div>
           ) : (
             <>
-              {lockMessage && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  {lockMessage}
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedWeeks.map((week) => {
                 const completed = Number(week?.completed_quizzes || 0);
@@ -333,7 +363,6 @@ const WeeklyPlanPage = () => {
                       <div className="flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
                         <div className="flex items-center gap-2">
-                          {isLocked && isStudent ? <span className="text-xs">🔒</span> : null}
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                               status === "Completed"
@@ -345,7 +374,7 @@ const WeeklyPlanPage = () => {
                                 : "bg-gray-100 text-gray-700"
                             }`}
                           >
-                            {status}
+                            {status === "Locked" && isStudent ? "🔒 Locked" : status}
                           </span>
                           <span className="text-xs font-semibold text-gray-700">
                             {isExpanded && canOpenWeek(week) ? "Hide" : "View"}
@@ -355,6 +384,9 @@ const WeeklyPlanPage = () => {
                       <p className="mt-1 text-xs text-gray-600">
                         {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
                       </p>
+                      {lockedWeekId === week.id && isStudent && currentWeekOrder !== null && (
+                        <p className="mt-2 text-xs text-amber-700">Locked: Complete Week {currentWeekOrder} first.</p>
+                      )}
                     </button>
 
                     {isExpanded && canOpenWeek(week) && (
