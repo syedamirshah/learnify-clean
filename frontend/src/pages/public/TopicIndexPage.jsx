@@ -163,9 +163,12 @@ const TopicIndexPage = () => {
     }, {});
 
     Object.keys(grouped).forEach((gradeName) => {
-      grouped[gradeName].sort((a, b) =>
-        String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" })
-      );
+      grouped[gradeName].sort((a, b) => {
+        const aOrder = Number.isFinite(Number(a?.order)) ? Number(a.order) : null;
+        const bOrder = Number.isFinite(Number(b?.order)) ? Number(b.order) : null;
+        if (aOrder !== null && bOrder !== null && aOrder !== bOrder) return aOrder - bOrder;
+        return String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" });
+      });
     });
 
     return Object.entries(grouped).sort(([gradeA], [gradeB]) =>
@@ -246,14 +249,17 @@ const TopicIndexPage = () => {
                   </div>
                   <div className="h-[2px] w-28 bg-green-300 rounded-full" />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="columns-1 md:columns-2 gap-6">
                   {gradeTopics.map((topic) => (
-                    <article key={topic.id} className="pb-2">
+                    <article
+                      key={topic.id}
+                      className="mb-6 break-inside-avoid rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
+                    >
                       <div className="flex items-baseline gap-3">
                         <h3 className="text-2xl font-bold text-green-700">{topic.name}</h3>
                       </div>
 
-                      <div className="mt-2 space-y-1.5">
+                      <div className="mt-3 max-h-72 space-y-1.5 overflow-y-auto pr-1">
                         {Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
                           topic.quizzes.map((quiz, index) => {
                             const scoreText = scoreTextForQuiz(quiz.id);
