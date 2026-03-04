@@ -1951,9 +1951,11 @@ def landing_weeks_view(request):
     include_quizzes = str(request.GET.get("include_quizzes", "1")).lower() in ("1", "true")
 
     try:
-        weeks_qs = Week.objects.select_related("grade").all()
+        weeks_qs = Week.objects.select_related("grade", "subject").all()
         if grade_id:
             weeks_qs = weeks_qs.filter(grade_id=grade_id)
+        if subject_id:
+            weeks_qs = weeks_qs.filter(subject_id=subject_id)
 
         weekquiz_qs = WeekQuiz.objects.select_related(
             "quiz", "quiz__grade", "quiz__subject", "quiz__chapter"
@@ -1967,7 +1969,7 @@ def landing_weeks_view(request):
 
         weeks = weeks_qs.prefetch_related(
             Prefetch("week_quizzes", queryset=weekquiz_qs)
-        )
+        ).order_by("grade__name", "subject__name", "order", "name")
 
         serializer = WeekLandingSerializer(
             weeks,

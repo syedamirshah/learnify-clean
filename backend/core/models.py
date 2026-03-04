@@ -1,6 +1,7 @@
 import uuid
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
@@ -235,14 +236,19 @@ class Topic(models.Model):
 class Week(models.Model):
     name = models.CharField(max_length=150)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='weeks')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='weeks', null=True, blank=True)
     order = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('grade', 'subject', 'order'), name='uniq_week_grade_subject_order')
+        ]
         ordering = ('grade', 'order', 'name')
 
     def __str__(self):
-        return f"{self.name} ({self.grade.name})"
+        subject_name = self.subject.name if self.subject else "No Subject"
+        return f"{self.name} ({self.grade.name} - {subject_name})"
 
 
 class Quiz(models.Model):
@@ -296,6 +302,16 @@ class WeekQuiz(models.Model):
     class Meta:
         unique_together = ('week', 'quiz')
         ordering = ('order',)
+
+    def clean(self):
+        if self.week_id and self.quiz_id and self.week.subject_id:
+            clash = WeekQuiz.objects.filter(
+                quiz_id=self.quiz_id,
+                week__grade_id=self.week.grade_id,
+                week__subject_id=self.week.subject_id,
+            ).exclude(pk=self.pk)
+            if clash.exists():
+                raise ValidationError("This quiz is already assigned to another week for the same grade and subject.")
 
     def __str__(self):
         return f"{self.week.name} → {self.quiz.title}"

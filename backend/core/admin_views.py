@@ -1,4 +1,5 @@
 import openpyxl
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import UploadForm
@@ -30,6 +31,8 @@ from django import forms
 from django.core.paginator import Paginator
 from core.utils import send_account_notification_email  # ‚úÖ Add this at the top
 from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When, F, Func
+from django.db import transaction
+from django.db import models
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
@@ -984,7 +987,7 @@ def _redirect_with_filters(route_name, route_kwargs, grade_id, subject_id, chapt
 
 def _quiz_filter_context(selected_grade, selected_subject, selected_chapter):
     grades = Grade.objects.all().order_by('name')
-    subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.none()
+    subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.all().order_by('grade__name', 'name')
     chapters = (
         Chapter.objects.filter(subject_id=selected_subject, subject__grade_id=selected_grade).order_by('name')
         if selected_grade and selected_subject
@@ -1021,6 +1024,64 @@ def _quiz_filter_context(selected_grade, selected_subject, selected_chapter):
     ).order_by('order_num', 'title')
 
     return grades, subjects, chapters, quizzes
+
+
+def _quiz_prefix_num(title):
+    title = (title or "").strip()
+    match = re.match(r'^(\d+)\s*[-–—]\s*', title)
+    if match:
+        return int(match.group(1))
+    return 10**9
+
+
+def _generate_weekly_plan_for_grade_subject(grade, subject):
+    chapter_field_names = {f.name for f in Chapter._meta.get_fields()}
+    chapter_order_field = 'order' if 'order' in chapter_field_names else None
+
+    quizzes = list(
+        Quiz.objects.select_related('chapter')
+        .filter(grade=grade, subject=subject)
+        .order_by('id')
+    )
+
+    def _chapter_rank(quiz):
+        chapter = getattr(quiz, 'chapter', None)
+        if not chapter:
+            return 10**9
+        if chapter_order_field and getattr(chapter, chapter_order_field, None) is not None:
+            return getattr(chapter, chapter_order_field)
+        return chapter.id or 10**9
+
+    quizzes.sort(key=lambda q: (_chapter_rank(q), _quiz_prefix_num(q.title), q.id))
+
+    weeks = []
+    for i in range(1, 31):
+        week, _ = Week.objects.get_or_create(
+            grade=grade,
+            subject=subject,
+            order=i,
+            defaults={'name': f'Week {i}'},
+        )
+        if week.name != f'Week {i}':
+            week.name = f'Week {i}'
+            week.save(update_fields=['name'])
+        weeks.append(week)
+
+    WeekQuiz.objects.filter(week__grade=grade, week__subject=subject).delete()
+
+    total = len(quizzes)
+    base = total // 30
+    rem = total % 30
+
+    idx = 0
+    for week_index, week in enumerate(weeks, start=1):
+        take = base + (1 if week_index <= rem else 0)
+        week_quizzes = quizzes[idx: idx + take]
+        idx += take
+        for order, quiz in enumerate(week_quizzes, start=1):
+            WeekQuiz.objects.create(week=week, quiz=quiz, order=order)
+
+    return len(quizzes)
 
 
 @staff_member_required
@@ -1144,25 +1205,64 @@ def manage_weeks_view(request):
     if guard:
         return guard
 
+    selected_grade = request.GET.get('grade') or ''
+    selected_subject = request.GET.get('subject') or ''
+    selected_chapter = request.GET.get('chapter') or ''
+
+    grades = Grade.objects.all().order_by('name')
+    subjects = Subject.objects.filter(grade_id=selected_grade).order_by('name') if selected_grade else Subject.objects.none()
+    chapters = (
+        Chapter.objects.filter(subject_id=selected_subject, subject__grade_id=selected_grade).order_by('name')
+        if selected_grade and selected_subject
+        else Chapter.objects.none()
+    )
+
     if request.method == 'POST':
-        name = (request.POST.get('name') or '').strip()
-        grade_id = request.POST.get('grade')
-        if not name or not grade_id:
-            messages.error(request, "Week name and grade are required.")
-        else:
+        action = (request.POST.get('action') or '').strip()
+        if action == 'regenerate':
+            grade_id = request.POST.get('grade') or ''
+            subject_id = request.POST.get('subject') or ''
             grade = Grade.objects.filter(id=grade_id).first()
-            if not grade:
-                messages.error(request, "Invalid grade selected.")
-            else:
-                Week.objects.create(name=name, grade=grade)
-                messages.success(request, f"Week '{name}' created successfully.")
+            subject = Subject.objects.filter(id=subject_id, grade_id=grade_id).first()
+            if not grade or not subject:
+                messages.error(request, "Please select a valid grade and subject.")
+                return redirect(f"{reverse('manage-weeks')}?{urlencode({'grade': grade_id, 'subject': subject_id})}")
+
+            with transaction.atomic():
+                total_mapped = _generate_weekly_plan_for_grade_subject(grade, subject)
+
+            messages.success(
+                request,
+                f"Weekly plan regenerated for {grade.name} - {subject.name}. Total quizzes mapped: {total_mapped}."
+            )
+            return redirect(f"{reverse('manage-weeks')}?{urlencode({'grade': grade_id, 'subject': subject_id})}")
+        else:
+            messages.error(request, "Invalid action.")
         return redirect('manage-weeks')
 
-    weeks = Week.objects.select_related('grade').order_by('grade__name', 'name')
-    grades = Grade.objects.all().order_by('name')
+    weeks = Week.objects.select_related('grade', 'subject')
+    if selected_grade:
+        weeks = weeks.filter(grade_id=selected_grade)
+    if selected_subject:
+        weeks = weeks.filter(subject_id=selected_subject)
+
+    if selected_chapter:
+        weeks = weeks.annotate(
+            quiz_count=Count('week_quizzes', filter=models.Q(week_quizzes__quiz__chapter_id=selected_chapter), distinct=True)
+        )
+    else:
+        weeks = weeks.annotate(quiz_count=Count('week_quizzes', distinct=True))
+
+    weeks = weeks.order_by('grade__name', 'subject__name', 'order')
+
     return render(request, 'admin/core/manage_weeks.html', {
         'weeks': weeks,
         'grades': grades,
+        'subjects': subjects,
+        'chapters': chapters,
+        'selected_grade': selected_grade,
+        'selected_subject': selected_subject,
+        'selected_chapter': selected_chapter,
     })
 
 
@@ -1172,10 +1272,10 @@ def week_detail_assign_view(request, week_id):
     if guard:
         return guard
 
-    week = get_object_or_404(Week.objects.select_related('grade'), id=week_id)
+    week = get_object_or_404(Week.objects.select_related('grade', 'subject'), id=week_id)
 
     selected_grade = request.GET.get('grade') or str(week.grade_id)
-    selected_subject = request.GET.get('subject') or ''
+    selected_subject = request.GET.get('subject') or (str(week.subject_id) if week.subject_id else '')
     selected_chapter = request.GET.get('chapter') or ''
 
     grades, subjects, chapters, quizzes = _quiz_filter_context(selected_grade, selected_subject, selected_chapter)
@@ -1193,6 +1293,11 @@ def week_detail_assign_view(request, week_id):
         to_remove = existing_ids - selected_ids
 
         if to_add:
+            WeekQuiz.objects.filter(
+                quiz_id__in=to_add,
+                week__grade_id=week.grade_id,
+                week__subject_id=week.subject_id,
+            ).exclude(week=week).delete()
             WeekQuiz.objects.bulk_create(
                 [WeekQuiz(week=week, quiz_id=qid) for qid in to_add],
                 ignore_conflicts=True,

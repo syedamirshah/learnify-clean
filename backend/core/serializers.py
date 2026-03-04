@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Quiz, QuizQuestionAssignment, Topic, Week, TopicProgress, WeekProgress
+    Quiz, QuizQuestionAssignment, Topic, Week, TopicProgress, WeekProgress, StudentQuizAttempt
 )
 from .models import User
 from rest_framework.response import Response
@@ -232,6 +232,8 @@ class TopicLandingSerializer(serializers.ModelSerializer):
 
 class WeekLandingSerializer(serializers.ModelSerializer):
     grade = GradeMiniSerializer(allow_null=True)
+    subject = SubjectMiniSerializer(allow_null=True)
+    order = serializers.IntegerField()
     quiz_count = serializers.SerializerMethodField()
     quizzes = serializers.SerializerMethodField()
     progress_percent = serializers.SerializerMethodField()
@@ -241,7 +243,7 @@ class WeekLandingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Week
         fields = [
-            'id', 'name', 'grade', 'quiz_count', 'quizzes',
+            'id', 'name', 'order', 'grade', 'subject', 'quiz_count', 'quizzes',
             'progress_percent', 'completed_quizzes', 'total_quizzes',
         ]
 
@@ -263,21 +265,29 @@ class WeekLandingSerializer(serializers.ModelSerializer):
         if not user or not getattr(user, "is_authenticated", False):
             return None
 
-        progress = WeekProgress.objects.filter(user=user, week=obj).first()
-        if not progress or progress.total_quizzes == 0:
+        total = self.get_total_quizzes(obj)
+        completed = self.get_completed_quizzes(obj)
+        if not total:
             return 0
-        return int((progress.completed_quizzes / progress.total_quizzes) * 100)
+        return int((completed / total) * 100)
 
     def get_completed_quizzes(self, obj):
         user = self.context.get("user")
         if not user or not getattr(user, "is_authenticated", False):
             return None
-        progress = WeekProgress.objects.filter(user=user, week=obj).first()
-        return progress.completed_quizzes if progress else 0
+        week_quiz_ids = [link.quiz_id for link in self._prefetched_week_links(obj)]
+        if not week_quiz_ids:
+            return 0
+        return (
+            StudentQuizAttempt.objects
+            .filter(student=user, completed_at__isnull=False, quiz_id__in=week_quiz_ids)
+            .values('quiz_id')
+            .distinct()
+            .count()
+        )
 
     def get_total_quizzes(self, obj):
         user = self.context.get("user")
         if not user or not getattr(user, "is_authenticated", False):
             return None
-        progress = WeekProgress.objects.filter(user=user, week=obj).first()
-        return progress.total_quizzes if progress else 0
+        return len(self._prefetched_week_links(obj))

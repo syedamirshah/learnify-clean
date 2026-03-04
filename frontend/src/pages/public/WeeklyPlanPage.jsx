@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
@@ -7,12 +7,12 @@ import { buildPublicNavItems } from "../../utils/publicNav";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
-const groupBySubject = (quizzes = []) => {
+const groupByChapter = (quizzes = []) => {
   const groups = {};
   quizzes.forEach((q) => {
-    const subject = q?.subject?.name || "General";
-    if (!groups[subject]) groups[subject] = [];
-    groups[subject].push(q);
+    const chapter = q?.chapter?.name || "General";
+    if (!groups[chapter]) groups[chapter] = [];
+    groups[chapter].push(q);
   });
   return groups;
 };
@@ -28,6 +28,7 @@ const WeeklyPlanPage = () => {
   const [weeks, setWeeks] = useState([]);
   const [hydrating, setHydrating] = useState(false);
   const [hydrationChecked, setHydrationChecked] = useState(false);
+  const [expandedWeek, setExpandedWeek] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -136,9 +137,7 @@ const WeeklyPlanPage = () => {
       try {
         const params = new URLSearchParams();
         const effectiveGradeId = isStudent ? gradeId : selectedGradeId;
-        const includeQuizzes = Boolean(effectiveGradeId);
-
-        params.set("include_quizzes", includeQuizzes ? "1" : "0");
+        params.set("include_quizzes", "1");
         if (effectiveGradeId) params.set("grade", effectiveGradeId);
 
         const res = await fetch(`${API}landing/weeks/?${params.toString()}`, { signal: controller.signal });
@@ -164,6 +163,23 @@ const WeeklyPlanPage = () => {
     navigate("/", { replace: true });
   };
 
+  const sortedWeeks = useMemo(() => {
+    return [...weeks].sort((a, b) => {
+      const orderA = Number.isFinite(Number(a?.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
+      const orderB = Number.isFinite(Number(b?.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) return orderA - orderB;
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [weeks]);
+
+  const completedWeeks = useMemo(() => {
+    return sortedWeeks.filter(
+      (week) =>
+        Number(week?.total_quizzes || 0) > 0 &&
+        Number(week?.completed_quizzes || 0) === Number(week?.total_quizzes || 0)
+    ).length;
+  }, [sortedWeeks]);
+
   return (
     <AppLayout
       className="font-[Nunito]"
@@ -183,6 +199,7 @@ const WeeklyPlanPage = () => {
         <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Weekly Plan</h1>
           <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
+          <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
         </header>
 
         {!isStudent && (
@@ -220,62 +237,71 @@ const WeeklyPlanPage = () => {
           ) : weeks.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No weeks created yet.</div>
           ) : (
-            weeks.map((week) => (
-              <article key={week.id} className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">{week.grade?.name || "Unknown Grade"}</p>
-                    {week.progress_percent !== null && week.progress_percent !== undefined && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-600">{week.completed_quizzes} / {week.total_quizzes} completed</p>
-                        <div className="mt-1 h-2 w-full rounded bg-gray-200">
-                          <div className="h-2 rounded bg-green-500" style={{ width: `${week.progress_percent}%` }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {sortedWeeks.map((week) => {
+                const completed = Number(week?.completed_quizzes || 0);
+                const total = Number(week?.total_quizzes || week?.quiz_count || 0);
+                const percent = Number(week?.progress_percent ?? 0);
+                const isComplete = total > 0 && completed === total;
+                const isExpanded = expandedWeek === week.id;
+
+                return (
+                  <article
+                    key={week.id}
+                    className={`border rounded-xl p-4 shadow-sm transition ${
+                      isComplete ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedWeek(isExpanded ? null : week.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
+                        <span className="text-xs font-semibold text-gray-700">{isExpanded ? "Hide" : "View"}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-600">Completed {completed} / {total}</p>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
                         </div>
+
+                        {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
+                          Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
+                            <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3">
+                              <h3 className="mb-1 text-sm font-semibold text-green-800">{chapterName}</h3>
+                              <div className="space-y-1">
+                                {quizzes.map((quiz) => (
+                                  <div
+                                    key={`week-quiz-${week.id}-${quiz.id}`}
+                                    className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                                  >
+                                    <p className="text-sm text-gray-800 pr-3">{quiz.title}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => navigate(`/student/attempt-quiz/${quiz.id}`)}
+                                      className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900"
+                                    >
+                                      Attempt
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
+                        )}
                       </div>
                     )}
-                  </div>
-                  <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                    {week.quiz_count || 0} quizzes
-                  </span>
-                </div>
-
-                {Array.isArray(week.quizzes) && (
-                  <div className="mt-3 space-y-2">
-                    {week.quizzes.length === 0 ? (
-                      <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                    ) : (
-                      Object.entries(groupBySubject(week.quizzes)).map(([subjectName, quizzes]) => (
-                        <div key={`week-subject-${week.id}-${subjectName}`} className="mt-3">
-                          <h3 className="mb-1 text-sm font-semibold text-green-800">{subjectName}</h3>
-                          <div className="space-y-2">
-                            {quizzes.map((quiz, index) => (
-                              <div
-                                key={`week-quiz-${week.id}-${quiz.id}`}
-                                className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-semibold text-gray-800">Lesson {index + 1}: {quiz.title}</p>
-                                  <p className="truncate text-[11px] text-gray-500">
-                                    {quiz.subject?.name || "—"} • {quiz.chapter?.name || "—"}
-                                  </p>
-                                </div>
-                                <Link
-                                  to={`/student/attempt-quiz/${quiz.id}`}
-                                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                                >
-                                  Attempt
-                                </Link>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </article>
-            ))
+                  </article>
+                );
+              })}
+            </div>
           )}
         </section>
       </div>
