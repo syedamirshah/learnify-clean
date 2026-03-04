@@ -135,19 +135,14 @@ const WeeklyPlanPage = () => {
         return;
       }
 
-      if (!isStudent && !selectedGradeId) {
-        setWeeks([]);
-        setError("Select a grade to view weekly plan.");
-        setLoading(false);
-        return;
-      }
-
       try {
         const params = new URLSearchParams();
         const effectiveGradeId = isStudent ? gradeId : selectedGradeId;
         params.set("include_quizzes", "1");
-        if (effectiveGradeId) params.set("grade", effectiveGradeId);
-        if (effectiveGradeId) params.set("subject", effectiveGradeId);
+        if (effectiveGradeId) {
+          params.set("grade", effectiveGradeId);
+          params.set("subject", effectiveGradeId);
+        }
 
         const res = await fetch(`${API}landing/weeks/?${params.toString()}`, { signal: controller.signal });
         if (!res.ok) throw new Error(`Failed to fetch weeks (${res.status})`);
@@ -176,12 +171,24 @@ const WeeklyPlanPage = () => {
 
   const sortedWeeks = useMemo(() => {
     return [...weeks].sort((a, b) => {
+      const gradeA = Number(a?.grade?.id || 0);
+      const gradeB = Number(b?.grade?.id || 0);
+      if (gradeA !== gradeB) return gradeA - gradeB;
       const orderA = Number.isFinite(Number(a?.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
       const orderB = Number.isFinite(Number(b?.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
       if (orderA !== orderB) return orderA - orderB;
       return String(a?.name || "").localeCompare(String(b?.name || ""));
     });
   }, [weeks]);
+
+  const weeksByGrade = useMemo(() => {
+    return sortedWeeks.reduce((acc, week) => {
+      const key = week?.grade?.name || "Unknown Grade";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(week);
+      return acc;
+    }, {});
+  }, [sortedWeeks]);
 
   const completedWeeks = useMemo(() => {
     return sortedWeeks.filter(
@@ -331,7 +338,110 @@ const WeeklyPlanPage = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {!isStudent && !selectedGradeId
+                ? Object.entries(weeksByGrade).map(([gradeName, gradeWeeks]) => (
+                    <div key={`weekly-grade-group-${gradeName}`} className="space-y-3">
+                      <h2 className="text-lg font-extrabold text-green-900">{gradeName}</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {gradeWeeks.map((week) => {
+                          const completed = Number(week?.completed_quizzes || 0);
+                          const total = Number(week?.total_quizzes || week?.quiz_count || 0);
+                          const percent = Number(week?.progress_percent ?? 0);
+                          const status = weekStatus(week);
+                          const isComplete = status === "Completed";
+                          const isActive = status === "Active";
+                          const isExpanded = expandedWeek === week.id;
+
+                          return (
+                            <article
+                              key={week.id}
+                              className={`border rounded-xl p-4 shadow-sm transition ${
+                                !isStudent
+                                  ? "bg-white border-gray-200"
+                                  : isComplete
+                                  ? "bg-green-50 border-green-400"
+                                  : isActive
+                                  ? "bg-blue-50 border-blue-400"
+                                  : "bg-gray-50 border-gray-300 opacity-70"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleWeekToggle(week)}
+                                className="w-full text-left"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                        status === "Completed"
+                                          ? "bg-green-100 text-green-800"
+                                          : status === "Active"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : status === "Locked"
+                                          ? "bg-gray-200 text-gray-700"
+                                          : "bg-gray-100 text-gray-700"
+                                      }`}
+                                    >
+                                      {status === "Locked" && isStudent ? "🔒 Locked" : status}
+                                    </span>
+                                    <span className="text-xs font-semibold text-gray-700">
+                                      {isExpanded && canOpenWeek(week) ? "Hide" : "View"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <p className="mt-1 text-xs text-gray-600">
+                                  {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
+                                </p>
+                                {lockedWeekId === week.id && isStudent && currentWeekOrder !== null && (
+                                  <p className="mt-2 text-xs text-amber-700">Locked: Complete Week {currentWeekOrder} first.</p>
+                                )}
+                              </button>
+
+                              {isExpanded && canOpenWeek(week) && (
+                                <div className="mt-3">
+                                  {isStudent && (
+                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                      <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
+                                    </div>
+                                  )}
+
+                                  {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
+                                    Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
+                                      <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3">
+                                        <h3 className="mb-1 text-sm font-semibold text-green-800">{chapterName}</h3>
+                                        <div className="space-y-1">
+                                          {quizzes.map((quiz) => (
+                                            <div
+                                              key={`week-quiz-${week.id}-${quiz.id}`}
+                                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                                            >
+                                              <p className="text-sm text-gray-800 pr-3">{quiz.title}</p>
+                                              <button
+                                                type="button"
+                                                onClick={() => navigate(`/student/attempt-quiz/${quiz.id}`)}
+                                                className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900"
+                                              >
+                                                Attempt
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
+                                  )}
+                                </div>
+                              )}
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                : <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedWeeks.map((week) => {
                 const completed = Number(week?.completed_quizzes || 0);
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
@@ -339,7 +449,6 @@ const WeeklyPlanPage = () => {
                 const status = weekStatus(week);
                 const isComplete = status === "Completed";
                 const isActive = status === "Active";
-                const isLocked = status === "Locked";
                 const isExpanded = expandedWeek === week.id;
 
                 return (
@@ -349,10 +458,10 @@ const WeeklyPlanPage = () => {
                       !isStudent
                         ? "bg-white border-gray-200"
                         : isComplete
-                        ? "bg-green-50 border-green-200"
+                        ? "bg-green-50 border-green-400"
                         : isActive
-                        ? "bg-white border-green-300"
-                        : "bg-gray-50 border-gray-200"
+                        ? "bg-blue-50 border-blue-400"
+                        : "bg-gray-50 border-gray-300 opacity-70"
                     }`}
                   >
                     <button
@@ -370,9 +479,9 @@ const WeeklyPlanPage = () => {
                                 : status === "Active"
                                 ? "bg-blue-100 text-blue-800"
                                 : status === "Locked"
-                                ? "bg-gray-200 text-gray-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
+                              ? "bg-gray-200 text-gray-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
                           >
                             {status === "Locked" && isStudent ? "🔒 Locked" : status}
                           </span>
@@ -428,7 +537,7 @@ const WeeklyPlanPage = () => {
                   </article>
                 );
               })}
-              </div>
+              </div>}
             </>
           )}
         </section>
