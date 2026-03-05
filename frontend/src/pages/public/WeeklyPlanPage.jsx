@@ -458,7 +458,7 @@ const WeeklyPlanPage = () => {
                                               {isStudent && historyMap[String(quiz.id)] ? (
                                                 <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
                                                   <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                                    Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks}
+                                                    Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks ?? (((historyMap[String(quiz.id)].total_questions || 0) * (historyMap[String(quiz.id)].marks_per_question || 0)) || 100)}
                                                   </span>
                                                 </div>
                                               ) : null}
@@ -538,7 +538,7 @@ const WeeklyPlanPage = () => {
                                     {isStudent && historyMap[String(quiz.id)] ? (
                                       <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
                                         <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                          Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks}
+                                          Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks ?? (((historyMap[String(quiz.id)].total_questions || 0) * (historyMap[String(quiz.id)].marks_per_question || 0)) || 100)}
                                         </span>
                                       </div>
                                     ) : null}
