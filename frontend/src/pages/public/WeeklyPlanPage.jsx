@@ -34,7 +34,7 @@ const WeeklyPlanPage = () => {
   const [weeks, setWeeks] = useState([]);
   const [hydrating, setHydrating] = useState(false);
   const [hydrationChecked, setHydrationChecked] = useState(false);
-  const [expandedWeek, setExpandedWeek] = useState(null);
+  const [expandedWeekIds, setExpandedWeekIds] = useState(() => new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [gradeDropdownOpen, setGradeDropdownOpen] = useState(false);
@@ -160,7 +160,7 @@ const WeeklyPlanPage = () => {
         });
         if (!res.ok) throw new Error(`Failed to fetch weeks (${res.status})`);
         const data = await res.json();
-        setExpandedWeek(null);
+        setExpandedWeekIds(new Set());
         setWeeks(Array.isArray(data?.results) ? data.results : []);
       } catch (err) {
         if (err?.name !== "AbortError") {
@@ -293,8 +293,13 @@ const WeeklyPlanPage = () => {
     );
   }, [isStudent, dedupedWeeks]);
 
-  const handleWeekToggle = (week) => {
-    setExpandedWeek(expandedWeek === week.id ? null : week.id);
+  const handleWeekToggle = (weekId) => {
+    setExpandedWeekIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(weekId)) next.delete(weekId);
+      else next.add(weekId);
+      return next;
+    });
   };
 
   return (
@@ -404,7 +409,7 @@ const WeeklyPlanPage = () => {
                           const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                           const percent = Number(week?.progress_percent ?? 0);
                           const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
-                          const isExpanded = expandedWeek === week.id;
+                          const isExpanded = expandedWeekIds.has(week.id);
 
                           return (
                             <article
@@ -417,7 +422,7 @@ const WeeklyPlanPage = () => {
                             >
                               <button
                                 type="button"
-                                onClick={() => handleWeekToggle(week)}
+                                onClick={() => handleWeekToggle(week.id)}
                                 className="w-full text-left"
                               >
                                 <div className="flex items-center justify-between gap-3">
@@ -484,7 +489,7 @@ const WeeklyPlanPage = () => {
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                 const percent = Number(week?.progress_percent ?? 0);
                 const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
-                const isExpanded = expandedWeek === week.id;
+                const isExpanded = expandedWeekIds.has(week.id);
 
                 return (
                   <article
@@ -497,7 +502,7 @@ const WeeklyPlanPage = () => {
                   >
                     <button
                       type="button"
-                      onClick={() => handleWeekToggle(week)}
+                      onClick={() => handleWeekToggle(week.id)}
                       className="w-full text-left"
                     >
                       <div className="flex items-center justify-between gap-3">
