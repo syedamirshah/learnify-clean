@@ -518,7 +518,7 @@ useEffect(() => {
   };
 
   const fontSize = quizMeta.font_size || 16;
-  const lineSpacing = quizMeta.line_spacing || 1.6;
+  const lineSpacing = Number(quizMeta.line_spacing ?? 1.6);
   const alignment = quizMeta.text_alignment || 'left';
   const fibWidth = quizMeta.input_box_width || 8;
   const optionRowGapPx = Math.max(10, Math.min(34, Math.round(fontSize * lineSpacing * 0.9)));
@@ -540,6 +540,10 @@ useEffect(() => {
 
   return (
     <>
+      <style>{`
+        .lf-qhtml { line-height: var(--lf-lh) !important; }
+        .lf-qhtml * { line-height: var(--lf-lh) !important; }
+      `}</style>
       {/* Logo + Green Title Bar aligned side by side */}
       <div
         className="mb-4 flex w-full items-center gap-2 px-2 sm:px-4"
@@ -723,10 +727,10 @@ useEffect(() => {
                   <div className="mt-2">
                     {/* Question text */}
                     <div
-                      className="text-gray-900 mb-3 font-normal"
+                      className="lf-qhtml text-gray-900 mb-3 font-normal"
                       style={{
+                        '--lf-lh': lineSpacing,
                         fontSize: `${fontSize}px`,
-                        lineHeight: lineSpacing,
                         textAlign: alignment,
                       }}
                       dangerouslySetInnerHTML={{
@@ -838,6 +842,8 @@ useEffect(() => {
                         {instruction && (
                           <div className="mb-2">
                             <span
+                              className="lf-qhtml"
+                              style={{ '--lf-lh': lineSpacing }}
                               dangerouslySetInnerHTML={{ __html: instruction }}
                             />
                           </div>
@@ -913,7 +919,9 @@ useEffect(() => {
 
                             return (
                               <span
+                                className="lf-qhtml"
                                 key={`txt-${index}`}
+                                style={{ '--lf-lh': lineSpacing }}
                                 dangerouslySetInnerHTML={{ __html: part }}
                               />
                             );
