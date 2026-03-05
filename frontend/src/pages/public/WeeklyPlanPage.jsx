@@ -38,6 +38,7 @@ const WeeklyPlanPage = () => {
   const [lockedWeekId, setLockedWeekId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [gradeDropdownOpen, setGradeDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
   const navItems = useMemo(() => buildPublicNavItems(role), [role]);
@@ -150,7 +151,13 @@ const WeeklyPlanPage = () => {
           params.set("subject", effectiveGradeId);
         }
 
-        const res = await fetch(`${API}landing/weeks/?${params.toString()}`, { signal: controller.signal });
+        const bearerToken = auth.accessToken || localStorage.getItem("token") || localStorage.getItem("access_token");
+        const headers = bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {};
+
+        const res = await fetch(`${API}landing/weeks/?${params.toString()}`, {
+          signal: controller.signal,
+          headers,
+        });
         if (!res.ok) throw new Error(`Failed to fetch weeks (${res.status})`);
         const data = await res.json();
         setExpandedWeek(null);
@@ -287,13 +294,13 @@ const WeeklyPlanPage = () => {
   };
 
   const weekStatus = (week) => {
-    if (!isStudent || !studentProgressAvailable) return "Browse";
+    if (!isStudent || !studentProgressAvailable) return null;
     const completed = Number(week?.completed_quizzes ?? 0);
     const total = Number(week?.total_quizzes ?? 0);
-    const isComplete = total === 0 || completed >= total;
+    const isComplete = total > 0 && completed >= total;
     if (allWeeksCompleted) return Number(week?.order) === 30 ? "Completed" : "Locked";
-    if (currentWeekOrder !== null && Number(week?.order) === currentWeekOrder) return "Active";
     if (isComplete) return "Completed";
+    if (currentWeekOrder !== null && Number(week?.order) === currentWeekOrder) return "Active";
     return "Locked";
   };
 
@@ -337,23 +344,50 @@ const WeeklyPlanPage = () => {
         </header>
 
         {!isStudent && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <label htmlFor="weekly-grade" className="block text-sm font-semibold text-gray-700 mb-2">
-              Filter by Grade
-            </label>
-            <select
-              id="weekly-grade"
-              value={selectedGradeId}
-              onChange={(e) => setSelectedGradeId(e.target.value)}
-              className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">All Grades</option>
-              {grades.map((grade) => (
-                <option key={grade.id} value={grade.id}>
-                  {grade.name}
-                </option>
-              ))}
-            </select>
+          <div className="my-10">
+            <div className="flex items-center justify-center gap-6">
+              <div className="hidden sm:block flex-1 h-[2px] bg-green-200" />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setGradeDropdownOpen((prev) => !prev)}
+                  className="px-8 sm:px-12 py-4 sm:py-6 rounded-full bg-green-100 border-2 border-green-300 text-green-900 text-xl sm:text-3xl font-bold shadow-md flex items-center gap-3 hover:bg-green-200 transition"
+                >
+                  {selectedGradeId
+                    ? grades.find((grade) => String(grade.id) === String(selectedGradeId))?.name || "Select Grade"
+                    : "All Grades"}
+                  <span className="text-base sm:text-lg">⌄</span>
+                </button>
+                {gradeDropdownOpen && (
+                  <div className="absolute z-20 mt-2 w-full min-w-[220px] rounded-xl border border-green-200 bg-white shadow-lg py-1">
+                    <button
+                      type="button"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-green-50"
+                      onClick={() => {
+                        setSelectedGradeId("");
+                        setGradeDropdownOpen(false);
+                      }}
+                    >
+                      All Grades
+                    </button>
+                    {grades.map((grade) => (
+                      <button
+                        key={grade.id}
+                        type="button"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-green-50"
+                        onClick={() => {
+                          setSelectedGradeId(String(grade.id));
+                          setGradeDropdownOpen(false);
+                        }}
+                      >
+                        {grade.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="hidden sm:block flex-1 h-[2px] bg-green-200" />
+            </div>
           </div>
         )}
 
@@ -393,20 +427,16 @@ const WeeklyPlanPage = () => {
                           const percent = Number(week?.progress_percent ?? 0);
                           const status = weekStatus(week);
                           const isComplete = status === "Completed";
-                          const isActive = status === "Active";
+                          const isLocked = status === "Locked";
                           const isExpanded = expandedWeek === week.id;
 
                           return (
                             <article
                               key={week.id}
                               className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
-                                !isStudent
-                                  ? "bg-red-50 border-red-200"
-                                  : isComplete
-                                  ? "bg-green-50 border-green-400"
-                                  : isActive
-                                  ? "bg-red-50 border-red-400"
-                                  : "bg-red-50 border-red-200 opacity-60"
+                                isComplete
+                                  ? "border-green-300 bg-green-50"
+                                  : `border-red-200 bg-red-50 ${isStudent && isLocked ? "opacity-60" : ""}`
                               }`}
                             >
                               <button
@@ -417,11 +447,13 @@ const WeeklyPlanPage = () => {
                                 <div className="flex items-center justify-between gap-3">
                                   <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
                                   <div className="flex items-center gap-2">
-                                    {isStudent ? (
+                                    {isStudent && status ? (
                                       <span
                                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                                           status === "Completed"
                                             ? "bg-green-100 text-green-800"
+                                            : status === "Locked"
+                                            ? "bg-red-100 text-red-800"
                                             : status === "Active"
                                             ? "bg-red-100 text-red-800"
                                             : "bg-red-100 text-red-800"
@@ -492,20 +524,16 @@ const WeeklyPlanPage = () => {
                 const percent = Number(week?.progress_percent ?? 0);
                 const status = weekStatus(week);
                 const isComplete = status === "Completed";
-                const isActive = status === "Active";
+                const isLocked = status === "Locked";
                 const isExpanded = expandedWeek === week.id;
 
                 return (
                   <article
                     key={week.id}
                     className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
-                      !isStudent
-                        ? "bg-red-50 border-red-200"
-                        : isComplete
-                        ? "bg-green-50 border-green-400"
-                        : isActive
-                        ? "bg-red-50 border-red-400"
-                        : "bg-red-50 border-red-200 opacity-60"
+                      isComplete
+                        ? "border-green-300 bg-green-50"
+                        : `border-red-200 bg-red-50 ${isStudent && isLocked ? "opacity-60" : ""}`
                     }`}
                   >
                     <button
@@ -516,11 +544,13 @@ const WeeklyPlanPage = () => {
                       <div className="flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
                         <div className="flex items-center gap-2">
-                          {isStudent ? (
+                          {isStudent && status ? (
                             <span
                               className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                                 status === "Completed"
                                   ? "bg-green-100 text-green-800"
+                                  : status === "Locked"
+                                  ? "bg-red-100 text-red-800"
                                   : status === "Active"
                                   ? "bg-red-100 text-red-800"
                                   : "bg-red-100 text-red-800"
