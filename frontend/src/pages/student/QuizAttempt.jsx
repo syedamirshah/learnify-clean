@@ -791,7 +791,7 @@ useEffect(() => {
                                   accentColor: '#5CC245',
                                 }}
                               />
-                              <span className="min-w-0 break-words leading-relaxed">{opt}</span>
+                              <span className="min-w-0 break-words" style={{ lineHeight: lineSpacing }}>{opt}</span>
                             </label>
                           );
                         })}
