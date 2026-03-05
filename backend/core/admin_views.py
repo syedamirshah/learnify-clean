@@ -1056,12 +1056,23 @@ def _generate_weekly_plan_for_grade_subject(grade, subject):
 
     weeks = []
     for i in range(1, 31):
-        week, _ = Week.objects.get_or_create(
-            grade=grade,
-            subject=subject,
-            order=i,
-            defaults={'name': f'Week {i}'},
+        same_order_weeks = list(
+            Week.objects.filter(grade=grade, subject=subject, order=i).order_by('id')
         )
+        if same_order_weeks:
+            week = same_order_weeks[0]
+            extra_ids = [w.id for w in same_order_weeks[1:]]
+            if extra_ids:
+                WeekQuiz.objects.filter(week_id__in=extra_ids).delete()
+                Week.objects.filter(id__in=extra_ids).delete()
+        else:
+            week = Week.objects.create(
+                grade=grade,
+                subject=subject,
+                order=i,
+                name=f'Week {i}',
+            )
+
         if week.name != f'Week {i}':
             week.name = f'Week {i}'
             week.save(update_fields=['name'])
