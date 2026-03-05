@@ -521,8 +521,8 @@ useEffect(() => {
   const lineSpacing = quizMeta.line_spacing || 1.6;
   const alignment = quizMeta.text_alignment || 'left';
   const fibWidth = quizMeta.input_box_width || 8;
-  const optionRowGapPx = Math.max(12, Math.min(52, Math.round(fontSize * lineSpacing * 1.25)));
-  const optionPaddingYPx = Math.max(6, Math.min(28, Math.round(fontSize * lineSpacing * 0.55)));
+  const optionRowGapPx = Math.max(10, Math.min(34, Math.round(fontSize * lineSpacing * 0.9)));
+  const optionPaddingYPx = Math.max(6, Math.min(18, Math.round(fontSize * lineSpacing * 0.35)));
 
   const fixImageUrls = (html) => {
     const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
@@ -736,7 +736,7 @@ useEffect(() => {
 
                     {/* OPTIONS */}
                     <div
-                      className="grid grid-cols-1 gap-x-14"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-x-14"
                       style={{
                         fontSize: `${fontSize}px`,
                         lineHeight: lineSpacing,
