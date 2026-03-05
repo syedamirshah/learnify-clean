@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
@@ -35,10 +35,10 @@ const WeeklyPlanPage = () => {
   const [hydrating, setHydrating] = useState(false);
   const [hydrationChecked, setHydrationChecked] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState(null);
-  const [lockedWeekId, setLockedWeekId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [gradeDropdownOpen, setGradeDropdownOpen] = useState(false);
+  const [historyMap, setHistoryMap] = useState({});
   const navigate = useNavigate();
 
   const navItems = useMemo(() => buildPublicNavItems(role), [role]);
@@ -161,7 +161,6 @@ const WeeklyPlanPage = () => {
         if (!res.ok) throw new Error(`Failed to fetch weeks (${res.status})`);
         const data = await res.json();
         setExpandedWeek(null);
-        setLockedWeekId(null);
         setWeeks(Array.isArray(data?.results) ? data.results : []);
       } catch (err) {
         if (err?.name !== "AbortError") {
@@ -176,6 +175,40 @@ const WeeklyPlanPage = () => {
     fetchWeeks();
     return () => controller.abort();
   }, [isStudent, gradeId, selectedGradeId, hydrating, hydrationChecked, auth.accessToken]);
+
+  useEffect(() => {
+    if (!isStudent || !auth.accessToken) {
+      setHistoryMap({});
+      return;
+    }
+
+    let mounted = true;
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${API}student/quiz-history/`, {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+        });
+        if (!res.ok) throw new Error(`Failed to fetch quiz history (${res.status})`);
+        const data = await res.json();
+        const results = Array.isArray(data?.results) ? data.results : [];
+        const map = {};
+        results.forEach((row) => {
+          const key = String(row?.quiz_id || "");
+          if (key) map[key] = row;
+        });
+        if (mounted) setHistoryMap(map);
+      } catch {
+        if (mounted) setHistoryMap({});
+      }
+    };
+
+    fetchHistory();
+    return () => {
+      mounted = false;
+    };
+  }, [isStudent, auth.accessToken]);
 
   const handleLogout = () => {
     clearAuth();
@@ -260,56 +293,7 @@ const WeeklyPlanPage = () => {
     );
   }, [isStudent, dedupedWeeks]);
 
-  const currentWeekOrder = useMemo(() => {
-    if (!isStudent || !studentProgressAvailable || dedupedWeeks.length === 0) return null;
-
-    const meaningfulWeeks = dedupedWeeks.filter((week) => Number(week?.total_quizzes || 0) > 0);
-    if (meaningfulWeeks.length === 0) return null;
-
-    const allComplete = meaningfulWeeks.every(
-      (week) => Number(week?.completed_quizzes || 0) >= Number(week?.total_quizzes || 0)
-    );
-    if (allComplete) return 30;
-
-    const firstIncomplete = meaningfulWeeks.find(
-      (week) => Number(week?.completed_quizzes || 0) < Number(week?.total_quizzes || 0)
-    );
-    return Number(firstIncomplete?.order || 30);
-  }, [isStudent, studentProgressAvailable, dedupedWeeks]);
-
-  const allWeeksCompleted = useMemo(() => {
-    if (!isStudent || !studentProgressAvailable || dedupedWeeks.length === 0) return false;
-    const weeksWithTotals = dedupedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
-    if (weeksWithTotals.length === 0) return false;
-    return weeksWithTotals.every(
-      (week) => Number(week?.completed_quizzes ?? 0) >= Number(week?.total_quizzes ?? 0)
-    );
-  }, [isStudent, studentProgressAvailable, dedupedWeeks]);
-
-  const canOpenWeek = (week) => {
-    if (!isStudent || !studentProgressAvailable) return true;
-    if (currentWeekOrder === null) return true;
-    if (allWeeksCompleted) return Number(week?.order) === 30;
-    return Number(week?.order) === currentWeekOrder;
-  };
-
-  const weekStatus = (week) => {
-    if (!isStudent || !studentProgressAvailable) return null;
-    const completed = Number(week?.completed_quizzes ?? 0);
-    const total = Number(week?.total_quizzes ?? 0);
-    const isComplete = total > 0 && completed >= total;
-    if (allWeeksCompleted) return Number(week?.order) === 30 ? "Completed" : "Locked";
-    if (isComplete) return "Completed";
-    if (currentWeekOrder !== null && Number(week?.order) === currentWeekOrder) return "Active";
-    return "Locked";
-  };
-
   const handleWeekToggle = (week) => {
-    setLockedWeekId(null);
-    if (!canOpenWeek(week)) {
-      setLockedWeekId(week.id);
-      return;
-    }
     setExpandedWeek(expandedWeek === week.id ? null : week.id);
   };
 
@@ -334,12 +318,6 @@ const WeeklyPlanPage = () => {
           <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
           {isStudent && (
             <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
-          )}
-          {isStudent && currentWeekOrder !== null && (
-            <p className="mt-1 text-xs font-semibold text-green-700">Your current week: Week {currentWeekOrder}</p>
-          )}
-          {isStudent && allWeeksCompleted && (
-            <p className="mt-1 text-xs font-semibold text-green-700">Completed all weeks. Great work!</p>
           )}
         </header>
 
@@ -425,9 +403,7 @@ const WeeklyPlanPage = () => {
                           const completed = Number(week?.completed_quizzes || 0);
                           const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                           const percent = Number(week?.progress_percent ?? 0);
-                          const status = weekStatus(week);
-                          const isComplete = status === "Completed";
-                          const isLocked = status === "Locked";
+                          const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
                           const isExpanded = expandedWeek === week.id;
 
                           return (
@@ -436,7 +412,7 @@ const WeeklyPlanPage = () => {
                               className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
                                 isComplete
                                   ? "border-green-300 bg-green-50"
-                                  : `border-red-200 bg-red-50 ${isStudent && isLocked ? "opacity-60" : ""}`
+                                  : "border-red-200 bg-red-50"
                               }`}
                             >
                               <button
@@ -446,36 +422,16 @@ const WeeklyPlanPage = () => {
                               >
                                 <div className="flex items-center justify-between gap-3">
                                   <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                                  <div className="flex items-center gap-2">
-                                    {isStudent && status ? (
-                                      <span
-                                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                          status === "Completed"
-                                            ? "bg-green-100 text-green-800"
-                                            : status === "Locked"
-                                            ? "bg-red-100 text-red-800"
-                                            : status === "Active"
-                                            ? "bg-red-100 text-red-800"
-                                            : "bg-red-100 text-red-800"
-                                        }`}
-                                      >
-                                        {status === "Locked" ? "🔒 Locked" : status}
-                                      </span>
-                                    ) : null}
-                                    <span className="text-xs font-semibold text-gray-700">
-                                      {isExpanded && canOpenWeek(week) ? "Hide" : "View"}
-                                    </span>
-                                  </div>
+                                  <span className="text-xs font-semibold text-gray-700">
+                                    {isExpanded ? "Hide" : "View"}
+                                  </span>
                                 </div>
                                 <p className="mt-1 text-xs text-gray-600">
                                   {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
                                 </p>
-                                {lockedWeekId === week.id && isStudent && currentWeekOrder !== null && (
-                                  <p className="mt-2 text-xs text-amber-700">Locked: Complete Week {currentWeekOrder} first.</p>
-                                )}
                               </button>
 
-                              {isExpanded && canOpenWeek(week) && (
+                              {isExpanded && (
                                 <div className="mt-3">
                                   {isStudent && (
                                     <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
@@ -493,14 +449,24 @@ const WeeklyPlanPage = () => {
                                               key={`week-quiz-${week.id}-${quiz.id}`}
                                               className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
                                             >
-                                              <p className="text-sm text-gray-800 pr-3">{quiz.title}</p>
-                                              <button
-                                                type="button"
-                                                onClick={() => navigate(`/student/attempt-quiz/${quiz.id}`)}
-                                                className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900"
+                                              <Link
+                                                to={`/student/attempt-quiz/${quiz.id}`}
+                                                className="text-sm text-green-800 hover:text-green-900 hover:underline pr-3"
                                               >
-                                                Attempt
-                                              </button>
+                                                {quiz.title}
+                                              </Link>
+                                              {isStudent && historyMap[String(quiz.id)]?.attempt_id ? (
+                                                <Link
+                                                  to={`/student/quiz-result/${historyMap[String(quiz.id)].attempt_id}/`}
+                                                  className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
+                                                >
+                                                  Result
+                                                </Link>
+                                              ) : (
+                                                <span className="shrink-0 text-xs font-semibold text-gray-500">
+                                                  Not Attempted
+                                                </span>
+                                              )}
                                             </div>
                                           ))}
                                         </div>
@@ -522,9 +488,7 @@ const WeeklyPlanPage = () => {
                 const completed = Number(week?.completed_quizzes || 0);
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                 const percent = Number(week?.progress_percent ?? 0);
-                const status = weekStatus(week);
-                const isComplete = status === "Completed";
-                const isLocked = status === "Locked";
+                const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
                 const isExpanded = expandedWeek === week.id;
 
                 return (
@@ -533,7 +497,7 @@ const WeeklyPlanPage = () => {
                     className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
                       isComplete
                         ? "border-green-300 bg-green-50"
-                        : `border-red-200 bg-red-50 ${isStudent && isLocked ? "opacity-60" : ""}`
+                        : "border-red-200 bg-red-50"
                     }`}
                   >
                     <button
@@ -543,36 +507,16 @@ const WeeklyPlanPage = () => {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                        <div className="flex items-center gap-2">
-                          {isStudent && status ? (
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                status === "Completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : status === "Locked"
-                                  ? "bg-red-100 text-red-800"
-                                  : status === "Active"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {status === "Locked" ? "🔒 Locked" : status}
-                            </span>
-                          ) : null}
-                          <span className="text-xs font-semibold text-gray-700">
-                            {isExpanded && canOpenWeek(week) ? "Hide" : "View"}
-                          </span>
-                        </div>
+                        <span className="text-xs font-semibold text-gray-700">
+                          {isExpanded ? "Hide" : "View"}
+                        </span>
                       </div>
                       <p className="mt-1 text-xs text-gray-600">
                         {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
                       </p>
-                      {lockedWeekId === week.id && isStudent && currentWeekOrder !== null && (
-                        <p className="mt-2 text-xs text-amber-700">Locked: Complete Week {currentWeekOrder} first.</p>
-                      )}
                     </button>
 
-                    {isExpanded && canOpenWeek(week) && (
+                    {isExpanded && (
                       <div className="mt-3">
                         {isStudent && (
                           <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
@@ -590,14 +534,24 @@ const WeeklyPlanPage = () => {
                                     key={`week-quiz-${week.id}-${quiz.id}`}
                                     className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
                                   >
-                                    <p className="text-sm text-gray-800 pr-3">{quiz.title}</p>
-                                    <button
-                                      type="button"
-                                      onClick={() => navigate(`/student/attempt-quiz/${quiz.id}`)}
-                                      className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900"
+                                    <Link
+                                      to={`/student/attempt-quiz/${quiz.id}`}
+                                      className="text-sm text-green-800 hover:text-green-900 hover:underline pr-3"
                                     >
-                                      Attempt
-                                    </button>
+                                      {quiz.title}
+                                    </Link>
+                                    {isStudent && historyMap[String(quiz.id)]?.attempt_id ? (
+                                      <Link
+                                        to={`/student/quiz-result/${historyMap[String(quiz.id)].attempt_id}/`}
+                                        className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
+                                      >
+                                        Result
+                                      </Link>
+                                    ) : (
+                                      <span className="shrink-0 text-xs font-semibold text-gray-500">
+                                        Not Attempted
+                                      </span>
+                                    )}
                                   </div>
                                 ))}
                               </div>
