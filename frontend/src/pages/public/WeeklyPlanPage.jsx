@@ -17,6 +17,12 @@ const groupByChapter = (quizzes = []) => {
   return groups;
 };
 
+const getWeekQuizCount = (week = {}) => {
+  const quizCount = Number(week?.quiz_count ?? 0);
+  const quizzesLength = Array.isArray(week?.quizzes) ? week.quizzes.length : 0;
+  return Math.max(Number.isFinite(quizCount) ? quizCount : 0, quizzesLength);
+};
+
 const WeeklyPlanPage = () => {
   const [auth, setAuth] = useState(() => getAuthSnapshot());
   const { role, userFullName, isStudent, isAuthed } = auth;
@@ -181,38 +187,76 @@ const WeeklyPlanPage = () => {
     });
   }, [weeks]);
 
+  const dedupedWeeks = useMemo(() => {
+    if (isStudent) return sortedWeeks;
+
+    const byGradeAndOrder = new Map();
+    sortedWeeks.forEach((week) => {
+      const gradeId = Number(week?.grade?.id || 0);
+      const order = Number(week?.order || 0);
+      const key = `${gradeId}-${order}`;
+      const existing = byGradeAndOrder.get(key);
+
+      if (!existing) {
+        byGradeAndOrder.set(key, week);
+        return;
+      }
+
+      const existingCount = getWeekQuizCount(existing);
+      const currentCount = getWeekQuizCount(week);
+      if (currentCount > existingCount) {
+        byGradeAndOrder.set(key, week);
+        return;
+      }
+
+      if (currentCount === existingCount && Number(week?.id || Number.MAX_SAFE_INTEGER) < Number(existing?.id || Number.MAX_SAFE_INTEGER)) {
+        byGradeAndOrder.set(key, week);
+      }
+    });
+
+    return Array.from(byGradeAndOrder.values()).sort((a, b) => {
+      const gradeA = Number(a?.grade?.id || 0);
+      const gradeB = Number(b?.grade?.id || 0);
+      if (gradeA !== gradeB) return gradeA - gradeB;
+      const orderA = Number(a?.order || Number.MAX_SAFE_INTEGER);
+      const orderB = Number(b?.order || Number.MAX_SAFE_INTEGER);
+      if (orderA !== orderB) return orderA - orderB;
+      return Number(a?.id || 0) - Number(b?.id || 0);
+    });
+  }, [isStudent, sortedWeeks]);
+
   const weeksByGrade = useMemo(() => {
-    return sortedWeeks.reduce((acc, week) => {
+    return dedupedWeeks.reduce((acc, week) => {
       const key = week?.grade?.name || "Unknown Grade";
       if (!acc[key]) acc[key] = [];
       acc[key].push(week);
       return acc;
     }, {});
-  }, [sortedWeeks]);
+  }, [dedupedWeeks]);
 
   const completedWeeks = useMemo(() => {
-    return sortedWeeks.filter(
+    return dedupedWeeks.filter(
       (week) =>
         Number(week?.total_quizzes || 0) > 0 &&
         Number(week?.completed_quizzes || 0) >= Number(week?.total_quizzes || 0)
     ).length;
-  }, [sortedWeeks]);
+  }, [dedupedWeeks]);
 
   const studentProgressAvailable = useMemo(() => {
-    if (!isStudent || sortedWeeks.length === 0) return false;
-    return sortedWeeks.every(
+    if (!isStudent || dedupedWeeks.length === 0) return false;
+    return dedupedWeeks.every(
       (week) =>
         week?.completed_quizzes !== null &&
         week?.completed_quizzes !== undefined &&
         week?.total_quizzes !== null &&
         week?.total_quizzes !== undefined
     );
-  }, [isStudent, sortedWeeks]);
+  }, [isStudent, dedupedWeeks]);
 
   const currentWeekOrder = useMemo(() => {
-    if (!isStudent || !studentProgressAvailable || sortedWeeks.length === 0) return null;
+    if (!isStudent || !studentProgressAvailable || dedupedWeeks.length === 0) return null;
 
-    const meaningfulWeeks = sortedWeeks.filter((week) => Number(week?.total_quizzes || 0) > 0);
+    const meaningfulWeeks = dedupedWeeks.filter((week) => Number(week?.total_quizzes || 0) > 0);
     if (meaningfulWeeks.length === 0) return null;
 
     const allComplete = meaningfulWeeks.every(
@@ -224,16 +268,16 @@ const WeeklyPlanPage = () => {
       (week) => Number(week?.completed_quizzes || 0) < Number(week?.total_quizzes || 0)
     );
     return Number(firstIncomplete?.order || 30);
-  }, [isStudent, studentProgressAvailable, sortedWeeks]);
+  }, [isStudent, studentProgressAvailable, dedupedWeeks]);
 
   const allWeeksCompleted = useMemo(() => {
-    if (!isStudent || !studentProgressAvailable || sortedWeeks.length === 0) return false;
-    const weeksWithTotals = sortedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
+    if (!isStudent || !studentProgressAvailable || dedupedWeeks.length === 0) return false;
+    const weeksWithTotals = dedupedWeeks.filter((week) => Number(week?.total_quizzes ?? 0) > 0);
     if (weeksWithTotals.length === 0) return false;
     return weeksWithTotals.every(
       (week) => Number(week?.completed_quizzes ?? 0) >= Number(week?.total_quizzes ?? 0)
     );
-  }, [isStudent, studentProgressAvailable, sortedWeeks]);
+  }, [isStudent, studentProgressAvailable, dedupedWeeks]);
 
   const canOpenWeek = (week) => {
     if (!isStudent || !studentProgressAvailable) return true;
@@ -341,7 +385,7 @@ const WeeklyPlanPage = () => {
               {!isStudent && !selectedGradeId
                 ? Object.entries(weeksByGrade).map(([gradeName, gradeWeeks]) => (
                     <div key={`weekly-grade-group-${gradeName}`} className="space-y-3">
-                      <h2 className="text-lg font-extrabold text-green-900">{gradeName}</h2>
+                      <h2 className="text-3xl font-extrabold text-green-900">{gradeName}</h2>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {gradeWeeks.map((week) => {
                           const completed = Number(week?.completed_quizzes || 0);
@@ -357,12 +401,12 @@ const WeeklyPlanPage = () => {
                               key={week.id}
                               className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
                                 !isStudent
-                                  ? "bg-green-50/30 border-green-200"
+                                  ? "bg-red-50 border-red-200"
                                   : isComplete
                                   ? "bg-green-50 border-green-400"
                                   : isActive
-                                  ? "bg-blue-50 border-blue-400"
-                                  : "bg-gray-50 border-gray-300 opacity-70"
+                                  ? "bg-red-50 border-red-400"
+                                  : "bg-red-50 border-red-200 opacity-60"
                               }`}
                             >
                               <button
@@ -379,8 +423,8 @@ const WeeklyPlanPage = () => {
                                           status === "Completed"
                                             ? "bg-green-100 text-green-800"
                                             : status === "Active"
-                                            ? "bg-blue-100 text-blue-800"
-                                            : "bg-gray-200 text-gray-700"
+                                            ? "bg-red-100 text-red-800"
+                                            : "bg-red-100 text-red-800"
                                         }`}
                                       >
                                         {status === "Locked" ? "🔒 Locked" : status}
@@ -442,7 +486,7 @@ const WeeklyPlanPage = () => {
                     </div>
                   ))
                 : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sortedWeeks.map((week) => {
+              {dedupedWeeks.map((week) => {
                 const completed = Number(week?.completed_quizzes || 0);
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
                 const percent = Number(week?.progress_percent ?? 0);
@@ -456,12 +500,12 @@ const WeeklyPlanPage = () => {
                     key={week.id}
                     className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
                       !isStudent
-                        ? "bg-green-50/30 border-green-200"
+                        ? "bg-red-50 border-red-200"
                         : isComplete
                         ? "bg-green-50 border-green-400"
                         : isActive
-                        ? "bg-blue-50 border-blue-400"
-                        : "bg-gray-50 border-gray-300 opacity-70"
+                        ? "bg-red-50 border-red-400"
+                        : "bg-red-50 border-red-200 opacity-60"
                     }`}
                   >
                     <button
@@ -478,8 +522,8 @@ const WeeklyPlanPage = () => {
                                 status === "Completed"
                                   ? "bg-green-100 text-green-800"
                                   : status === "Active"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-200 text-gray-700"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-red-100 text-red-800"
                               }`}
                             >
                               {status === "Locked" ? "🔒 Locked" : status}
