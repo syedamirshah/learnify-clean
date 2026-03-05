@@ -455,18 +455,16 @@ const WeeklyPlanPage = () => {
                                               >
                                                 {quiz.title}
                                               </Link>
-                                              {isStudent && historyMap[String(quiz.id)]?.attempt_id ? (
-                                                <Link
-                                                  to={`/student/quiz-result/${historyMap[String(quiz.id)].attempt_id}/`}
-                                                  className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
-                                                >
-                                                  Result
-                                                </Link>
-                                              ) : (
-                                                <span className="shrink-0 text-xs font-semibold text-gray-500">
-                                                  Not Attempted
-                                                </span>
-                                              )}
+                                              {isStudent && historyMap[String(quiz.id)] ? (
+                                                <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
+                                                  <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                                    Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks}
+                                                  </span>
+                                                  <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                                    {historyMap[String(quiz.id)].percentage}% • {historyMap[String(quiz.id)].grade_letter}
+                                                  </span>
+                                                </div>
+                                              ) : null}
                                             </div>
                                           ))}
                                         </div>
@@ -540,18 +538,16 @@ const WeeklyPlanPage = () => {
                                     >
                                       {quiz.title}
                                     </Link>
-                                    {isStudent && historyMap[String(quiz.id)]?.attempt_id ? (
-                                      <Link
-                                        to={`/student/quiz-result/${historyMap[String(quiz.id)].attempt_id}/`}
-                                        className="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
-                                      >
-                                        Result
-                                      </Link>
-                                    ) : (
-                                      <span className="shrink-0 text-xs font-semibold text-gray-500">
-                                        Not Attempted
-                                      </span>
-                                    )}
+                                    {isStudent && historyMap[String(quiz.id)] ? (
+                                      <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
+                                        <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                          Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
+                                          {historyMap[String(quiz.id)].percentage}% • {historyMap[String(quiz.id)].grade_letter}
+                                        </span>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 ))}
                               </div>
