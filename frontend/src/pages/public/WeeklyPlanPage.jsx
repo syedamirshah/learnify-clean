@@ -317,24 +317,26 @@ const WeeklyPlanPage = () => {
       onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
       onLogoutClick={handleLogout}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
-        <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Weekly Plan</h1>
-          <p className="mt-1 text-sm text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        <header className="rounded-3xl border border-green-200 bg-gradient-to-br from-white to-green-50/60 p-6 shadow-sm">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-green-900">Weekly Plan</h1>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
           {isStudent && (
-            <p className="mt-2 text-sm font-semibold text-green-800">Weeks Completed: {completedWeeks} / 30</p>
+            <p className="mt-3 inline-flex items-center rounded-full border border-green-200 bg-white/80 px-3 py-1 text-sm font-semibold text-green-800">
+              Weeks Completed: {completedWeeks} / 30
+            </p>
           )}
         </header>
 
         {!isStudent && (
-          <div className="my-10">
+          <div className="my-6 sm:my-8">
             <div className="flex items-center justify-center gap-6">
-              <div className="hidden sm:block flex-1 h-[2px] bg-green-200" />
+              <div className="hidden sm:block flex-1 h-[2px] bg-gradient-to-r from-transparent via-green-300 to-transparent" />
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setGradeDropdownOpen((prev) => !prev)}
-                  className="px-8 sm:px-12 py-4 sm:py-6 rounded-full bg-green-100 border-2 border-green-300 text-green-900 text-xl sm:text-3xl font-bold shadow-md flex items-center gap-3 hover:bg-green-200 transition"
+                  className="px-8 sm:px-12 py-4 sm:py-5 rounded-full bg-green-100 border-2 border-green-300 text-green-900 text-xl sm:text-3xl font-bold shadow-md hover:shadow-lg flex items-center gap-3 hover:bg-green-200 transition-all duration-200"
                 >
                   {selectedGradeId
                     ? grades.find((grade) => String(grade.id) === String(selectedGradeId))?.name || "Select Grade"
@@ -342,10 +344,10 @@ const WeeklyPlanPage = () => {
                   <span className="text-base sm:text-lg">⌄</span>
                 </button>
                 {gradeDropdownOpen && (
-                  <div className="absolute z-20 mt-2 w-full min-w-[220px] rounded-xl border border-green-200 bg-white shadow-lg py-1">
+                  <div className="absolute z-20 mt-2 w-full min-w-[220px] rounded-2xl border border-green-200 bg-white shadow-xl py-1 overflow-hidden">
                     <button
                       type="button"
-                      className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-green-50"
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-green-50 transition"
                       onClick={() => {
                         setSelectedGradeId("");
                         setGradeDropdownOpen(false);
@@ -357,7 +359,7 @@ const WeeklyPlanPage = () => {
                       <button
                         key={grade.id}
                         type="button"
-                        className="w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-green-50"
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-green-50 transition"
                         onClick={() => {
                           setSelectedGradeId(String(grade.id));
                           setGradeDropdownOpen(false);
@@ -369,7 +371,7 @@ const WeeklyPlanPage = () => {
                   </div>
                 )}
               </div>
-              <div className="hidden sm:block flex-1 h-[2px] bg-green-200" />
+              <div className="hidden sm:block flex-1 h-[2px] bg-gradient-to-r from-transparent via-green-300 to-transparent" />
             </div>
           </div>
         )}
@@ -382,9 +384,9 @@ const WeeklyPlanPage = () => {
               Your grade is not set. Please contact admin.
             </div>
           ) : loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {Array.from({ length: 8 }).map((_, idx) => (
-                <div key={`week-skeleton-${idx}`} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm animate-pulse">
+                <div key={`week-skeleton-${idx}`} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm animate-pulse">
                   <div className="h-5 w-24 bg-gray-200 rounded mb-3" />
                   <div className="h-3 w-28 bg-gray-200 rounded mb-2" />
                   <div className="h-2 w-full bg-gray-200 rounded" />
@@ -401,9 +403,13 @@ const WeeklyPlanPage = () => {
             <>
               {!isStudent && !selectedGradeId
                 ? Object.entries(weeksByGrade).map(([gradeName, gradeWeeks]) => (
-                    <div key={`weekly-grade-group-${gradeName}`} className="space-y-3">
-                      <h2 className="text-3xl font-extrabold text-green-900">{gradeName}</h2>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div key={`weekly-grade-group-${gradeName}`} className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-green-300 to-transparent" />
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-green-900 whitespace-nowrap">{gradeName}</h2>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-green-300 to-transparent" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {gradeWeeks.map((week) => {
                           const completed = Number(week?.completed_quizzes || 0);
                           const total = Number(week?.total_quizzes || week?.quiz_count || 0);
@@ -423,15 +429,15 @@ const WeeklyPlanPage = () => {
                               <button
                                 type="button"
                                 onClick={() => handleWeekToggle(week.id)}
-                                className="w-full text-left"
+                                className="w-full text-left group"
                               >
                                 <div className="flex items-center justify-between gap-3">
-                                  <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                                  <span className="text-xs font-semibold text-gray-700">
+                                  <h2 className="text-lg font-bold text-gray-900 group-hover:text-green-800 transition-colors">{week.name}</h2>
+                                  <span className="text-xs font-bold text-gray-700 bg-white/70 px-2 py-1 rounded-full border border-gray-200">
                                     {isExpanded ? "Hide" : "View"}
                                   </span>
                                 </div>
-                                <p className="mt-1 text-xs text-gray-600">
+                                <p className="mt-2 text-xs text-gray-600">
                                   {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
                                 </p>
                               </button>
@@ -446,13 +452,13 @@ const WeeklyPlanPage = () => {
 
                                   {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
                                     Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
-                                      <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3">
-                                        <h3 className="mb-1 text-sm font-semibold text-green-800">{chapterName}</h3>
-                                        <div className="space-y-1">
+                                      <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3 rounded-xl border border-green-100 bg-white/70 p-3">
+                                        <h3 className="mb-2 text-sm font-semibold text-green-800">{chapterName}</h3>
+                                        <div className="space-y-1.5">
                                           {quizzes.map((quiz) => (
                                             <div
                                               key={`week-quiz-${week.id}-${quiz.id}`}
-                                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                                              className="flex justify-between items-center py-2 border-b border-gray-200/80 last:border-b-0 rounded-md px-1 hover:bg-green-50/60 transition-colors"
                                             >
                                               <Link
                                                 to={`/student/attempt-quiz/${quiz.id}`}
@@ -483,7 +489,7 @@ const WeeklyPlanPage = () => {
                       </div>
                     </div>
                   ))
-                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {dedupedWeeks.map((week) => {
                 const completed = Number(week?.completed_quizzes || 0);
                 const total = Number(week?.total_quizzes || week?.quiz_count || 0);
@@ -503,15 +509,15 @@ const WeeklyPlanPage = () => {
                     <button
                       type="button"
                       onClick={() => handleWeekToggle(week.id)}
-                      className="w-full text-left"
+                      className="w-full text-left group"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-lg font-bold text-gray-900">{week.name}</h2>
-                        <span className="text-xs font-semibold text-gray-700">
+                        <h2 className="text-lg font-bold text-gray-900 group-hover:text-green-800 transition-colors">{week.name}</h2>
+                        <span className="text-xs font-bold text-gray-700 bg-white/70 px-2 py-1 rounded-full border border-gray-200">
                           {isExpanded ? "Hide" : "View"}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">
+                      <p className="mt-2 text-xs text-gray-600">
                         {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
                       </p>
                     </button>
@@ -526,13 +532,13 @@ const WeeklyPlanPage = () => {
 
                         {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
                           Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
-                            <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3">
-                              <h3 className="mb-1 text-sm font-semibold text-green-800">{chapterName}</h3>
-                              <div className="space-y-1">
+                            <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3 rounded-xl border border-green-100 bg-white/70 p-3">
+                              <h3 className="mb-2 text-sm font-semibold text-green-800">{chapterName}</h3>
+                              <div className="space-y-1.5">
                                 {quizzes.map((quiz) => (
                                   <div
                                     key={`week-quiz-${week.id}-${quiz.id}`}
-                                    className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                                    className="flex justify-between items-center py-2 border-b border-gray-200/80 last:border-b-0 rounded-md px-1 hover:bg-green-50/60 transition-colors"
                                   >
                                     <Link
                                       to={`/student/attempt-quiz/${quiz.id}`}
