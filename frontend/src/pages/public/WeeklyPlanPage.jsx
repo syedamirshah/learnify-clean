@@ -540,9 +540,6 @@ const WeeklyPlanPage = () => {
                                         <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
                                           Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks}
                                         </span>
-                                        <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                          {historyMap[String(quiz.id)].percentage}% • {historyMap[String(quiz.id)].grade_letter}
-                                        </span>
                                       </div>
                                     ) : null}
                                   </div>
