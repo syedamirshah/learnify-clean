@@ -404,10 +404,26 @@ const WeeklyPlanPage = () => {
               {!isStudent && !selectedGradeId
                 ? Object.entries(weeksByGrade).map(([gradeName, gradeWeeks]) => (
                     <div key={`weekly-grade-group-${gradeName}`} className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-green-300 to-transparent" />
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-green-900 whitespace-nowrap">{gradeName}</h2>
-                        <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-green-300 to-transparent" />
+                      <div className="flex items-center justify-center gap-6 mt-4 mb-6">
+                        <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+                        <div
+                          className="
+                            flex items-center justify-center gap-3 whitespace-nowrap
+                            px-10 py-4
+                            rounded-full
+                            border-2 border-green-300
+                            bg-green-100
+                            shadow-md
+                            hover:shadow-lg
+                            transition
+                            text-3xl
+                            font-extrabold
+                            text-green-900
+                          "
+                        >
+                          {gradeName}
+                        </div>
+                        <div className="h-[2px] w-28 bg-green-300 rounded-full" />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {gradeWeeks.map((week) => {
