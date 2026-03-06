@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
+import axiosInstance from "../../utils/axiosInstance";
+import { persistStudentGrade } from "../../utils/auth";
 import textbookExercises from "@/assets/screenshots/textbook-exercises.png";
 import topicIndex from "@/assets/screenshots/topic-index.png";
 import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
@@ -9,7 +11,85 @@ import resultsTable from "@/assets/screenshots/results-table.png";
 import honorBoard from "@/assets/screenshots/honor-board.png";
 import membership from "@/assets/screenshots/membership.png";
 
+const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
+
 const HomePage = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const getNextPath = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next");
+      if (!next || typeof next !== "string") return "/learn";
+      if (!next.startsWith("/")) return "/learn";
+      if (next.startsWith("//")) return "/learn";
+      return next;
+    } catch {
+      return "/learn";
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const res = await axiosInstance.post("token/", { username, password });
+      const access = res.data.access;
+      const refresh = res.data.refresh;
+      const roleFromToken = res.data.role;
+      const statusFromToken = res.data.account_status;
+
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      localStorage.setItem("role", roleFromToken);
+      localStorage.setItem("account_status", statusFromToken);
+
+      if (statusFromToken === "expired") {
+        alert("Your subscription has expired. Redirecting to payment page...");
+        setTimeout(() => {
+          window.location.href = `${API}payments/choose/`;
+        }, 500);
+        return;
+      }
+
+      const userRes = await axiosInstance.get("user/me/", {
+        headers: { Authorization: `Bearer ${access}` },
+      });
+
+      const userData = userRes.data;
+      const status = userData.account_status;
+      const role = userData.role;
+      const fullName = userData.full_name;
+
+      localStorage.setItem("account_status", status);
+      localStorage.setItem("user_full_name", fullName);
+      localStorage.setItem("user_role", role);
+      persistStudentGrade(userData);
+
+      if (role !== "student" && role !== "teacher") {
+        alert("Admins and Managers must log in from backend.");
+        return;
+      }
+
+      if (status === "expired") {
+        alert("Your subscription has expired. Redirecting to payment page...");
+        setTimeout(() => {
+          window.location.href = `${API}payments/choose/`;
+        }, 500);
+        return;
+      }
+
+      const nextPath = getNextPath();
+      window.location.href = nextPath || "/learn";
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        alert("Login failed: " + err.response.data.detail);
+      } else {
+        alert("Login failed. Please check username/password.");
+      }
+      console.error("Login error:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white font-[Nunito] text-gray-900">
       <header className="sticky top-0 z-20 border-b border-green-100 bg-white/95 backdrop-blur">
@@ -64,7 +144,45 @@ const HomePage = () => {
           </div>
 
           <div>
-            <div className="mb-3 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg">
+              <h3 className="text-xl font-bold text-green-900">Login to Continue</h3>
+              <p className="mt-1 text-sm text-gray-600">Access your full learning experience.</p>
+              <div className="mt-4 space-y-3">
+                <input
+                  type="text"
+                  autoComplete="username"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="mt-4 w-full rounded-xl bg-green-600 py-2.5 font-semibold text-white transition hover:bg-green-700"
+              >
+                Login
+              </button>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <Link to="/learn" className="font-semibold text-green-700 hover:underline">
+                  Continue as Guest
+                </Link>
+                <Link to="/signup" className="font-semibold text-green-700 hover:underline">
+                  Sign Up
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-6 mb-3 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
             <img
               src={textbookExercises}
               alt="Textbook exercises preview"
