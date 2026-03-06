@@ -59,7 +59,7 @@ export default function TeacherTasks() {
   };
 
   const navItems = [
-    { key: "home", label: "Home", href: "/" },
+    { key: "home", label: "Home", href: "/learn" },
     { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
     ...(role === "teacher"
       ? [

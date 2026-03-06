@@ -8,7 +8,7 @@ export default function AppLayout({
   children,
   logoSrc,
   logoAlt,
-  logoHref = "/",
+  logoHref = "/learn",
   brandTitle,
   brandMotto,
   isAuthenticated = false,

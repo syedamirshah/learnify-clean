@@ -558,7 +558,7 @@ useEffect(() => {
             alt="Learnify Home"
             className="h-[52px] w-auto md:h-[70px]"
             style={{ cursor: 'pointer' }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/learn')}
           />
         </div>
 
