@@ -90,33 +90,143 @@ const HomePage = () => {
     }
   };
 
+  const heroButtons = [
+    {
+      label: "Enter as Guest",
+      to: "/learn",
+      className:
+        "inline-flex items-center justify-center rounded-md bg-[#118C4F] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]",
+    },
+    {
+      label: "Login",
+      to: "#login-card",
+      className:
+        "inline-flex items-center justify-center rounded-md border border-[#118C4F] bg-white px-6 py-3 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50",
+      isAnchor: true,
+    },
+    {
+      label: "Sign Up",
+      to: "/signup",
+      className:
+        "inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50",
+    },
+  ];
+
+  const featureCards = [
+    {
+      title: "Aligned with Curriculum",
+      description:
+        "Math practice follows a structured sequence so learners build understanding in the right order.",
+    },
+    {
+      title: "Smart Pedagogy",
+      description:
+        "Learnify supports step-by-step concept building through clear practice paths and focused revision.",
+    },
+    {
+      title: "Track Progress Clearly",
+      description:
+        "Students and teachers can follow performance, identify weak areas, and see improvement over time.",
+    },
+    {
+      title: "Unlimited, Affordable Practice",
+      description:
+        "Meaningful math practice stays accessible, repeatable, and easy to continue.",
+    },
+  ];
+
+  const learningModes = [
+    {
+      title: "Textbook Exercises",
+      description: "Study chapter-wise exercises in a structured textbook sequence.",
+      to: "/learn",
+      image: textbookExercises,
+      button: "Open Exercises",
+    },
+    {
+      title: "Topic Practice",
+      description: "Strengthen specific concepts through focused topic-based learning.",
+      to: "/topic-index",
+      image: topicIndex,
+      button: "Open Topics",
+    },
+    {
+      title: "Weekly Plan",
+      description: "Follow a guided weekly path for regular and steady progress.",
+      to: "/weekly-plan",
+      image: weeklyPlan,
+      button: "Open Weekly Plan",
+    },
+  ];
+
+  const audienceCards = [
+    {
+      title: "Students",
+      description:
+        "Build confidence through regular practice, immediate feedback, and clear learning structure.",
+    },
+    {
+      title: "Teachers",
+      description:
+        "Guide learners with a platform that supports consistency, preview access, and progress visibility.",
+    },
+    {
+      title: "Families",
+      description:
+        "Support daily math learning with one focused, affordable, and easy-to-use platform.",
+    },
+  ];
+
+  const sectionTitleClass =
+    "text-3xl font-bold tracking-tight text-[#0f5132] sm:text-4xl";
+  const sectionTextClass =
+    "mt-3 max-w-2xl text-base leading-7 text-gray-600";
+
+  const screenshotClass =
+    "w-full rounded-xl border border-[#d9e9df] bg-white shadow-sm";
+
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-emerald-50 via-white to-teal-50 text-gray-900"
-      style={{ fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif' }}
+      className="min-h-screen bg-[#f7fbf8] text-gray-900"
+      style={{
+        fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif',
+      }}
     >
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-[460px] w-[460px] -translate-x-1/2 rounded-full bg-emerald-300/30 blur-[130px] animate-pulse" />
-      <div className="pointer-events-none absolute right-0 top-[26rem] h-[420px] w-[420px] rounded-full bg-teal-300/25 blur-[130px] animate-pulse [animation-delay:400ms]" />
-      <div className="pointer-events-none absolute -left-24 bottom-[18rem] h-[360px] w-[360px] rounded-full bg-cyan-200/30 blur-[110px] animate-pulse [animation-delay:800ms]" />
-
-      <header className="sticky top-0 z-20 border-b border-white/20 bg-white/55 backdrop-blur-xl shadow-[0_4px_24px_rgba(16,185,129,0.08)]">
+      <header className="border-b border-[#dbe9df] bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <img src={logo} alt="Learnify" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
-            <div className="flex min-h-[56px] flex-col justify-center sm:min-h-[64px]">
-              <h1 className="leading-none text-2xl font-black tracking-tight text-green-900 sm:text-3xl">Learnify Pakistan</h1>
-              <p className="mt-1 leading-none text-sm font-bold italic text-green-700 sm:text-lg">Learning with Responsibility</p>
+          <div className="flex items-center gap-3">
+            <img
+              src={logo}
+              alt="Learnify"
+              className="h-14 w-14 object-contain sm:h-16 sm:w-16"
+            />
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-[#0f5132] sm:text-3xl">
+                Learnify
+              </h1>
+              <p className="mt-1 text-sm font-medium text-[#118C4F] sm:text-base">
+                Learning Math Responsibly
+              </p>
             </div>
           </div>
 
-          <nav className="flex items-center gap-2 text-sm font-semibold sm:gap-3">
-            <Link to="/login" className="rounded-full px-3 py-1.5 text-green-900 transition duration-200 hover:scale-[1.03] hover:bg-white/70 hover:brightness-110">
+          <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <a
+              href="#login-card"
+              className="rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50"
+            >
               Login
-            </Link>
-            <Link to="/signup" className="rounded-full border border-white/20 bg-white/70 px-4 py-1.5 text-green-900 shadow-[0_12px_24px_rgba(0,0,0,0.08)] transition duration-200 hover:scale-[1.03] hover:bg-white hover:brightness-110">
+            </a>
+            <Link
+              to="/signup"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+            >
               Sign Up
             </Link>
-            <Link to="/learn" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-1.5 text-white shadow-[0_12px_24px_rgba(16,185,129,0.35)] transition duration-200 hover:scale-[1.03] hover:brightness-110">
+            <Link
+              to="/learn"
+              className="rounded-md bg-[#118C4F] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
+            >
               Enter as Guest
             </Link>
           </nav>
@@ -124,259 +234,306 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-green-100/70 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 right-0 h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
-
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-14 md:gap-12 md:py-16 lg:grid-cols-2 lg:items-start">
-            <div className="relative z-10">
-              <p className="inline-flex rounded-full border border-white/20 bg-white/60 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700 backdrop-blur">
-                Math Learning Platform
+        <section className="border-b border-[#e3efe7] bg-white">
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
+            <div>
+              <p className="inline-flex rounded-full bg-[#eaf6ee] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#118C4F]">
+                Entry Page
               </p>
-              <h2 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight text-green-900 sm:text-5xl lg:text-6xl">
+
+              <h2 className="mt-4 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:text-5xl lg:text-6xl">
                 Master Math with Confidence
               </h2>
-              <p className="mt-4 max-w-xl text-lg leading-relaxed text-gray-700 md:text-xl">
-                Build strong understanding through structured textbook exercises, focused topic practice,
-                and guided weekly plans in one platform.
+
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-700">
+                Enter the platform to explore textbook exercises, topic practice,
+                weekly learning plans, and clear progress tracking in one focused
+                math environment.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to="/learn" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(16,185,129,0.35)] transition duration-200 hover:scale-[1.03] hover:brightness-110">
-                  Start Learning
-                </Link>
-                <Link to="/signup" className="rounded-full border border-white/20 bg-white/70 px-6 py-3 text-sm font-bold text-green-900 shadow-[0_12px_24px_rgba(0,0,0,0.08)] transition duration-200 hover:scale-[1.03] hover:bg-white hover:brightness-110">
-                  Sign Up
-                </Link>
-                <Link to="/learn" className="rounded-full border border-white/20 bg-white/70 px-6 py-3 text-sm font-bold text-gray-800 shadow-[0_12px_24px_rgba(0,0,0,0.08)] transition duration-200 hover:scale-[1.03] hover:bg-white hover:brightness-110">
-                  Enter as Guest
-                </Link>
+                {heroButtons.map((btn) =>
+                  btn.isAnchor ? (
+                    <a key={btn.label} href={btn.to} className={btn.className}>
+                      {btn.label}
+                    </a>
+                  ) : (
+                    <Link key={btn.label} to={btn.to} className={btn.className}>
+                      {btn.label}
+                    </Link>
+                  )
+                )}
               </div>
-              <p className="mt-3 text-sm text-gray-500">Try real exercises instantly, no signup required.</p>
+
+              <p className="mt-4 text-sm text-gray-500">
+                Try real exercises instantly — no signup required.
+              </p>
+
+              <div className="mt-10">
+                <p className="mb-3 text-sm font-semibold text-[#118C4F]">
+                  Textbook Exercises Preview
+                </p>
+                <img
+                  src={textbookExercises}
+                  alt="Textbook exercises preview"
+                  className={screenshotClass}
+                />
+              </div>
             </div>
 
-            <div className="relative z-10">
-              <div className="group relative overflow-hidden rounded-3xl border border-white/20 bg-white/55 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl md:p-6">
-                <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-gradient-to-br from-emerald-200/30 to-teal-200/30 blur-3xl" />
-                <h3 className="text-xl font-black text-green-900">Login to Continue</h3>
-                <p className="mt-1 text-sm text-gray-600">Access your full learning experience.</p>
-                <div className="mt-4 space-y-3">
+            <div
+              id="login-card"
+              className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-6 shadow-sm"
+            >
+              <h3 className="text-2xl font-bold text-[#0f5132]">Login to Continue</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Existing student and teacher accounts can sign in here and continue to
+                the main learning page.
+              </p>
+
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Username
+                  </label>
                   <input
                     type="text"
                     autoComplete="username"
-                    placeholder="Username"
+                    placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-xl border border-white/20 bg-white/80 px-3 py-2.5 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70"
+                    className="w-full rounded-lg border border-[#cfe2d4] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#118C4F] focus:ring-2 focus:ring-[#118C4F]/15"
                   />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
                   <input
                     type="password"
                     autoComplete="current-password"
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-white/20 bg-white/80 px-3 py-2.5 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/70"
+                    className="w-full rounded-lg border border-[#cfe2d4] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#118C4F] focus:ring-2 focus:ring-[#118C4F]/15"
                   />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogin}
-                  className="relative mt-4 w-full overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2.5 font-semibold text-white shadow-[0_14px_30px_rgba(16,185,129,0.35)] transition duration-200 hover:scale-[1.01] hover:brightness-110"
-                >
-                  <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/25 opacity-0 transition-all duration-500 group-hover:left-[120%] group-hover:opacity-100" />
-                  Login
-                </button>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <Link to="/learn" className="font-semibold text-green-700 hover:underline">
-                    Continue as Guest
-                  </Link>
-                  <Link to="/signup" className="font-semibold text-green-700 hover:underline">
-                    Sign Up
-                  </Link>
                 </div>
               </div>
 
-              <div className="mb-3 mt-6 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
-              <img
-                src={textbookExercises}
-                alt="Textbook exercises preview"
-                className="w-full rounded-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition duration-300 hover:brightness-105"
-              />
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="mt-5 w-full rounded-lg bg-[#118C4F] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
+              >
+                Login
+              </button>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+                <Link to="/learn" className="font-medium text-[#118C4F] hover:underline">
+                  Continue as Guest
+                </Link>
+                <Link to="/signup" className="font-medium text-[#118C4F] hover:underline">
+                  Sign Up
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
-          <div className="mb-6 text-center">
-            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Why Learnify Works</h3>
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
+          <div className="max-w-3xl">
+            <h3 className={sectionTitleClass}>Why Learnify Works</h3>
+            <p className={sectionTextClass}>
+              Learnify combines structured practice, focused revision, and clear progress
+              visibility in one math-first platform.
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
-            {[
-              ["Curriculum-Aligned Math Practice", "Practice aligned exercises organized for consistent progression."],
-              ["Topic-Based Mastery", "Strengthen specific skills through focused topic practice paths."],
-              ["Weekly Structured Learning", "Follow weekly plans to build routine and momentum."],
-              ["Progress and Recognition", "Track outcomes and celebrate milestones with confidence."],
-            ].map(([title, text]) => (
-              <article key={title} className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:scale-[1.025] hover:brightness-105 hover:shadow-[0_28px_60px_rgba(16,185,129,0.15)] md:col-span-3">
-                <h4 className="text-lg font-black text-green-900">{title}</h4>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">{text}</p>
+
+          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+            {featureCards.map((card) => (
+              <article
+                key={card.title}
+                className="rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm"
+              >
+                <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
+                <p className="mt-3 text-sm leading-7 text-gray-600">
+                  {card.description}
+                </p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="border-y border-green-100/60 bg-white/80">
-          <div className="mx-auto w-full max-w-[1240px] px-4 py-16">
-            <div className="mb-6 text-center">
-              <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Learn in Three Ways</h3>
+        <section className="border-y border-[#e3efe7] bg-white">
+          <div className="mx-auto w-full max-w-[1240px] px-4 py-14">
+            <div className="max-w-3xl">
+              <h3 className={sectionTitleClass}>Learn in Three Ways</h3>
+              <p className={sectionTextClass}>
+                Choose the style of practice that best fits your learning routine.
+              </p>
             </div>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-6">
-              {[
-                {
-                  title: "Textbook Exercises",
-                  desc: "Study chapter-wise exercises in textbook sequence.",
-                  to: "/learn",
-                  image: textbookExercises,
-                  button: "Open Exercises",
-                  span: "md:col-span-3",
-                },
-                {
-                  title: "Topic Practice",
-                  desc: "Practice by topic to strengthen targeted skills.",
-                  to: "/topic-index",
-                  image: topicIndex,
-                  button: "Open Topics",
-                  span: "md:col-span-3",
-                },
-                {
-                  title: "Weekly Plan",
-                  desc: "Follow structured weekly sets for steady progress.",
-                  to: "/weekly-plan",
-                  image: weeklyPlan,
-                  button: "Open Weekly Plan",
-                  span: "md:col-span-6",
-                },
-              ].map((card) => (
-                <article key={card.title} className={`rounded-3xl border border-white/20 bg-white/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] hover:brightness-105 hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] ${card.span}`}>
-                  <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {learningModes.map((card) => (
+                <article
+                  key={card.title}
+                  className="overflow-hidden rounded-2xl border border-[#dbe9df] bg-[#fcfefd] shadow-sm"
+                >
+                  <div className="border-b border-[#e3efe7] bg-white p-4">
                     <img
                       src={card.image}
                       alt={`${card.title} preview`}
-                      className="h-full w-full object-cover object-top"
+                      className={screenshotClass}
                     />
                   </div>
-                  <h4 className="mt-4 text-xl font-black text-green-900">{card.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-600">{card.desc}</p>
-                  <Link to={card.to} className="mt-4 inline-block rounded-full border border-white/20 bg-white/75 px-4 py-2 text-sm font-bold text-green-900 shadow-sm transition duration-200 hover:scale-[1.03] hover:bg-white hover:brightness-105">
-                    {card.button}
-                  </Link>
+
+                  <div className="p-5">
+                    <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
+                    <p className="mt-3 text-sm leading-7 text-gray-600">
+                      {card.description}
+                    </p>
+                    <Link
+                      to={card.to}
+                      className="mt-5 inline-flex rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50"
+                    >
+                      {card.button}
+                    </Link>
+                  </div>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
-          <div className="mb-6 text-center">
-            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Built for Students, Teachers, and Families</h3>
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
+          <div className="max-w-3xl">
+            <h3 className={sectionTitleClass}>Built for Students, Teachers, and Families</h3>
+            <p className={sectionTextClass}>
+              Learnify is designed to support regular math practice across different learning settings.
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <h4 className="text-xl font-black text-green-900">Students</h4>
-              <p className="mt-2 text-sm text-gray-600">Build confidence through structured, grade-aligned math practice.</p>
-            </article>
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <h4 className="text-xl font-black text-green-900">Teachers</h4>
-              <p className="mt-2 text-sm text-gray-600">Use a clear practice structure to guide students with consistency.</p>
-            </article>
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <h4 className="text-xl font-black text-green-900">Families</h4>
-              <p className="mt-2 text-sm text-gray-600">Support daily math progress with one focused and simple platform.</p>
-            </article>
+
+          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+            {audienceCards.map((card) => (
+              <article
+                key={card.title}
+                className="rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm"
+              >
+                <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
+                <p className="mt-3 text-sm leading-7 text-gray-600">
+                  {card.description}
+                </p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
-          <div className="mb-6 text-center">
-            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Results and Recognition</h3>
-            <p className="mt-2 text-sm leading-relaxed text-gray-700">
-              Track performance clearly and celebrate achievement with visible milestones.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+        <section className="border-y border-[#e3efe7] bg-white">
+          <div className="mx-auto w-full max-w-[1240px] px-4 py-14">
+            <div className="max-w-3xl">
+              <h3 className={sectionTitleClass}>Results and Recognition</h3>
+              <p className={sectionTextClass}>
+                Learners can track performance clearly and stay motivated through visible achievement.
+              </p>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
                 <img
                   src={quizAttempt}
-                  alt="Quiz experience"
-                  className="w-full"
+                  alt="Quiz experience preview"
+                  className={screenshotClass}
                 />
-              </div>
-              <h4 className="mt-3 text-lg font-black text-green-900">Real Quiz Experience</h4>
-            </article>
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
+                  Real Quiz Experience
+                </h4>
+              </article>
+
+              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
                 <img
                   src={resultsTable}
-                  alt="Progress results"
-                  className="w-full"
+                  alt="Progress results preview"
+                  className={screenshotClass}
                 />
-              </div>
-              <h4 className="mt-3 text-lg font-black text-green-900">Progress Tracking</h4>
-            </article>
-            <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
+                  Progress Tracking
+                </h4>
+              </article>
+
+              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
                 <img
                   src={honorBoard}
                   alt="Honor board preview"
-                  className="w-full"
+                  className={screenshotClass}
                 />
-              </div>
-              <h4 className="mt-3 text-lg font-black text-green-900">Honor Board Recognition</h4>
-              <Link to="/honor-board" className="mt-2 inline-block text-sm font-bold text-green-800 hover:underline">
-                View Honor Board
-              </Link>
-            </article>
+                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
+                  Honor Board Recognition
+                </h4>
+                <Link
+                  to="/honor-board"
+                  className="mt-3 inline-flex text-sm font-semibold text-[#118C4F] hover:underline"
+                >
+                  View Honor Board
+                </Link>
+              </article>
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1240px] px-4 pb-14 pt-2">
-          <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-white/70 to-emerald-50/60 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl md:p-8">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
-              <img
-                src={membership}
-                alt="Membership plans"
-                className="w-full rounded-xl border border-gray-200 shadow-xl"
-              />
-              <div>
-                <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Ready to Start Learning?</h3>
-                <p className="mt-3 text-sm leading-relaxed text-gray-700">
-                  Enter instantly as a guest, or create your account to unlock your full learning journey.
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link to="/learn" className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 text-sm font-bold text-white shadow-[0_14px_30px_rgba(16,185,129,0.35)] transition duration-200 hover:scale-[1.03] hover:brightness-110">
-                    Enter as Guest
-                  </Link>
-                  <Link to="/signup" className="rounded-full border border-white/20 bg-white/75 px-6 py-2.5 text-sm font-bold text-green-900 shadow-sm transition duration-200 hover:scale-[1.03] hover:bg-white hover:brightness-105">
-                    Sign Up
-                  </Link>
-                </div>
-                <Link to="/membership" className="mt-3 inline-block text-sm font-semibold text-green-800 hover:underline">
-                  Explore Membership
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
+          <div className="grid grid-cols-1 gap-8 rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm lg:grid-cols-[1fr_1.05fr] lg:items-center lg:p-8">
+            <img
+              src={membership}
+              alt="Membership plans"
+              className={screenshotClass}
+            />
+
+            <div>
+              <h3 className={sectionTitleClass}>Ready to Start Learning?</h3>
+              <p className="mt-4 max-w-xl text-base leading-7 text-gray-600">
+                Enter instantly as a guest, or create an account to continue your full learning journey.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/learn"
+                  className="inline-flex items-center justify-center rounded-md bg-[#118C4F] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
+                >
+                  Enter as Guest
+                </Link>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+                >
+                  Sign Up
                 </Link>
               </div>
+
+              <Link
+                to="/membership"
+                className="mt-4 inline-flex text-sm font-semibold text-[#118C4F] hover:underline"
+              >
+                Explore Membership
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-green-100 bg-gradient-to-r from-emerald-50/80 to-teal-50/80">
+      <footer className="border-t border-[#dbe9df] bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
-          <div className="font-semibold text-green-900">Learnify</div>
+          <div className="font-semibold text-[#0f5132]">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link to="/membership" className="hover:text-green-700 hover:underline">Membership</Link>
-            <Link to="/help-center" className="hover:text-green-700 hover:underline">Help Center</Link>
-            <Link to="/honor-board" className="hover:text-green-700 hover:underline">Honor Board</Link>
+            <Link to="/membership" className="hover:text-[#118C4F] hover:underline">
+              Membership
+            </Link>
+            <Link to="/help-center" className="hover:text-[#118C4F] hover:underline">
+              Help Center
+            </Link>
+            <Link to="/honor-board" className="hover:text-[#118C4F] hover:underline">
+              Honor Board
+            </Link>
           </div>
           <div>© {new Date().getFullYear()} Learnify</div>
         </div>
