@@ -6,6 +6,7 @@ import IndividualQuizResult from "./pages/student/quiz-results/IndividualQuizRes
 import QuizAttempt from "./pages/student/QuizAttempt.jsx";
 import HonorBoard from './pages/public/HonorBoard';
 import LandingPage from './pages/public/LandingPage';
+import HomePage from './pages/public/HomePage';
 import WhyJoin from './pages/public/WhyJoin';
 import SignupPage from '@/pages/public/SignupPage';
 import EditProfile from './pages/account/EditProfile';
@@ -48,7 +49,8 @@ function App() {
           <Route path="/student/quiz/:quizId/start" element={<QuizAttempt />} />
           <Route path="/honor-roll" element={<HonorBoard />} />
           <Route path="/honor-board" element={<HonorBoard />} />
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/learn" element={<LandingPage />} />
           <Route path="/why-join" element={<WhyJoin />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />

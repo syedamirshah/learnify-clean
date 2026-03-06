@@ -259,7 +259,7 @@ const navLinkClass = () =>
       if ((role === "student" || role === "teacher") && status === "expired") {
         window.location.href = `${API}payments/choose/`;
       } else {
-        navigate("/");
+        navigate("/learn");
       }
     } catch (err) {
       if (err.response?.data?.detail) {
@@ -293,7 +293,7 @@ const navLinkClass = () =>
     setUserGrade(null); // ✅ IMPORTANT
   
     // 🔹 Redirect cleanly
-    navigate("/", { replace: true });
+    navigate("/learn", { replace: true });
   };
   
   // ====== existing helpers (unchanged, kept as-is even if not used) ======
@@ -442,7 +442,7 @@ const chapterPalettes = [
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Learning with Responsibility";
   const navItems = [
-    { key: "home", label: "Home", href: "/" },
+    { key: "home", label: "Home", href: "/learn" },
     { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
     ...(role === "student"
       ? [
