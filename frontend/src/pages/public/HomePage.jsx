@@ -95,11 +95,11 @@ const HomePage = () => {
       className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-emerald-50 via-white to-teal-50 text-gray-900"
       style={{ fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif' }}
     >
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-[460px] w-[460px] -translate-x-1/2 rounded-full bg-emerald-300/30 blur-[130px]" />
-      <div className="pointer-events-none absolute right-0 top-[26rem] h-[420px] w-[420px] rounded-full bg-teal-300/25 blur-[130px]" />
-      <div className="pointer-events-none absolute -left-24 bottom-[18rem] h-[360px] w-[360px] rounded-full bg-cyan-200/30 blur-[110px]" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-[460px] w-[460px] -translate-x-1/2 rounded-full bg-emerald-300/30 blur-[130px] animate-pulse" />
+      <div className="pointer-events-none absolute right-0 top-[26rem] h-[420px] w-[420px] rounded-full bg-teal-300/25 blur-[130px] animate-pulse [animation-delay:400ms]" />
+      <div className="pointer-events-none absolute -left-24 bottom-[18rem] h-[360px] w-[360px] rounded-full bg-cyan-200/30 blur-[110px] animate-pulse [animation-delay:800ms]" />
 
-      <header className="sticky top-0 z-20 border-b border-white/20 bg-white/55 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/20 bg-white/55 backdrop-blur-xl shadow-[0_4px_24px_rgba(16,185,129,0.08)]">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-3 sm:gap-4">
             <img src={logo} alt="Learnify" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
@@ -208,7 +208,7 @@ const HomePage = () => {
 
         <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-black text-green-900">Why Learnify Works</h3>
+            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Why Learnify Works</h3>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
             {[
@@ -217,7 +217,7 @@ const HomePage = () => {
               ["Weekly Structured Learning", "Follow weekly plans to build routine and momentum."],
               ["Progress and Recognition", "Track outcomes and celebrate milestones with confidence."],
             ].map(([title, text]) => (
-              <article key={title} className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] hover:brightness-105 md:col-span-3">
+              <article key={title} className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:scale-[1.025] hover:brightness-105 hover:shadow-[0_28px_60px_rgba(16,185,129,0.15)] md:col-span-3">
                 <h4 className="text-lg font-black text-green-900">{title}</h4>
                 <p className="mt-2 text-sm leading-relaxed text-gray-600">{text}</p>
               </article>
@@ -228,7 +228,7 @@ const HomePage = () => {
         <section className="border-y border-green-100/60 bg-white/80">
           <div className="mx-auto w-full max-w-[1240px] px-4 py-16">
             <div className="mb-6 text-center">
-              <h3 className="text-3xl font-black text-green-900">Learn in Three Ways</h3>
+              <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Learn in Three Ways</h3>
             </div>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-6">
               {[
@@ -258,7 +258,7 @@ const HomePage = () => {
                 },
               ].map((card) => (
                 <article key={card.title} className={`rounded-3xl border border-white/20 bg-white/70 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] hover:brightness-105 hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] ${card.span}`}>
-                  <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-gray-200 shadow-xl">
+                  <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
                     <img
                       src={card.image}
                       alt={`${card.title} preview`}
@@ -278,7 +278,7 @@ const HomePage = () => {
 
         <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-black text-green-900">Built for Students, Teachers, and Families</h3>
+            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Built for Students, Teachers, and Families</h3>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <article className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
@@ -298,34 +298,40 @@ const HomePage = () => {
 
         <section className="mx-auto w-full max-w-[1240px] px-4 py-16">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-black text-green-900">Results and Recognition</h3>
+            <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Results and Recognition</h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-700">
               Track performance clearly and celebrate achievement with visible milestones.
             </p>
           </div>
           <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
             <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <img
-                src={quizAttempt}
-                alt="Quiz experience"
-                className="w-full rounded-xl border border-gray-200 shadow-xl"
-              />
+              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+                <img
+                  src={quizAttempt}
+                  alt="Quiz experience"
+                  className="w-full"
+                />
+              </div>
               <h4 className="mt-3 text-lg font-black text-green-900">Real Quiz Experience</h4>
             </article>
             <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <img
-                src={resultsTable}
-                alt="Progress results"
-                className="w-full rounded-xl border border-gray-200 shadow-xl"
-              />
+              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+                <img
+                  src={resultsTable}
+                  alt="Progress results"
+                  className="w-full"
+                />
+              </div>
               <h4 className="mt-3 text-lg font-black text-green-900">Progress Tracking</h4>
             </article>
             <article className="rounded-3xl border border-white/20 bg-white/70 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] backdrop-blur transition duration-200 hover:scale-[1.01] hover:brightness-105">
-              <img
-                src={honorBoard}
-                alt="Honor board preview"
-                className="w-full rounded-xl border border-gray-200 shadow-xl"
-              />
+              <div className="w-full overflow-hidden rounded-xl border border-gray-200 ring-1 ring-emerald-200/50 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
+                <img
+                  src={honorBoard}
+                  alt="Honor board preview"
+                  className="w-full"
+                />
+              </div>
               <h4 className="mt-3 text-lg font-black text-green-900">Honor Board Recognition</h4>
               <Link to="/honor-board" className="mt-2 inline-block text-sm font-bold text-green-800 hover:underline">
                 View Honor Board
@@ -335,7 +341,7 @@ const HomePage = () => {
         </section>
 
         <section className="mx-auto w-full max-w-[1240px] px-4 pb-14 pt-2">
-          <div className="rounded-3xl border border-white/20 bg-white/65 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl md:p-8">
+          <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-white/70 to-emerald-50/60 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl md:p-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
               <img
                 src={membership}
@@ -343,7 +349,7 @@ const HomePage = () => {
                 className="w-full rounded-xl border border-gray-200 shadow-xl"
               />
               <div>
-                <h3 className="text-3xl font-black text-green-900">Ready to Start Learning?</h3>
+                <h3 className="bg-gradient-to-r from-green-800 to-teal-700 bg-clip-text text-3xl font-black text-transparent">Ready to Start Learning?</h3>
                 <p className="mt-3 text-sm leading-relaxed text-gray-700">
                   Enter instantly as a guest, or create your account to unlock your full learning journey.
                 </p>
@@ -364,7 +370,7 @@ const HomePage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-green-100 bg-white/90">
+      <footer className="border-t border-green-100 bg-gradient-to-r from-emerald-50/80 to-teal-50/80">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
           <div className="font-semibold text-green-900">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
