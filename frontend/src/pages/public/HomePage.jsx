@@ -94,11 +94,13 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#f7fff8] via-white to-[#f4fbf5] font-[Nunito] text-gray-900">
       <header className="sticky top-0 z-20 border-b border-green-100/80 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Learnify" className="h-12 w-12 rounded-2xl object-contain ring-1 ring-green-100" />
-            <div>
-              <h1 className="text-2xl font-extrabold text-green-900">Learnify</h1>
-              <p className="text-sm text-green-700">Learning Math Responsibly</p>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <img src={logo} alt="Learnify" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
+            <div className="flex min-h-[56px] flex-col justify-center sm:min-h-[64px]">
+              <h1 className="leading-none text-2xl font-extrabold text-green-900 sm:text-3xl">Learnify Pakistan</h1>
+              <p className="mt-1 leading-none text-sm font-semibold italic text-green-700 sm:text-lg sm:font-bold">
+                Learning with Responsibility
+              </p>
             </div>
           </div>
 
@@ -120,7 +122,7 @@ const HomePage = () => {
         <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-green-100/70 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 right-0 h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-14 md:py-16 lg:grid-cols-2 lg:items-center">
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-14 md:py-16 lg:grid-cols-2 lg:items-start">
           <div className="relative z-10">
             <p className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
               Math Learning Platform
@@ -245,11 +247,13 @@ const HomePage = () => {
               },
             ].map((card) => (
               <article key={card.title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-                <img
-                  src={card.image}
-                  alt={`${card.title} preview`}
-                  className="w-full rounded-xl border border-gray-200 shadow-xl"
-                />
+                <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-gray-200 shadow-xl">
+                  <img
+                    src={card.image}
+                    alt={`${card.title} preview`}
+                    className="h-full w-full object-cover object-top"
+                  />
+                </div>
                 <h4 className="mt-4 text-xl font-bold text-green-900">{card.title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{card.desc}</p>
                 <Link to={card.to} className="mt-4 inline-block rounded-full border border-green-300 bg-white px-4 py-2 text-sm font-bold text-green-900 transition hover:bg-green-50">
