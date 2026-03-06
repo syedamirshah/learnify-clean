@@ -1,7 +1,6 @@
 // src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import IndividualQuizResult from "./pages/student/quiz-results/IndividualQuizResult";
 import QuizAttempt from "./pages/student/QuizAttempt.jsx";
 import HonorBoard from './pages/public/HonorBoard';
@@ -43,7 +42,7 @@ function App() {
       <OfflineOverlay />
       <div className="min-h-screen bg-white">
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/student/quiz-result/:attemptId/" element={<IndividualQuizResult />} />
           <Route path="/student/attempt-quiz/:quizId" element={<QuizAttempt />} />
           <Route path="/student/quiz/:quizId/start" element={<QuizAttempt />} />
