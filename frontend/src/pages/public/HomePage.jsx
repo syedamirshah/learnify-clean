@@ -222,7 +222,7 @@ const HomePage = () => {
           <div className="mb-6 text-center">
             <h3 className="text-3xl font-extrabold text-green-900">Learn in Three Ways</h3>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
             {[
               {
                 title: "Textbook Exercises",
