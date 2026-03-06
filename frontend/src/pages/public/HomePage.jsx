@@ -8,8 +8,6 @@ import topicIndex from "@/assets/screenshots/topic-index.png";
 import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
 import quizAttempt from "@/assets/screenshots/quiz-attempt.png";
 import resultsTable from "@/assets/screenshots/results-table.png";
-import honorBoard from "@/assets/screenshots/honor-board.png";
-import membership from "@/assets/screenshots/membership.png";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -112,76 +110,6 @@ const HomePage = () => {
     },
   ];
 
-  const featureCards = [
-    {
-      title: "Aligned with Curriculum",
-      description:
-        "Math practice follows a structured sequence so learners build understanding in the right order.",
-    },
-    {
-      title: "Smart Pedagogy",
-      description:
-        "Learnify supports step-by-step concept building through clear practice paths and focused revision.",
-    },
-    {
-      title: "Track Progress Clearly",
-      description:
-        "Students and teachers can follow performance, identify weak areas, and see improvement over time.",
-    },
-    {
-      title: "Unlimited, Affordable Practice",
-      description:
-        "Meaningful math practice stays accessible, repeatable, and easy to continue.",
-    },
-  ];
-
-  const learningModes = [
-    {
-      title: "Textbook Exercises",
-      description: "Study chapter-wise exercises in a structured textbook sequence.",
-      to: "/learn",
-      image: textbookExercises,
-      button: "Open Exercises",
-    },
-    {
-      title: "Topic Practice",
-      description: "Strengthen specific concepts through focused topic-based learning.",
-      to: "/topic-index",
-      image: topicIndex,
-      button: "Open Topics",
-    },
-    {
-      title: "Weekly Plan",
-      description: "Follow a guided weekly path for regular and steady progress.",
-      to: "/weekly-plan",
-      image: weeklyPlan,
-      button: "Open Weekly Plan",
-    },
-  ];
-
-  const audienceCards = [
-    {
-      title: "Students",
-      description:
-        "Build confidence through regular practice, immediate feedback, and clear learning structure.",
-    },
-    {
-      title: "Teachers",
-      description:
-        "Guide learners with a platform that supports consistency, preview access, and progress visibility.",
-    },
-    {
-      title: "Families",
-      description:
-        "Support daily math learning with one focused, affordable, and easy-to-use platform.",
-    },
-  ];
-
-  const sectionTitleClass =
-    "text-3xl font-bold tracking-tight text-[#0f5132] sm:text-4xl";
-  const sectionTextClass =
-    "mt-3 max-w-2xl text-base leading-7 text-gray-600";
-
   const screenshotClass =
     "w-full rounded-xl border border-[#d9e9df] bg-white shadow-sm";
 
@@ -194,21 +122,29 @@ const HomePage = () => {
     >
       <header className="border-b border-[#dbe9df] bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <img
-            src={logo}
-            alt="Learnify"
-            className="h-14 w-14 object-contain sm:h-16 sm:w-16"
-          />
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#0f5132] sm:text-3xl">
-              Learnify Pakistan
-            </h1>
-            <p className="mt-1 text-sm font-medium text-[#118C4F] sm:text-base">
-              Learning Math Responsibly
-            </p>
+        <div className="flex items-center gap-4">
+            <img
+              src={logo}
+              alt="Learnify Pakistan Logo"
+              className="h-[68px] w-auto object-contain sm:h-[82px]"
+            />
+
+            <div className="flex flex-col justify-center leading-none">
+              <h1
+                className="text-[34px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[48px]"
+                style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
+              >
+                Learnify Pakistan
+              </h1>
+
+              <p
+                className="mt-2 text-[20px] font-bold italic text-[#2f7a43] sm:text-[30px]"
+                style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
+              >
+                Learning Math Responsibly
+              </p>
+            </div>
           </div>
-        </div>
 
           <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
@@ -264,10 +200,6 @@ const HomePage = () => {
                   )
                 )}
               </div>
-
-              <p className="mt-4 text-sm text-gray-500">
-                Try real exercises instantly — no signup required.
-              </p>
 
               <div className="mt-10">
                 <p className="mb-3 text-sm font-semibold text-[#118C4F]">
@@ -341,182 +273,73 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
-          <div className="max-w-3xl">
-            <h3 className={sectionTitleClass}>Why Learnify Works</h3>
-            <p className={sectionTextClass}>
-              Learnify combines structured practice, focused revision, and clear progress
-              visibility in one math-first platform.
+        <section className="mx-auto max-w-[1240px] px-4 py-16">
+          <div className="max-w-4xl">
+            <h3 className="text-3xl font-bold tracking-tight text-[#0f5132] sm:text-4xl">
+              How Learnify Supports Learning
+            </h3>
+            <p className="mt-3 text-base leading-7 text-gray-600">
+              Each feature of Learnify is designed to support structured learning, regular practice, and clear progress visibility.
             </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-            {featureCards.map((card) => (
-              <article
-                key={card.title}
-                className="rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm"
-              >
-                <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-gray-600">
-                  {card.description}
+          <div className="mt-12 space-y-16">
+            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div>
+                <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with Curriculum and Official Textbooks</h4>
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  Learnify exercises follow the official textbook sequence chapter by chapter, so students build understanding in a structured progression.
+                  This curriculum alignment makes the platform easy to integrate into school routines and classroom learning plans.
                 </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-y border-[#e3efe7] bg-white">
-          <div className="mx-auto w-full max-w-[1240px] px-4 py-14">
-            <div className="max-w-3xl">
-              <h3 className={sectionTitleClass}>Learn in Three Ways</h3>
-              <p className={sectionTextClass}>
-                Choose the style of practice that best fits your learning routine.
-              </p>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {learningModes.map((card) => (
-                <article
-                  key={card.title}
-                  className="overflow-hidden rounded-2xl border border-[#dbe9df] bg-[#fcfefd] shadow-sm"
-                >
-                  <div className="border-b border-[#e3efe7] bg-white p-4">
-                    <img
-                      src={card.image}
-                      alt={`${card.title} preview`}
-                      className={screenshotClass}
-                    />
-                  </div>
-
-                  <div className="p-5">
-                    <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
-                    <p className="mt-3 text-sm leading-7 text-gray-600">
-                      {card.description}
-                    </p>
-                    <Link
-                      to={card.to}
-                      className="mt-5 inline-flex rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50"
-                    >
-                      {card.button}
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
-          <div className="max-w-3xl">
-            <h3 className={sectionTitleClass}>Built for Students, Teachers, and Families</h3>
-            <p className={sectionTextClass}>
-              Learnify is designed to support regular math practice across different learning settings.
-            </p>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {audienceCards.map((card) => (
-              <article
-                key={card.title}
-                className="rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm"
-              >
-                <h4 className="text-xl font-semibold text-[#0f5132]">{card.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-gray-600">
-                  {card.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-y border-[#e3efe7] bg-white">
-          <div className="mx-auto w-full max-w-[1240px] px-4 py-14">
-            <div className="max-w-3xl">
-              <h3 className={sectionTitleClass}>Results and Recognition</h3>
-              <p className={sectionTextClass}>
-                Learners can track performance clearly and stay motivated through visible achievement.
-              </p>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
-                <img
-                  src={quizAttempt}
-                  alt="Quiz experience preview"
-                  className={screenshotClass}
-                />
-                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
-                  Real Quiz Experience
-                </h4>
-              </article>
-
-              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
-                <img
-                  src={resultsTable}
-                  alt="Progress results preview"
-                  className={screenshotClass}
-                />
-                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
-                  Progress Tracking
-                </h4>
-              </article>
-
-              <article className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-4 shadow-sm">
-                <img
-                  src={honorBoard}
-                  alt="Honor board preview"
-                  className={screenshotClass}
-                />
-                <h4 className="mt-4 text-lg font-semibold text-[#0f5132]">
-                  Honor Board Recognition
-                </h4>
-                <Link
-                  to="/honor-board"
-                  className="mt-3 inline-flex text-sm font-semibold text-[#118C4F] hover:underline"
-                >
-                  View Honor Board
-                </Link>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
-          <div className="grid grid-cols-1 gap-8 rounded-2xl border border-[#dbe9df] bg-white p-6 shadow-sm lg:grid-cols-[1fr_1.05fr] lg:items-center lg:p-8">
-            <img
-              src={membership}
-              alt="Membership plans"
-              className={screenshotClass}
-            />
-
-            <div>
-              <h3 className={sectionTitleClass}>Ready to Start Learning?</h3>
-              <p className="mt-4 max-w-xl text-base leading-7 text-gray-600">
-                Enter instantly as a guest, or create an account to continue your full learning journey.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  to="/learn"
-                  className="inline-flex items-center justify-center rounded-md bg-[#118C4F] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
-                >
-                  Enter as Guest
-                </Link>
-                <Link
-                  to="/signup"
-                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
-                >
-                  Sign Up
-                </Link>
               </div>
+              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <img src={textbookExercises} alt="Textbook exercises preview" className={screenshotClass} />
+              </div>
+            </article>
 
-              <Link
-                to="/membership"
-                className="mt-4 inline-flex text-sm font-semibold text-[#118C4F] hover:underline"
-              >
-                Explore Membership
-              </Link>
-            </div>
+            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="order-2 lg:order-1 rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <img src={resultsTable} alt="Progress results preview" className={screenshotClass} />
+              </div>
+              <div className="order-1 lg:order-2">
+                <h4 className="text-2xl font-semibold text-[#0f5132]">Track Progress Clearly</h4>
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  The quiz history and results view makes performance easy to read through marks, percentages, and attempt history.
+                  Students and teachers can identify weak areas quickly and monitor improvement over time with confidence.
+                </p>
+              </div>
+            </article>
+
+            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div>
+                <h4 className="text-2xl font-semibold text-[#0f5132]">Unlimited, Affordable Practice</h4>
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  Learnify supports both Learning Mode and Exam Mode with unlimited attempts, giving students space to practice repeatedly.
+                  Since new questions are randomized each attempt, learners improve understanding instead of memorizing fixed answer patterns.
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <img src={quizAttempt} alt="Quiz experience preview" className={screenshotClass} />
+              </div>
+            </article>
+
+            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="order-2 lg:order-1 space-y-4">
+                <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                  <img src={topicIndex} alt="Topic Practice preview" className={screenshotClass} />
+                </div>
+                <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                  <img src={weeklyPlan} alt="Weekly Plan preview" className={screenshotClass} />
+                </div>
+              </div>
+              <div className="order-1 lg:order-2">
+                <h4 className="text-2xl font-semibold text-[#0f5132]">Multiple Ways to Organize Learning</h4>
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  Learnify offers three complementary learning paths: Textbook Exercises, Topic Index, and Weekly Plan.
+                  Learners can follow textbook structure for guided progression or switch to topic-based and week-based practice for flexible revision.
+                </p>
+              </div>
+            </article>
           </div>
         </section>
       </main>
