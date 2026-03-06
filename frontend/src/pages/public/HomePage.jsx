@@ -194,21 +194,21 @@ const HomePage = () => {
     >
       <header className="border-b border-[#dbe9df] bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={logo}
-              alt="Learnify"
-              className="h-14 w-14 object-contain sm:h-16 sm:w-16"
-            />
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-[#0f5132] sm:text-3xl">
-                Learnify
-              </h1>
-              <p className="mt-1 text-sm font-medium text-[#118C4F] sm:text-base">
-                Learning Math Responsibly
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <img
+            src={logo}
+            alt="Learnify"
+            className="h-14 w-14 object-contain sm:h-16 sm:w-16"
+          />
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#0f5132] sm:text-3xl">
+              Learnify
+            </h1>
+            <p className="mt-1 text-sm font-medium text-[#118C4F] sm:text-base">
+              Learning Math Responsibly
+            </p>
           </div>
+        </div>
 
           <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
