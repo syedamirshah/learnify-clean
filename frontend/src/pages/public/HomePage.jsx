@@ -1,13 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
-import textbookExercises from "@/assets/screenshots/textbook-exercises.png";
-import topicIndex from "@/assets/screenshots/topic-index.png";
-import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
-import quizAttempt from "@/assets/screenshots/quiz-attempt.png";
-import resultsTable from "@/assets/screenshots/results-table.png";
-import honorBoard from "@/assets/screenshots/honor-board.png";
-import membership from "@/assets/screenshots/membership.png";
 
 const HomePage = () => {
   return (
@@ -63,13 +56,14 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div>
+          <div className="rounded-3xl border border-green-100 bg-gradient-to-br from-green-50 to-white p-6 shadow-sm">
             <div className="mb-3 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
-            <img
-              src={textbookExercises}
-              alt="Textbook exercises preview"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
-            />
+            <div className="flex h-[320px] items-center justify-center rounded-2xl border-2 border-dashed border-green-200 bg-white text-center">
+              <div>
+                <p className="text-base font-bold text-green-900">Screenshot Placeholder</p>
+                <p className="mt-1 text-sm text-gray-600">Chapter-wise exercises and progress cards</p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -102,69 +96,29 @@ const HomePage = () => {
                 title: "Textbook Exercises",
                 desc: "Study chapter-wise exercises in textbook sequence.",
                 to: "/learn",
-                image: textbookExercises,
-                button: "Open Exercises",
               },
               {
                 title: "Topic Practice",
                 desc: "Practice by topic to strengthen targeted skills.",
                 to: "/topic-index",
-                image: topicIndex,
-                button: "Open Topics",
               },
               {
                 title: "Weekly Plan",
                 desc: "Follow structured weekly sets for steady progress.",
                 to: "/weekly-plan",
-                image: weeklyPlan,
-                button: "Open Weekly Plan",
               },
             ].map((card) => (
               <article key={card.title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
-                <img
-                  src={card.image}
-                  alt={`${card.title} preview`}
-                  className="rounded-xl shadow-xl border border-gray-200 w-full"
-                />
-                <h4 className="mt-4 text-xl font-bold text-green-900">{card.title}</h4>
+                <div className="mb-4 flex h-36 items-center justify-center rounded-xl border-2 border-dashed border-green-200 bg-green-50/40 text-sm font-semibold text-green-700">
+                  Thumbnail Placeholder
+                </div>
+                <h4 className="text-xl font-bold text-green-900">{card.title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{card.desc}</p>
-                <Link to={card.to} className="mt-4 inline-block rounded-full border border-green-300 px-4 py-2 text-sm font-bold text-green-900 hover:bg-green-50">
-                  {card.button}
+                <Link to={card.to} className="mt-4 inline-block text-sm font-bold text-green-700 hover:underline">
+                  Open
                 </Link>
               </article>
             ))}
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h3 className="text-3xl font-extrabold text-green-900">Real Quiz Experience</h3>
-              <p className="mt-3 text-sm text-gray-700">
-                Attempt quizzes in a focused interface designed for smooth answering and better concentration.
-              </p>
-            </div>
-            <img
-              src={quizAttempt}
-              alt="Quiz attempt experience"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
-            />
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
-            <img
-              src={resultsTable}
-              alt="Progress tracking results"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
-            />
-            <div>
-              <h3 className="text-3xl font-extrabold text-green-900">Track Your Progress</h3>
-              <p className="mt-3 text-sm text-gray-700">
-                View quiz history and performance trends to understand strengths and improve consistently.
-              </p>
-            </div>
           </div>
         </section>
 
@@ -175,15 +129,15 @@ const HomePage = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
               <h4 className="text-xl font-bold text-green-900">Guest</h4>
-              <p className="mt-2 text-sm text-gray-600">Can explore quizzes across grades in preview mode.</p>
+              <p className="mt-2 text-sm text-gray-600">Explore quizzes across grades in preview mode.</p>
             </article>
             <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
               <h4 className="text-xl font-bold text-green-900">Teacher</h4>
-              <p className="mt-2 text-sm text-gray-600">Can browse and preview quizzes across grades.</p>
+              <p className="mt-2 text-sm text-gray-600">Browse and preview quizzes across grades with ease.</p>
             </article>
             <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
               <h4 className="text-xl font-bold text-green-900">Student</h4>
-              <p className="mt-2 text-sm text-gray-600">Gets full graded access for their own grade.</p>
+              <p className="mt-2 text-sm text-gray-600">Get full graded access for your own grade learning path.</p>
             </article>
           </div>
         </section>
@@ -192,45 +146,34 @@ const HomePage = () => {
           <div className="rounded-3xl border border-green-100 bg-gradient-to-r from-green-50 to-white p-6 shadow-sm md:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
-                <h3 className="text-3xl font-extrabold text-green-900">Celebrate Achievement</h3>
+                <h3 className="text-3xl font-extrabold text-green-900">Honor Board</h3>
                 <p className="mt-2 text-sm text-gray-700">
-                  Highlight student accomplishments and keep motivation high with visible recognition.
+                  Celebrate learners who consistently show commitment and achievement.
                 </p>
                 <Link to="/honor-board" className="mt-4 inline-block rounded-full border border-green-300 px-5 py-2 text-sm font-bold text-green-900 hover:bg-green-100">
                   View Honor Board
                 </Link>
               </div>
-              <img
-                src={honorBoard}
-                alt="Honor board preview"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
-              />
+              <div className="flex h-40 items-center justify-center rounded-2xl border-2 border-dashed border-green-200 bg-white text-sm font-semibold text-green-700">
+                Honor Board Preview Placeholder
+              </div>
             </div>
           </div>
         </section>
 
         <section className="mx-auto w-full max-w-[1200px] px-4 pb-14 pt-2">
-          <div className="rounded-3xl border border-green-200 bg-green-50 p-6 shadow-sm md:p-8">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
-              <img
-                src={membership}
-                alt="Membership plans"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
-              />
-              <div>
-                <h3 className="text-3xl font-extrabold text-green-900">Flexible Membership for Every Learner</h3>
-                <p className="mt-3 text-sm text-gray-700">
-                  Choose affordable options and keep your math journey active with full learning access.
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link to="/membership" className="rounded-full bg-green-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-700">
-                    Start Membership
-                  </Link>
-                  <Link to="/signup" className="rounded-full border border-green-300 px-6 py-2.5 text-sm font-bold text-green-900 hover:bg-green-100">
-                    Create Account
-                  </Link>
-                </div>
-              </div>
+          <div className="rounded-3xl border border-green-200 bg-green-50 p-6 text-center shadow-sm md:p-8">
+            <h3 className="text-3xl font-extrabold text-green-900">Flexible Membership for Every Learner</h3>
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-700">
+              Access structured math learning with affordable and practical membership options.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Link to="/membership" className="rounded-full bg-green-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                Explore Membership
+              </Link>
+              <Link to="/signup" className="rounded-full border border-green-300 px-6 py-2.5 text-sm font-bold text-green-900 hover:bg-green-100">
+                Sign Up
+              </Link>
             </div>
           </div>
         </section>
