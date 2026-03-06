@@ -91,11 +91,11 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-[Nunito] text-gray-900">
-      <header className="sticky top-0 z-20 border-b border-green-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4 px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#f7fff8] via-white to-[#f4fbf5] font-[Nunito] text-gray-900">
+      <header className="sticky top-0 z-20 border-b border-green-100/80 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Learnify" className="h-12 w-12 object-contain" />
+            <img src={logo} alt="Learnify" className="h-12 w-12 rounded-2xl object-contain ring-1 ring-green-100" />
             <div>
               <h1 className="text-2xl font-extrabold text-green-900">Learnify</h1>
               <p className="text-sm text-green-700">Learning Math Responsibly</p>
@@ -103,13 +103,13 @@ const HomePage = () => {
           </div>
 
           <nav className="flex items-center gap-2 sm:gap-3 text-sm font-semibold">
-            <Link to="/login" className="rounded-full px-3 py-1.5 text-green-900 hover:bg-green-50">
+            <Link to="/login" className="rounded-full px-3 py-1.5 text-green-900 transition hover:bg-green-50">
               Login
             </Link>
-            <Link to="/signup" className="rounded-full border border-green-300 px-4 py-1.5 text-green-900 hover:bg-green-50">
+            <Link to="/signup" className="rounded-full border border-green-300 bg-white px-4 py-1.5 text-green-900 shadow-sm transition hover:bg-green-50 hover:shadow">
               Sign Up
             </Link>
-            <Link to="/learn" className="rounded-full bg-green-600 px-4 py-1.5 text-white hover:bg-green-700">
+            <Link to="/learn" className="rounded-full bg-green-600 px-4 py-1.5 text-white shadow-sm transition hover:bg-green-700 hover:shadow">
               Enter as Guest
             </Link>
           </nav>
@@ -117,34 +117,38 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-4 py-14 lg:grid-cols-2 lg:items-center">
-          <div>
+        <section className="relative overflow-hidden">
+          <div className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-green-100/70 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 right-0 h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-14 md:py-16 lg:grid-cols-2 lg:items-center">
+          <div className="relative z-10">
             <p className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
               Math Learning Platform
             </p>
-            <h2 className="mt-4 text-4xl font-extrabold leading-tight text-green-900 sm:text-5xl">
+            <h2 className="mt-4 text-4xl font-extrabold leading-tight text-green-900 sm:text-5xl lg:text-6xl">
               Master Math with Confidence
             </h2>
-            <p className="mt-4 max-w-xl text-lg text-gray-700">
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-gray-700">
               Build strong understanding through structured textbook exercises, focused topic practice,
               and guided weekly plans in one platform.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/learn" className="rounded-full bg-green-600 px-6 py-3 text-sm font-bold text-white hover:bg-green-700">
+              <Link to="/learn" className="rounded-full bg-green-600 px-6 py-3 text-sm font-bold text-white shadow transition hover:bg-green-700 hover:shadow-md">
                 Start Learning
               </Link>
-              <Link to="/signup" className="rounded-full border border-green-300 px-6 py-3 text-sm font-bold text-green-900 hover:bg-green-50">
+              <Link to="/signup" className="rounded-full border border-green-300 bg-white px-6 py-3 text-sm font-bold text-green-900 shadow-sm transition hover:bg-green-50 hover:shadow">
                 Sign Up
               </Link>
-              <Link to="/learn" className="rounded-full border border-gray-300 px-6 py-3 text-sm font-bold text-gray-800 hover:bg-gray-50">
+              <Link to="/learn" className="rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-50 hover:shadow">
                 Enter as Guest
               </Link>
             </div>
+            <p className="mt-3 text-sm text-gray-500">Try real exercises instantly, no signup required.</p>
           </div>
 
-          <div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg">
+          <div className="relative z-10">
+            <div className="rounded-3xl border border-gray-200/90 bg-white p-5 shadow-xl md:p-6">
               <h3 className="text-xl font-bold text-green-900">Login to Continue</h3>
               <p className="mt-1 text-sm text-gray-600">Access your full learning experience.</p>
               <div className="mt-4 space-y-3">
@@ -168,7 +172,7 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="mt-4 w-full rounded-xl bg-green-600 py-2.5 font-semibold text-white transition hover:bg-green-700"
+                className="mt-4 w-full rounded-xl bg-green-600 py-2.5 font-semibold text-white shadow-sm transition hover:bg-green-700 hover:shadow"
               >
                 Login
               </button>
@@ -182,16 +186,17 @@ const HomePage = () => {
               </div>
             </div>
 
-            <div className="mt-6 mb-3 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
+            <div className="mb-3 mt-6 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
             <img
               src={textbookExercises}
               alt="Textbook exercises preview"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
+              className="w-full rounded-2xl border border-gray-200 shadow-xl"
             />
+          </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-8">
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
           <div className="mb-6 text-center">
             <h3 className="text-3xl font-extrabold text-green-900">Why Learnify Works</h3>
           </div>
@@ -202,7 +207,7 @@ const HomePage = () => {
               ["Weekly Structured Learning", "Follow weekly plans to build routine and momentum."],
               ["Progress and Recognition", "Track outcomes and celebrate milestones with confidence."],
             ].map(([title, text]) => (
-              <article key={title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+              <article key={title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <h4 className="text-lg font-bold text-green-900">{title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{text}</p>
               </article>
@@ -210,7 +215,8 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="border-y border-green-100/60 bg-white/80">
+          <div className="mx-auto w-full max-w-[1240px] px-4 py-14">
           <div className="mb-6 text-center">
             <h3 className="text-3xl font-extrabold text-green-900">Learn in Three Ways</h3>
           </div>
@@ -238,43 +244,44 @@ const HomePage = () => {
                 button: "Open Weekly Plan",
               },
             ].map((card) => (
-              <article key={card.title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+              <article key={card.title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
                 <img
                   src={card.image}
                   alt={`${card.title} preview`}
-                  className="rounded-xl shadow-xl border border-gray-200 w-full"
+                  className="w-full rounded-xl border border-gray-200 shadow-xl"
                 />
                 <h4 className="mt-4 text-xl font-bold text-green-900">{card.title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{card.desc}</p>
-                <Link to={card.to} className="mt-4 inline-block rounded-full border border-green-300 px-4 py-2 text-sm font-bold text-green-900 hover:bg-green-50">
+                <Link to={card.to} className="mt-4 inline-block rounded-full border border-green-300 bg-white px-4 py-2 text-sm font-bold text-green-900 transition hover:bg-green-50">
                   {card.button}
                 </Link>
               </article>
             ))}
           </div>
+          </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-8">
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
           <div className="mb-6 text-center">
             <h3 className="text-3xl font-extrabold text-green-900">Built for Students, Teachers, and Families</h3>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition hover:shadow-md">
               <h4 className="text-xl font-bold text-green-900">Students</h4>
               <p className="mt-2 text-sm text-gray-600">Build confidence through structured, grade-aligned math practice.</p>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition hover:shadow-md">
               <h4 className="text-xl font-bold text-green-900">Teachers</h4>
               <p className="mt-2 text-sm text-gray-600">Use a clear practice structure to guide students with consistency.</p>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm transition hover:shadow-md">
               <h4 className="text-xl font-bold text-green-900">Families</h4>
               <p className="mt-2 text-sm text-gray-600">Support daily math progress with one focused and simple platform.</p>
             </article>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="mx-auto w-full max-w-[1240px] px-4 py-14">
           <div className="mb-6 text-center">
             <h3 className="text-3xl font-extrabold text-green-900">Results and Recognition</h3>
             <p className="mt-2 text-sm text-gray-700">
@@ -282,27 +289,27 @@ const HomePage = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm transition hover:shadow-md">
               <img
                 src={quizAttempt}
                 alt="Quiz experience"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl border border-gray-200 shadow-xl"
               />
               <h4 className="mt-3 text-lg font-bold text-green-900">Real Quiz Experience</h4>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm transition hover:shadow-md">
               <img
                 src={resultsTable}
                 alt="Progress results"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl border border-gray-200 shadow-xl"
               />
               <h4 className="mt-3 text-lg font-bold text-green-900">Progress Tracking</h4>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm">
+            <article className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm transition hover:shadow-md">
               <img
                 src={honorBoard}
                 alt="Honor board preview"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl border border-gray-200 shadow-xl"
               />
               <h4 className="mt-3 text-lg font-bold text-green-900">Honor Board Recognition</h4>
               <Link to="/honor-board" className="mt-2 inline-block text-sm font-bold text-green-800 hover:underline">
@@ -312,13 +319,13 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 pb-14 pt-2">
-          <div className="rounded-3xl border border-green-200 bg-green-50 p-6 shadow-sm md:p-8">
+        <section className="mx-auto w-full max-w-[1240px] px-4 pb-14 pt-2">
+          <div className="rounded-3xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-6 shadow-sm md:p-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
               <img
                 src={membership}
                 alt="Membership plans"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl border border-gray-200 shadow-xl"
               />
               <div>
                 <h3 className="text-3xl font-extrabold text-green-900">Ready to Start Learning?</h3>
@@ -326,10 +333,10 @@ const HomePage = () => {
                   Enter instantly as a guest, or create your account to unlock your full learning journey.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <Link to="/learn" className="rounded-full bg-green-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                  <Link to="/learn" className="rounded-full bg-green-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 hover:shadow">
                     Enter as Guest
                   </Link>
-                  <Link to="/signup" className="rounded-full border border-green-300 px-6 py-2.5 text-sm font-bold text-green-900 hover:bg-green-100">
+                  <Link to="/signup" className="rounded-full border border-green-300 bg-white px-6 py-2.5 text-sm font-bold text-green-900 shadow-sm transition hover:bg-green-100 hover:shadow">
                     Sign Up
                   </Link>
                 </div>
@@ -342,8 +349,8 @@ const HomePage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-green-100 bg-white">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
+      <footer className="border-t border-green-100 bg-white/90">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
           <div className="font-semibold text-green-900">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/membership" className="hover:text-green-700 hover:underline">Membership</Link>
