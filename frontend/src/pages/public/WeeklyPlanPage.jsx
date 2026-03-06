@@ -307,6 +307,7 @@ const WeeklyPlanPage = () => {
       className="font-[Nunito]"
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
+      logoHref="/learn"
       brandTitle="Learnify Pakistan"
       brandMotto="Learning with Responsibility"
       isAuthenticated={isAuthed}

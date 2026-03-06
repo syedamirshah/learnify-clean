@@ -501,6 +501,7 @@ const chapterPalettes = [
       className="font-[Nunito]"
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
+      logoHref="/learn"
       brandTitle={brandTitle}
       brandMotto={brandMotto}
       isAuthenticated={Boolean(role)}
