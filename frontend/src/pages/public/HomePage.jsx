@@ -37,7 +37,7 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-4 py-14 lg:grid-cols-2 lg:items-center">
+        <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-10 items-center px-4 py-20 lg:grid-cols-2">
           <div>
             <p className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
               Math Learning Platform
@@ -61,21 +61,25 @@ const HomePage = () => {
                 Enter as Guest
               </Link>
             </div>
+            <p className="text-sm text-gray-500 mt-3">Try real exercises instantly — no signup required.</p>
           </div>
 
-          <div>
+          <div className="max-w-xl mx-auto w-full">
             <div className="mb-3 text-sm font-semibold text-green-700">Textbook Exercises Preview</div>
             <img
               src={textbookExercises}
               alt="Textbook exercises preview"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
+              className="w-full rounded-xl shadow-xl border border-gray-200"
             />
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-8">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-extrabold text-green-900">Why Learnify Works</h3>
+            <h3 className="text-3xl font-bold text-gray-800">Why Learnify Works</h3>
+            <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+              A focused learning system for building strong math understanding step by step.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
@@ -84,7 +88,7 @@ const HomePage = () => {
               ["Weekly Structured Learning", "Follow weekly plans to build routine and momentum."],
               ["Progress and Recognition", "Track outcomes and celebrate milestones with confidence."],
             ].map(([title, text]) => (
-              <article key={title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+              <article key={title} className="rounded-xl border border-green-100 bg-white p-5 shadow-md hover:shadow-xl transition duration-200">
                 <h4 className="text-lg font-bold text-green-900">{title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{text}</p>
               </article>
@@ -92,9 +96,12 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-extrabold text-green-900">Choose How You Want to Study</h3>
+            <h3 className="text-3xl font-bold text-gray-800">Choose How You Want to Study</h3>
+            <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+              Pick the path that matches your routine and learning goals.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {[
@@ -120,11 +127,11 @@ const HomePage = () => {
                 button: "Open Weekly Plan",
               },
             ].map((card) => (
-              <article key={card.title} className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+              <article key={card.title} className="rounded-xl border border-green-100 bg-white p-5 shadow-md hover:shadow-xl transition duration-200">
                 <img
                   src={card.image}
                   alt={`${card.title} preview`}
-                  className="rounded-xl shadow-xl border border-gray-200 w-full"
+                  className="w-full rounded-xl shadow-xl border border-gray-200"
                 />
                 <h4 className="mt-4 text-xl font-bold text-green-900">{card.title}</h4>
                 <p className="mt-2 text-sm text-gray-600">{card.desc}</p>
@@ -136,64 +143,67 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
             <div>
-              <h3 className="text-3xl font-extrabold text-green-900">Real Quiz Experience</h3>
-              <p className="mt-3 text-sm text-gray-700">
+              <h3 className="text-3xl font-bold text-gray-800">Real Quiz Experience</h3>
+              <p className="text-gray-600 mt-3 max-w-2xl">
                 Attempt quizzes in a focused interface designed for smooth answering and better concentration.
               </p>
             </div>
             <img
               src={quizAttempt}
               alt="Quiz attempt experience"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
+              className="w-full rounded-xl shadow-xl border border-gray-200 max-w-4xl mx-auto"
             />
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
             <img
               src={resultsTable}
               alt="Progress tracking results"
-              className="rounded-xl shadow-xl border border-gray-200 w-full"
+              className="w-full rounded-xl shadow-xl border border-gray-200 max-w-4xl mx-auto"
             />
             <div>
-              <h3 className="text-3xl font-extrabold text-green-900">Track Your Progress</h3>
-              <p className="mt-3 text-sm text-gray-700">
+              <h3 className="text-3xl font-bold text-gray-800">Track Your Progress</h3>
+              <p className="text-gray-600 mt-3 max-w-2xl">
                 View quiz history and performance trends to understand strengths and improve consistently.
               </p>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-8">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="mb-6 text-center">
-            <h3 className="text-3xl font-extrabold text-green-900">Access Learnify Your Way</h3>
+            <h3 className="text-3xl font-bold text-gray-800">Access Learnify Your Way</h3>
+            <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+              The same platform supports exploration, teaching, and full student learning access.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-xl border border-green-100 bg-white p-5 shadow-md hover:shadow-xl transition duration-200">
               <h4 className="text-xl font-bold text-green-900">Guest</h4>
               <p className="mt-2 text-sm text-gray-600">Can explore quizzes across grades in preview mode.</p>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-xl border border-green-100 bg-white p-5 shadow-md hover:shadow-xl transition duration-200">
               <h4 className="text-xl font-bold text-green-900">Teacher</h4>
               <p className="mt-2 text-sm text-gray-600">Can browse and preview quizzes across grades.</p>
             </article>
-            <article className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+            <article className="rounded-xl border border-green-100 bg-white p-5 shadow-md hover:shadow-xl transition duration-200">
               <h4 className="text-xl font-bold text-green-900">Student</h4>
               <p className="mt-2 text-sm text-gray-600">Gets full graded access for their own grade.</p>
             </article>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 py-10">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="rounded-3xl border border-green-100 bg-gradient-to-r from-green-50 to-white p-6 shadow-sm md:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
-                <h3 className="text-3xl font-extrabold text-green-900">Celebrate Achievement</h3>
-                <p className="mt-2 text-sm text-gray-700">
+                <h3 className="text-3xl font-bold text-gray-800">🏆 Honor Board</h3>
+                <p className="text-gray-600 mt-3 max-w-2xl">
                   Highlight student accomplishments and keep motivation high with visible recognition.
                 </p>
                 <Link to="/honor-board" className="mt-4 inline-block rounded-full border border-green-300 px-5 py-2 text-sm font-bold text-green-900 hover:bg-green-100">
@@ -203,30 +213,30 @@ const HomePage = () => {
               <img
                 src={honorBoard}
                 alt="Honor board preview"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl shadow-xl border border-gray-200 max-w-4xl mx-auto"
               />
             </div>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1200px] px-4 pb-14 pt-2">
+        <section className="mx-auto w-full max-w-[1200px] px-4 py-20">
           <div className="rounded-3xl border border-green-200 bg-green-50 p-6 shadow-sm md:p-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
               <img
                 src={membership}
                 alt="Membership plans"
-                className="rounded-xl shadow-xl border border-gray-200 w-full"
+                className="w-full rounded-xl shadow-xl border border-gray-200 max-w-4xl mx-auto"
               />
               <div>
-                <h3 className="text-3xl font-extrabold text-green-900">Flexible Membership for Every Learner</h3>
-                <p className="mt-3 text-sm text-gray-700">
+                <h3 className="text-3xl font-bold text-gray-800">Flexible Membership for Every Learner</h3>
+                <p className="text-gray-600 mt-3 max-w-2xl">
                   Choose affordable options and keep your math journey active with full learning access.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <Link to="/membership" className="rounded-full bg-green-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                  <Link to="/membership" className="rounded-full bg-green-600 px-6 py-3 text-sm font-bold text-white hover:bg-green-700">
                     Start Membership
                   </Link>
-                  <Link to="/signup" className="rounded-full border border-green-300 px-6 py-2.5 text-sm font-bold text-green-900 hover:bg-green-100">
+                  <Link to="/signup" className="rounded-full border border-green-300 px-6 py-3 text-sm font-bold text-green-900 hover:bg-green-100">
                     Create Account
                   </Link>
                 </div>
