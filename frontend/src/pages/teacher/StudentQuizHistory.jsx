@@ -150,7 +150,7 @@ const StudentQuizHistory = () => {
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
       brandTitle="Learnify Pakistan"
-      brandMotto="Learning Math Responsibly"
+      brandMotto="Practicing Math Responsibly"
       isAuthenticated={Boolean(role)}
       userFullName={userFullName}
       navItems={navItems}

@@ -440,7 +440,7 @@ const chapterPalettes = [
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
 
   const brandTitle = "Learnify Pakistan";
-  const brandMotto = "Learning Math Responsibly";
+  const brandMotto = "Practicing Math Responsibly";
   const navItems = [
     { key: "home", label: "Home", href: "/learn" },
     { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },

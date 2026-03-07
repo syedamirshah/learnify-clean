@@ -92,7 +92,7 @@ const MembershipPage = () => {
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
       brandTitle="Learnify Pakistan"
-      brandMotto="Learning Math Responsibly"
+      brandMotto="Practicing Math Responsibly"
       isAuthenticated={Boolean(role)}
       userFullName={userFullName}
       navItems={navItems}
@@ -413,7 +413,7 @@ const MembershipPage = () => {
               Recognition is positive, not shaming.
             </MiniCard>
             <MiniCard title="Learning values">
-              “Learning Math Responsibly” is part of the product design.
+              “Practicing Math Responsibly” is part of the product design.
             </MiniCard>
             <MiniCard title="Research with care">
               Anonymous learning trends can support research on outcomes across regions,

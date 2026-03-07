@@ -200,7 +200,7 @@ const TopicIndexPage = () => {
       logoAlt="Learnify Pakistan Logo"
       logoHref="/learn"
       brandTitle="Learnify Pakistan"
-      brandMotto="Learning Math Responsibly"
+      brandMotto="Practicing Math Responsibly"
       isAuthenticated={isAuthed}
       userFullName={userFullName}
       navItems={navItems}

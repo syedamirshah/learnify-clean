@@ -142,7 +142,7 @@ const HomePage = () => {
                 className="mt-1 text-[11px] font-bold italic text-[#2f7a43] sm:text-[14px] md:text-[18px]"
                 style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
               >
-                Learning Math Responsibly
+                Practicing Math Responsibly
               </p>
             </div>
           </div>
