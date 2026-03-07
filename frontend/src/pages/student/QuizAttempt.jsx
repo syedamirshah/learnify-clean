@@ -719,10 +719,10 @@ useEffect(() => {
           <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:gap-0">
             {/* Question Block */}
             <section ref={questionTopRef} aria-label="Question" className="w-full min-w-0 lg:flex-1 lg:pr-6">
-              <div
-                className="mb-4 text-gray-900"
-                style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing, textAlign: alignment }}
-                >
+            <div
+              className="mb-4 text-gray-900"
+              style={{ fontSize: `${fontSize}px`, textAlign: alignment }}
+            >
                 {(currentQuestion.type === 'scq' || currentQuestion.type === 'mcq') && (
                   <div className="mt-2">
                     {/* Question text */}
