@@ -386,7 +386,7 @@ const HonorBoard = () => {
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
       brandTitle="Learnify Pakistan"
-      brandMotto="Learning with Responsibility"
+      brandMotto="Learning Math Responsibly"
       isAuthenticated={Boolean(role)}
       userFullName={userFullName}
       navItems={navItems}

@@ -195,7 +195,7 @@ const SignupPage = () => {
       logoSrc={logo}
       logoAlt="Learnify Pakistan Logo"
       brandTitle="Learnify Pakistan"
-      brandMotto="Learning with Responsibility"
+      brandMotto="Learning Math Responsibly"
       isAuthenticated={Boolean(currentUserRole)}
       userFullName={userFullName}
       navItems={navItems}

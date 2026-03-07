@@ -6,7 +6,7 @@ export default function PublicHeader({
   logoAlt = "Learnify",
   logoHref = "/",
   brandTitle = "Learnify Pakistan",
-  brandMotto = "Learning with Responsibility",
+  brandMotto = "Learning Math Responsibly",
   onMenuClick,
   isMenuOpen = false,
   menuControlsId = "primary-mobile-drawer",
