@@ -1518,6 +1518,23 @@ def public_register_user(request):
     if raw_pw and 'password' not in data:
         data['password'] = raw_pw
 
+    confirm_pw = (
+        data.get('confirm_password')
+        or data.get('password2')
+        or data.get('confirmPassword')
+    )
+
+    # Keep API backward compatible: validate only when a confirmation field is supplied.
+    if confirm_pw is not None and raw_pw is not None and str(confirm_pw) != str(raw_pw):
+        return Response(
+            {"success": False, "errors": {"confirm_password": ["Passwords do not match."]}},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Strip non-model helper fields so serializer doesn't reject unknown keys.
+    for extra_key in ('confirm_password', 'password2', 'confirmPassword'):
+        data.pop(extra_key, None)
+
     serializer = PublicSignupSerializer(data=data)
     if serializer.is_valid():
         user = serializer.save()
