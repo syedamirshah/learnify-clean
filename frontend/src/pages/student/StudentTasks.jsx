@@ -104,7 +104,7 @@ export default function StudentTasks() {
           {/* ✅ Back to Home */}
           <div className="mt-3">
             <Link
-              to="/"
+              to="/learn"
               className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:underline"
             >
               ← Back to Home

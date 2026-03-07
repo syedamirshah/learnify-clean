@@ -186,20 +186,6 @@ const HomePage = () => {
                 weekly learning plans, and clear progress tracking in one focused
                 math environment.
               </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                {heroButtons.map((btn) =>
-                  btn.isAnchor ? (
-                    <a key={btn.label} href={btn.to} className={btn.className}>
-                      {btn.label}
-                    </a>
-                  ) : (
-                    <Link key={btn.label} to={btn.to} className={btn.className}>
-                      {btn.label}
-                    </Link>
-                  )
-                )}
-              </div>
             </div>
 
             <div
