@@ -263,11 +263,11 @@ const HomePage = () => {
         </section>
 
         <section className="mx-auto max-w-[1240px] px-4 py-16">
-          <div className="max-w-4xl">
-            <h3 className="text-3xl font-bold tracking-tight text-[#0f5132] sm:text-4xl">
+          <div className="mx-auto max-w-4xl text-center">
+            <h3 className="text-4xl font-bold tracking-tight text-[#0f5132] sm:text-5xl">
               How Learnify Supports Learning
             </h3>
-            <p className="mt-3 text-base leading-7 text-gray-600">
+            <p className="mt-4 text-lg leading-8 text-gray-600">
               Each feature of Learnify is designed to support structured learning, regular practice, and clear progress visibility.
             </p>
           </div>
