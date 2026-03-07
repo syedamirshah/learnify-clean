@@ -112,16 +112,19 @@ const HomePage = () => {
   ];
 
   const screenshotClass =
-    "w-full rounded-xl border border-[#d9e9df] bg-white shadow-sm";
+    "w-full rounded-xl border border-[#d9e9df] bg-white shadow-[0_10px_28px_rgba(15,81,50,0.12)]";
 
   return (
     <div
-      className="min-h-screen bg-[#f7fbf8] text-gray-900"
+      className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#f2faf5] via-[#f8fcf9] to-[#eef8f2] text-gray-900"
       style={{
         fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif',
       }}
     >
-      <header className="border-b border-[#dbe9df] bg-white">
+      <div className="pointer-events-none absolute -top-20 left-1/4 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-40 h-80 w-80 rounded-full bg-teal-100/50 blur-3xl" />
+
+      <header className="sticky top-0 z-20 border-b border-[#dbe9df] bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
         <div className="flex items-center gap-4">
             <img
@@ -150,19 +153,19 @@ const HomePage = () => {
           <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
               href="#login-card"
-              className="rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50"
+              className="rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow-md"
             >
               Login
             </a>
             <Link
               to="/signup"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md"
             >
               Sign Up
             </Link>
             <Link
               to="/learn"
-              className="rounded-md bg-[#118C4F] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
+              className="rounded-md bg-gradient-to-r from-[#118C4F] to-[#0e8b68] px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-md"
             >
               Enter as Guest
             </Link>
@@ -171,9 +174,9 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="border-b border-[#e3efe7] bg-white">
+        <section className="relative border-b border-[#e3efe7] bg-white/70">
           <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
-            <div>
+            <div className="rounded-3xl border border-[#d9e9df] bg-white/85 p-6 shadow-[0_18px_50px_rgba(15,81,50,0.08)] lg:p-8">
               <p className="inline-flex rounded-full bg-[#eaf6ee] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#118C4F]">
                 Entry Page
               </p>
@@ -191,7 +194,7 @@ const HomePage = () => {
 
             <div
               id="login-card"
-              className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-6 shadow-sm"
+              className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-6 shadow-[0_18px_50px_rgba(15,81,50,0.12)]"
             >
               <h3 className="text-2xl font-bold text-[#0f5132]">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
@@ -232,7 +235,7 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="mt-5 w-full rounded-lg bg-[#118C4F] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#118C4F] to-[#0e8b68] py-3 text-sm font-semibold text-white shadow-sm transition duration-200 hover:brightness-105 hover:shadow-md"
               >
                 Login
               </button>
@@ -251,7 +254,7 @@ const HomePage = () => {
 
         <section className="mx-auto max-w-[1240px] px-4 py-16">
           <div className="mx-auto max-w-4xl text-center">
-            <h3 className="text-4xl font-bold tracking-tight text-[#0f5132] sm:text-5xl">
+            <h3 className="bg-gradient-to-r from-[#0f5132] to-[#118C4F] bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
               How Learnify Supports Learning
             </h3>
             <p className="mt-4 text-lg leading-8 text-gray-600">
@@ -260,7 +263,7 @@ const HomePage = () => {
           </div>
 
           <div className="mt-12 space-y-16">
-            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with National Curriculum and Official Textbooks</h4>
                 <p className="mt-4 text-base leading-8 text-gray-600">
@@ -273,7 +276,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
               <div className="order-2 lg:order-1 rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
                 <img src={resultsTable} alt="Progress results preview" className={screenshotClass} />
               </div>
@@ -286,7 +289,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">Unlimited, Affordable Practice</h4>
                 <p className="mt-4 text-base leading-8 text-gray-600">
@@ -299,7 +302,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
               <div className="order-2 lg:order-1 space-y-4">
                 <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
                   <img src={topicIndex} alt="Topic Practice preview" className={screenshotClass} />
@@ -317,7 +320,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">
                   Support for Teachers
@@ -349,7 +352,7 @@ const HomePage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-[#dbe9df] bg-white">
+      <footer className="border-t border-[#dbe9df] bg-white/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
           <div className="font-semibold text-[#0f5132]">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
