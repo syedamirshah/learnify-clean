@@ -575,15 +575,15 @@ def choose_plan(request):
         plan = (carrier.get("plan") or "monthly").lower()
 
         # Define your plans here (Learnify Pakistan final fees)
-        # Monthly: Rs. 200
-        # Yearly: 12 × 200 = 2400 → 25% OFF = 1800
+        # Monthly: Rs. 300
+        # Yearly: 12 × 300 = 3600 → 25% OFF = 2700
         price_map = {
-            "monthly": 200.0,  # Rs. 200 per month
-            "yearly": 1800.0,  # Rs. 1800 per year (25% off)
+            "monthly": 300.0,  # Rs. 300 per month
+            "yearly": 2700.0,  # Rs. 2700 per year (25% off)
         }
         months_map = {"monthly": 1, "yearly": 12}
 
-        amount = price_map.get(plan, 200.0)   # default also 200 now
+        amount = price_map.get(plan, 300.0)   # default also 300 now
         months = months_map.get(plan, 1)
 
         if not ctx.get("user_obj"):

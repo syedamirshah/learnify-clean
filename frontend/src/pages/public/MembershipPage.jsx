@@ -16,13 +16,13 @@ const MembershipPage = () => {
   const navigate = useNavigate();
 
   // Pricing (as per your decision)
-  const MONTHLY_INDIVIDUAL = 200; // Rs.
-  const YEARLY_BASE = MONTHLY_INDIVIDUAL * 12; // 2400
-  const YEARLY_INDIVIDUAL = Math.round(YEARLY_BASE * 0.75); // 25% off => 1800
+  const MONTHLY_INDIVIDUAL = 300; // Rs.
+  const YEARLY_BASE = MONTHLY_INDIVIDUAL * 12; // 3600
+  const YEARLY_INDIVIDUAL = Math.round(YEARLY_BASE * 0.75); // 25% off => 2700
 
   // Schools discount rules (as requested)
-  const SCHOOL_MONTHLY_PER_STUDENT = Math.round(MONTHLY_INDIVIDUAL * 0.75); // 25% off => 150
-  const SCHOOL_YEARLY_PER_STUDENT = Math.round(YEARLY_BASE * 0.5); // Annual + school => 50% off => 1200
+  const SCHOOL_MONTHLY_PER_STUDENT = Math.round(MONTHLY_INDIVIDUAL * 0.75); // 25% off => 225
+  const SCHOOL_YEARLY_PER_STUDENT = Math.round(YEARLY_BASE * 0.5); // Annual + school => 50% off => 1800
 
   useEffect(() => {
     setRole(localStorage.getItem("user_role"));
