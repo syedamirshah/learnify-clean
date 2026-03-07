@@ -8,6 +8,7 @@ import topicIndex from "@/assets/screenshots/topic-index.png";
 import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
 import quizAttempt from "@/assets/screenshots/quiz-attempt.png";
 import resultsTable from "@/assets/screenshots/results-table.png";
+import teacherTasks from "@/assets/screenshots/teacher-tasks.png";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -313,6 +314,35 @@ const HomePage = () => {
                   Learnify offers three complementary learning paths: Textbook Exercises, Topic Index, and Weekly Plan.
                   Learners can follow textbook structure for guided progression or switch to topic-based and week-based practice for flexible revision.
                 </p>
+              </div>
+            </article>
+
+            <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div>
+                <h4 className="text-2xl font-semibold text-[#0f5132]">
+                  Support for Teachers
+                </h4>
+
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  Learnify helps teachers monitor student learning outcomes clearly and efficiently.
+                  Teachers can view quiz performance, identify weak areas, and understand where
+                  students need additional support.
+                </p>
+
+                <p className="mt-4 text-base leading-8 text-gray-600">
+                  The platform also allows teachers to assign structured quiz tasks to an entire
+                  grade or to specific students. By automating practice tracking and performance
+                  visibility, Learnify saves valuable time and allows teachers to focus more on
+                  planning lessons and supporting student understanding.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <img
+                  src={teacherTasks}
+                  alt="Teacher assigning and monitoring quiz tasks"
+                  className={screenshotClass}
+                />
               </div>
             </article>
           </div>
