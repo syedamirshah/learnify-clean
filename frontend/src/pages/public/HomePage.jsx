@@ -112,19 +112,16 @@ const HomePage = () => {
   ];
 
   const screenshotClass =
-    "w-full rounded-xl border border-[#d9e9df] bg-white shadow-[0_10px_28px_rgba(15,81,50,0.12)]";
+    "w-full rounded-xl border border-green-200 bg-white shadow-sm";
 
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#f2faf5] via-[#f8fcf9] to-[#eef8f2] text-gray-900"
+      className="min-h-screen bg-white text-gray-900"
       style={{
         fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif',
       }}
     >
-      <div className="pointer-events-none absolute -top-20 left-1/4 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute right-0 top-40 h-80 w-80 rounded-full bg-teal-100/50 blur-3xl" />
-
-      <header className="sticky top-0 z-20 border-b border-[#dbe9df] bg-white/85 backdrop-blur-xl">
+      <header className="border-b border-green-100 bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
         <div className="flex items-center gap-4">
             <img
@@ -153,19 +150,19 @@ const HomePage = () => {
           <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
               href="#login-card"
-              className="rounded-md border border-[#118C4F] bg-white px-4 py-2 text-sm font-semibold text-[#118C4F] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow-md"
+              className="rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-50"
             >
               Login
             </a>
             <Link
               to="/signup"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
             >
               Sign Up
             </Link>
             <Link
               to="/learn"
-              className="rounded-md bg-gradient-to-r from-[#118C4F] to-[#0e8b68] px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-md"
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
             >
               Enter as Guest
             </Link>
@@ -174,10 +171,10 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="relative border-b border-[#e3efe7] bg-white/70">
+        <section className="border-b border-green-100 bg-white">
           <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
-            <div className="rounded-3xl border border-[#d9e9df] bg-white/85 p-6 shadow-[0_18px_50px_rgba(15,81,50,0.08)] lg:p-8">
-              <p className="inline-flex rounded-full bg-[#eaf6ee] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#118C4F]">
+            <div className="rounded-3xl border border-green-200 bg-white p-6 shadow-sm lg:p-8">
+              <p className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-green-700">
                 Entry Page
               </p>
 
@@ -194,7 +191,7 @@ const HomePage = () => {
 
             <div
               id="login-card"
-              className="rounded-2xl border border-[#dbe9df] bg-[#fcfefd] p-6 shadow-[0_18px_50px_rgba(15,81,50,0.12)]"
+              className="rounded-2xl border border-green-200 bg-white p-6 shadow-sm"
             >
               <h3 className="text-2xl font-bold text-[#0f5132]">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
@@ -235,7 +232,7 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#118C4F] to-[#0e8b68] py-3 text-sm font-semibold text-white shadow-sm transition duration-200 hover:brightness-105 hover:shadow-md"
+                className="mt-5 w-full rounded-lg bg-green-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
               >
                 Login
               </button>
@@ -254,7 +251,7 @@ const HomePage = () => {
 
         <section className="mx-auto max-w-[1240px] px-4 py-16">
           <div className="mx-auto max-w-4xl text-center">
-            <h3 className="bg-gradient-to-r from-[#0f5132] to-[#118C4F] bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
+            <h3 className="text-4xl font-bold tracking-tight text-green-900 sm:text-5xl">
               How Learnify Supports Learning
             </h3>
             <p className="mt-4 text-lg leading-8 text-gray-600">
@@ -263,7 +260,7 @@ const HomePage = () => {
           </div>
 
           <div className="mt-12 space-y-16">
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-sm transition hover:shadow-md lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with National Curriculum and Official Textbooks</h4>
                 <p className="mt-4 text-base leading-8 text-gray-600">
@@ -271,13 +268,13 @@ const HomePage = () => {
                   This curriculum alignment makes the platform easy to integrate into school routines and classroom learning plans.
                 </p>
               </div>
-              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                 <img src={textbookExercises} alt="Textbook exercises preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
-              <div className="order-2 lg:order-1 rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-sm transition hover:shadow-md lg:grid-cols-2 lg:p-8">
+              <div className="order-2 lg:order-1 rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                 <img src={resultsTable} alt="Progress results preview" className={screenshotClass} />
               </div>
               <div className="order-1 lg:order-2">
@@ -289,7 +286,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-sm transition hover:shadow-md lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">Unlimited, Affordable Practice</h4>
                 <p className="mt-4 text-base leading-8 text-gray-600">
@@ -297,17 +294,17 @@ const HomePage = () => {
                   Since new questions are randomized each attempt, learners improve understanding instead of memorizing fixed answer patterns.
                 </p>
               </div>
-              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                 <img src={quizAttempt} alt="Quiz experience preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-sm transition hover:shadow-md lg:grid-cols-2 lg:p-8">
               <div className="order-2 lg:order-1 space-y-4">
-                <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                   <img src={topicIndex} alt="Topic Practice preview" className={screenshotClass} />
                 </div>
-                <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+                <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                   <img src={weeklyPlan} alt="Weekly Plan preview" className={screenshotClass} />
                 </div>
               </div>
@@ -320,7 +317,7 @@ const HomePage = () => {
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-[#d9e9df] bg-white/80 p-6 shadow-[0_14px_40px_rgba(15,81,50,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(15,81,50,0.12)] lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-sm transition hover:shadow-md lg:grid-cols-2 lg:p-8">
               <div>
                 <h4 className="text-2xl font-semibold text-[#0f5132]">
                   Support for Teachers
@@ -340,7 +337,7 @@ const HomePage = () => {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#d9e9df] bg-white p-3 shadow-md">
+              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
                 <img
                   src={teacherTasks}
                   alt="Teacher assigning and monitoring quiz tasks"
@@ -352,7 +349,7 @@ const HomePage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-[#dbe9df] bg-white/90 backdrop-blur">
+      <footer className="border-t border-green-100 bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
           <div className="font-semibold text-[#0f5132]">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
