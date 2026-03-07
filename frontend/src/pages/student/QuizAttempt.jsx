@@ -521,8 +521,10 @@ useEffect(() => {
   const lineSpacing = Number(quizMeta.line_spacing ?? 1.6);
   const alignment = quizMeta.text_alignment || 'left';
   const fibWidth = quizMeta.input_box_width || 8;
-  const optionRowGapPx = Math.max(10, Math.min(34, Math.round(fontSize * lineSpacing * 0.9)));
-  const optionPaddingYPx = Math.max(6, Math.min(18, Math.round(fontSize * lineSpacing * 0.35)));
+  // Keep option layout spacing lightly tied to font size only.
+  // lineSpacing should primarily affect text line-height, not multiply layout gaps.
+  const optionRowGapPx = Math.max(10, Math.min(16, Math.round(fontSize * 0.65)));
+  const optionPaddingYPx = Math.max(6, Math.min(10, Math.round(fontSize * 0.25)));
 
   const fixImageUrls = (html) => {
     const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
