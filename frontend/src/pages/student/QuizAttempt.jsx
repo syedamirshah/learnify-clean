@@ -745,7 +745,6 @@ useEffect(() => {
                       className="grid grid-cols-1 md:grid-cols-2 gap-x-14"
                       style={{
                         fontSize: `${fontSize}px`,
-                        lineHeight: lineSpacing,
                         textAlign: alignment,
                         rowGap: `${optionRowGapPx}px`,
                       }}
@@ -770,7 +769,6 @@ useEffect(() => {
                               className="flex cursor-pointer items-center gap-3 rounded-md hover:bg-green-50 active:bg-green-100"
                               style={{
                                 fontSize: `${fontSize}px`,
-                                lineHeight: lineSpacing,
                                 textAlign: alignment,
                                 opacity: isLocked ? 0.7 : 1,
                                 paddingTop: `${optionPaddingYPx}px`,
@@ -802,7 +800,7 @@ useEffect(() => {
                                   accentColor: '#5CC245',
                                 }}
                               />
-                              <span className="min-w-0 break-words" style={{ lineHeight: lineSpacing }}>{opt}</span>
+                              <span className="min-w-0 break-words" style={{ display: 'block', lineHeight: lineSpacing }}>{opt}</span>
                             </label>
                           );
                         })}
