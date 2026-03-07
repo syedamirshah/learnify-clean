@@ -521,8 +521,8 @@ useEffect(() => {
   const lineSpacing = Number(quizMeta.line_spacing ?? 1.6);
   const alignment = quizMeta.text_alignment || 'left';
   const fibWidth = quizMeta.input_box_width || 8;
-  const optionRowGapPx = Math.max(10, Math.min(34, Math.round(fontSize * lineSpacing * 0.9)));
-  const optionPaddingYPx = Math.max(6, Math.min(18, Math.round(fontSize * lineSpacing * 0.35)));
+  const optionRowGapPx = 8;
+  const optionPaddingYPx = 2;
 
   const fixImageUrls = (html) => {
     const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
