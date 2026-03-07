@@ -131,14 +131,14 @@ const HomePage = () => {
 
             <div className="flex flex-col justify-center leading-none">
               <h1
-                className="text-[34px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[48px]"
+                className="text-[20px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[30px]"
                 style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
               >
                 Learnify Pakistan
               </h1>
 
               <p
-                className="mt-2 text-[20px] font-bold italic text-[#2f7a43] sm:text-[30px]"
+                className="mt-2 text-[12px] font-bold italic text-[#2f7a43] sm:text-[18px]"
                 style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
               >
                 Learning Math Responsibly
@@ -199,17 +199,6 @@ const HomePage = () => {
                     </Link>
                   )
                 )}
-              </div>
-
-              <div className="mt-10">
-                <p className="mb-3 text-sm font-semibold text-[#118C4F]">
-                  Textbook Exercises Preview
-                </p>
-                <img
-                  src={textbookExercises}
-                  alt="Textbook exercises preview"
-                  className={screenshotClass}
-                />
               </div>
             </div>
 
@@ -286,7 +275,7 @@ const HomePage = () => {
           <div className="mt-12 space-y-16">
             <article className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
               <div>
-                <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with Curriculum and Official Textbooks</h4>
+                <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with National Curriculum and Official Textbooks</h4>
                 <p className="mt-4 text-base leading-8 text-gray-600">
                   Learnify exercises follow the official textbook sequence chapter by chapter, so students build understanding in a structured progression.
                   This curriculum alignment makes the platform easy to integrate into school routines and classroom learning plans.

@@ -683,7 +683,8 @@ const chapterPalettes = [
                     
                     return (
                       <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
-                        {/* ✅ Subject styled like Grade (no big box) */}
+                        {/*
+                          ✅ Subject heading hidden temporarily because Learnify is now math-exclusive
                         <div className="flex justify-center">
                           <div className="flex items-center gap-4">
                             <span className="hidden md:block h-[2px] w-24 bg-green-200 rounded-full" />
@@ -694,6 +695,7 @@ const chapterPalettes = [
                             <span className="hidden md:block h-[2px] w-24 bg-green-200 rounded-full" />
                           </div>
                         </div>
+                        */}
                         {/* Modern two-panel layout */}
                         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
                           {/* LEFT: Chapters */}
