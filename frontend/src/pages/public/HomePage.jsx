@@ -122,24 +122,24 @@ const HomePage = () => {
       }}
     >
       <header className="sticky top-0 z-20 border-b border-green-100 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4 px-4 py-4">
-        <div className="flex items-center gap-4">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col items-start gap-2 px-4 py-2 sm:py-3 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
+        <div className="flex items-center gap-3 sm:gap-4">
             <img
               src={logo}
               alt="Learnify Pakistan Logo"
-              className="h-[68px] w-auto object-contain sm:h-[82px]"
+              className="h-12 w-auto object-contain sm:h-[68px] md:h-[82px]"
             />
 
             <div className="flex flex-col justify-center leading-none">
               <h1
-                className="text-[20px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[30px]"
+                className="text-[18px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[24px] md:text-[30px]"
                 style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
               >
                 Learnify Pakistan
               </h1>
 
               <p
-                className="mt-2 text-[12px] font-bold italic text-[#2f7a43] sm:text-[18px]"
+                className="mt-1 text-[11px] font-bold italic text-[#2f7a43] sm:text-[14px] md:text-[18px]"
                 style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
               >
                 Learning Math Responsibly
@@ -147,22 +147,22 @@ const HomePage = () => {
             </div>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-3">
             <a
               href="#login-card"
-              className="rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-semibold text-green-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow"
+              className="rounded-md border border-green-300 bg-white px-4 py-2 text-center text-sm font-semibold text-green-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow"
             >
               Login
             </a>
             <Link
               to="/signup"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow"
             >
               Sign Up
             </Link>
             <Link
               to="/learn"
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow"
+              className="col-span-2 rounded-md bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow sm:col-span-1"
             >
               Enter as Guest
             </Link>
@@ -172,17 +172,17 @@ const HomePage = () => {
 
       <main>
         <section className="border-b border-green-100 bg-white">
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
-            <div className="rounded-3xl border border-green-200 bg-white p-6 shadow-md lg:p-8">
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-6 px-4 py-6 sm:gap-8 sm:py-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
+            <div className="rounded-2xl border border-green-200 bg-white p-4 shadow-md sm:rounded-3xl sm:p-6 lg:p-8">
               <p className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-green-700">
                 Entry Page
               </p>
 
-              <h2 className="mt-4 max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:text-5xl lg:text-6xl">
+              <h2 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:mt-4 sm:text-4xl lg:text-6xl">
                 Master Math with Confidence
               </h2>
 
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-700">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-700 sm:mt-5 sm:text-lg sm:leading-8">
                 Enter the platform to explore textbook exercises, topic practice,
                 weekly learning plans, and clear progress tracking in one focused
                 math environment.
@@ -191,7 +191,7 @@ const HomePage = () => {
 
             <div
               id="login-card"
-              className="rounded-2xl border border-green-200 bg-white p-6 shadow-md"
+              className="rounded-2xl border border-green-200 bg-white p-4 shadow-md sm:p-6"
             >
               <h3 className="text-2xl font-bold text-[#0f5132]">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
