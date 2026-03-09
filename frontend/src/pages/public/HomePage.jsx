@@ -178,11 +178,12 @@ const HomePage = () => {
                 Entry Page
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:mt-4 sm:text-4xl lg:text-6xl">
-                A Complete Math Practicing Platform For Pakistani Students
+              <h2 className="mt-3 max-w-3xl text-xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:mt-4 sm:text-2xl lg:text-3xl"> 
+
+                A Complete Math Practicing Platform For Pakistani Students.
               </h2>
 
-              <p className="mt-4 max-w-2xl text-xs leading-7 text-gray-700 sm:mt-5 sm:text-sm sm:leading-8">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-700 sm:mt-5 sm:text-lg sm:leading-8">
                 Enter the platform to explore textbook exercises, topic practice,
                 weekly learning plans, and clear progress tracking in one focused
                 math environment.
