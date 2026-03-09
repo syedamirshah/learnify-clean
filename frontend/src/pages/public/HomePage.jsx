@@ -182,7 +182,7 @@ const HomePage = () => {
                 A Complete Math Practicing Platform For Pakistani Students
               </h2>
 
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-700 sm:mt-5 sm:text-base sm:leading-7">
+              <p className="mt-4 max-w-2xl text-xs leading-7 text-gray-700 sm:mt-5 sm:text-sm sm:leading-8">
                 Enter the platform to explore textbook exercises, topic practice,
                 weekly learning plans, and clear progress tracking in one focused
                 math environment.
