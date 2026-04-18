@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.conf import settings
 from .models import (
     Quiz, QuizQuestionAssignment, Topic, Week, TopicProgress, WeekProgress, StudentQuizAttempt
 )
@@ -123,21 +124,43 @@ class PublicSignupSerializer(serializers.ModelSerializer):
     
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        today = timezone.now().date()
+
+        if settings.FREE_MODE:
+            username = attrs.get(User.USERNAME_FIELD)
+            user = User.objects.filter(**{User.USERNAME_FIELD: username}).first()
+            if (
+                user
+                and not user.is_active
+                and (
+                    user.account_status == 'expired'
+                    or (user.subscription_expiry and user.subscription_expiry < today)
+                )
+            ):
+                user.is_active = True
+                user.save(update_fields=["is_active"])
+
         data = super().validate(attrs)
 
         user = self.user
-        today = timezone.now().date()
 
         # ‚Äö√∫√ñ Check expiry and mark status
-        if user.subscription_expiry and user.subscription_expiry < today:
+        if not settings.FREE_MODE and user.subscription_expiry and user.subscription_expiry < today:
             user.account_status = 'expired'
             user.is_active = True  # ‚Äö√∫√ñ Allow login so frontend can redirect
             user.save()
 
         # ‚Äö√∫√ñ Pass extra info to frontend
+        account_status = user.account_status
+        if settings.FREE_MODE and (
+            account_status == 'expired'
+            or (user.subscription_expiry and user.subscription_expiry < today)
+        ):
+            account_status = 'active'
+
         data['username'] = user.username
         data['role'] = user.role
-        data['account_status'] = user.account_status
+        data['account_status'] = account_status
 
         return data
     

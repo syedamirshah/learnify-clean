@@ -8,6 +8,10 @@ class Command(BaseCommand):
     help = 'Send reminder emails to users whose subscription will expire in 5 days.'
 
     def handle(self, *args, **kwargs):
+        if settings.FREE_MODE:
+            self.stdout.write(self.style.WARNING('FREE_MODE is enabled. Skipping subscription expiry reminders.'))
+            return
+
         target_date = date.today() + timedelta(days=5)
         users_to_notify = User.objects.filter(subscription_expiry=target_date)
 

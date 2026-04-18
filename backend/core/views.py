@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import SelfRegistrationForm, UploadSCQForm, UploadMCQForm, UploadFIBForm
@@ -1464,10 +1465,21 @@ def get_current_user(request):
 
     # mark expired if past expiry
     today = timezone.now().date()
-    if user.subscription_expiry and user.subscription_expiry < today:
+    if (
+        not settings.FREE_MODE
+        and user.subscription_expiry
+        and user.subscription_expiry < today
+    ):
         if user.account_status != 'expired':
             user.account_status = 'expired'
             user.save(update_fields=["account_status"])
+
+    account_status = user.account_status
+    if settings.FREE_MODE and (
+        account_status == 'expired'
+        or (user.subscription_expiry and user.subscription_expiry < today)
+    ):
+        account_status = 'active'
 
     return Response({
         "id": user.id,
@@ -1489,7 +1501,7 @@ def get_current_user(request):
 
         "subscription_plan": user.subscription_plan,
         "subscription_expiry": user.subscription_expiry.strftime("%Y-%m-%d") if user.subscription_expiry else None,
-        "account_status": user.account_status,
+        "account_status": account_status,
 
         "profile_picture": user.profile_picture.url if user.profile_picture else None,
     })

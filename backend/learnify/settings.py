@@ -20,6 +20,9 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 # Surface full tracebacks to logs even when DEBUG=False (controlled by env var)
 DEBUG_PROPAGATE_EXCEPTIONS = os.getenv("DEBUG_PROPAGATE_EXCEPTIONS", "0") == "1"
 
+# Temporary business toggle: bypass subscription expiry enforcement when enabled.
+FREE_MODE = os.getenv("FREE_MODE", "0").lower() in {"1", "true", "yes", "on"}
+
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",

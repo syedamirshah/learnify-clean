@@ -92,22 +92,44 @@ const navLinkClass = () =>
     }
   }, [location.search]);
 
-  // Expired user redirect
-    // Expired user redirect (only if actually logged in)
-    useEffect(() => {
-      const status = localStorage.getItem("account_status");
-      const storedRole = localStorage.getItem("user_role");
-      const token = localStorage.getItem("access_token");
-  
-      if (
-        token && // ✅ only redirect if we have a token (real login)
-        (storedRole === "student" || storedRole === "teacher") &&
-        status === "expired"
-      ) {
-        alert("Your subscription has expired. Redirecting to payment page...");
-        window.location.href = `${API}payments/choose/`;
-      }
-    }, []);
+  // Expired user redirect (only if actually logged in)
+  useEffect(() => {
+    const storedRole = localStorage.getItem("user_role");
+    const token = localStorage.getItem("access_token");
+
+    if (!token || (storedRole !== "student" && storedRole !== "teacher")) {
+      return;
+    }
+
+    axiosInstance
+      .get("user/me/")
+      .then((res) => {
+        const freshStatus = res.data?.account_status;
+        const freshRole = res.data?.role;
+        const freshName = res.data?.full_name || res.data?.username || "";
+
+        if (freshStatus) {
+          localStorage.setItem("account_status", freshStatus);
+        }
+        if (freshRole) {
+          localStorage.setItem("user_role", freshRole);
+        }
+        if (freshName) {
+          localStorage.setItem("user_full_name", freshName);
+        }
+
+        if (
+          (freshRole === "student" || freshRole === "teacher") &&
+          freshStatus === "expired"
+        ) {
+          alert("Your subscription has expired. Redirecting to payment page...");
+          window.location.href = `${API}payments/choose/`;
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to refresh user status for expiry check:", err);
+      });
+  }, []);
 
   // Fetch quiz data from backend and log it
   useEffect(() => {
