@@ -99,10 +99,8 @@ const SignupPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Immediately guide them to payment
-      alert('✅ Account created!\n\nNext step: please complete your fee payment.');
-      window.location.href =
-        `${import.meta.env.VITE_API_BASE_URL}payments/choose/?username=${encodeURIComponent(formData.username)}`;
+      alert('✅ Account created successfully. You can now log in.');
+      navigate('/login', { replace: true });
       } catch (error) {
         console.error("❌ Registration failed:", error);
   
