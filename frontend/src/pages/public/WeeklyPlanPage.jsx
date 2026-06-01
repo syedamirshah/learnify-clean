@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
+import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 
@@ -318,16 +319,16 @@ const WeeklyPlanPage = () => {
       onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
       onLogoutClick={handleLogout}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-        <header className="rounded-3xl border border-green-200 bg-gradient-to-br from-white to-green-50/60 p-6 shadow-sm">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-green-900">Weekly Plan</h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">Browse quizzes grouped week-wise and follow your learning sequence.</p>
-          {isStudent && (
-            <p className="mt-3 inline-flex items-center rounded-full border border-green-200 bg-white/80 px-3 py-1 text-sm font-semibold text-green-800">
+      <LearningPathSelector activePath="weekly-plan" className="mt-0" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-2 space-y-6">
+        {isStudent && (
+          <p className="text-center">
+            <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-sm font-semibold text-green-800">
               Weeks Completed: {completedWeeks} / 30
-            </p>
-          )}
-        </header>
+            </span>
+          </p>
+        )}
 
         {!isStudent && (
           <div className="my-6 sm:my-8">

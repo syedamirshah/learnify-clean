@@ -5,6 +5,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 import AppLayout from "../../components/layout/AppLayout";
+import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import AuthPanel from "../../components/layout/AuthPanel";
 import { persistStudentGrade } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
@@ -537,44 +538,7 @@ const chapterPalettes = [
         </div>
       </section>
 
-      {/* Browse Shortcuts */}
-      <section className="mt-6 px-3 md:px-4 max-w-[1400px] mx-auto">
-        <div className="mx-auto max-w-3xl">
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <div className="h-[2px] w-14 sm:w-20 bg-green-300 rounded-full" />
-            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-green-700">
-              Learning Paths
-            </p>
-            <div className="h-[2px] w-14 sm:w-20 bg-green-300 rounded-full" />
-          </div>
-
-          <div className="mt-2 text-center">
-            <h2 className="text-lg sm:text-xl font-bold text-green-900">Choose Your Learning Path</h2>
-          </div>
-
-          <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <button
-              type="button"
-              aria-current="page"
-              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-200 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
-            >
-              Textbook View
-            </button>
-            <Link
-              to="/topic-index"
-              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
-            >
-              Topic Index
-            </Link>
-            <Link
-              to="/weekly-plan"
-              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
-            >
-              Weekly Plan
-            </Link>
-          </div>
-        </div>
-      </section>
+      <LearningPathSelector activePath="textbook" />
         {/* Content Explorer — default Textbook View (chapter-based layout) */}
         <div id="textbook-view" className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
           {getVisibleQuizData().map((gradeItem, gradeIndex) => {

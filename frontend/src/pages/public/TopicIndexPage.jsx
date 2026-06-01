@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
+import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import axiosInstance from "../../utils/axiosInstance";
@@ -209,12 +210,9 @@ const TopicIndexPage = () => {
       onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
       onLogoutClick={handleLogout}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
-        <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">Topic Index</h1>
-          <p className="mt-1 text-sm text-gray-600">Browse by Topic.</p>
-        </header>
+      <LearningPathSelector activePath="topic-index" className="mt-0" />
 
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-2 space-y-5">
         <section className="space-y-4">
           {isStudent && !gradeId && accessToken && (hydrating || !hydrationChecked) ? (
             <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
