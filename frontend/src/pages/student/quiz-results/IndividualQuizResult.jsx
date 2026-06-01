@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../../utils/axiosInstance";
 import logo from "../../../assets/logo.png";
 import AppLayout from "../../../components/layout/AppLayout";
+import { buildPublicNavItems } from "../../../utils/publicNav";
 
 const IndividualQuizResult = () => {
   const { attemptId } = useParams();
@@ -58,51 +59,8 @@ const IndividualQuizResult = () => {
     navigate("/", { replace: true });
   };
 
-  const navItems = [
-    { key: "home", label: "Home", href: "/learn" },
-    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
-    ...(currentUserRole === "student"
-      ? [
-          {
-            key: "assessment",
-            label: "Assessment",
-            href: "/student/assessment",
-            children: [
-              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
-              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
-              { key: "tasks", label: "Tasks", href: "/student/tasks" },
-            ],
-          },
-        ]
-      : []),
-    ...(currentUserRole === "teacher"
-      ? [
-          {
-            key: "assessment",
-            label: "Assessment",
-            href: "/teacher/assessment",
-            children: [
-              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
-              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
-              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
-            ],
-          },
-        ]
-      : []),
-    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    { key: "membership", label: "Membership", href: "/membership" },
-    { key: "help-center", label: "Help Center", href: "/help-center" },
-    ...(!currentUserRole
-      ? [
-          {
-            key: "sign-up",
-            label: "Sign up",
-            href: "/signup",
-            children: [{ key: "create-account", label: "Create Account", href: "/signup" }],
-          },
-        ]
-      : []),
-  ];
+  const navItems = useMemo(() => buildPublicNavItems(currentUserRole), [currentUserRole]);
+
 
   const renderAnswer = (ans) => {
     if (!ans || ans === "") return <span className="text-gray-400 italic">No answer</span>;

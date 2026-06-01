@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import logo from "../../assets/logo.png";
 import "../../App.css";
 import axiosInstance from "../../utils/axiosInstance";
@@ -7,6 +7,7 @@ import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 import AppLayout from "../../components/layout/AppLayout";
 import AuthPanel from "../../components/layout/AuthPanel";
 import { persistStudentGrade } from "../../utils/auth";
+import { buildPublicNavItems } from "../../utils/publicNav";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -441,65 +442,14 @@ const chapterPalettes = [
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Practicing Math Responsibly";
-  const isStudentOrTeacher = role === "student" || role === "teacher";
-  const navItems = [
-    { key: "home", label: "Home", href: "/learn" },
-    ...(!isStudentOrTeacher
-      ? [{ key: "why-join", label: "Why Join Learnify?", href: "/why-join" }]
-      : []),
-    ...(role === "student"
-      ? [
-          {
-            key: "assessment",
-            label: "Assessment",
-            href: "/student/assessment",
-            children: [
-              { key: "subject-wise", label: "Subject-wise Performance", href: "/student/assessment" },
-              { key: "quiz-history", label: "Quiz History", href: "/student/quiz-history" },
-              { key: "tasks", label: "Tasks", href: "/student/tasks" },
-            ],
-          },
-        ]
-      : []),
-    ...(role === "teacher"
-      ? [
-          {
-            key: "assessment",
-            label: "Assessment",
-            href: "/teacher/assessment",
-            children: [
-              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
-              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
-              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
-            ],
-          },
-        ]
-      : []),
-    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    ...(!isStudentOrTeacher
-      ? [{ key: "membership", label: "Membership", href: "/membership" }]
-      : []),
-    { key: "help-center", label: "Help Center", href: "/help-center" },
-    ...(!role
-      ? [
-          {
-            key: "sign-up",
-            label: "Sign up",
-            href: "/signup",
-            children: [
-              { key: "create-account", label: "Create Account", href: "/signup" },
-              {
-                key: "make-payment",
-                label: "Make Payment",
-                onClick: () => {
-                  window.location.href = `${API}payments/choose/`;
-                },
-              },
-            ],
-          },
-        ]
-      : []),
-  ];
+  const navItems = useMemo(
+    () =>
+      buildPublicNavItems(role, {
+        includePaymentInSignup: true,
+        paymentChooseUrl: `${API}payments/choose/`,
+      }),
+    [role]
+  );
 
   return (
     <AppLayout
@@ -603,6 +553,13 @@ const chapterPalettes = [
           </div>
 
           <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <button
+              type="button"
+              aria-current="page"
+              className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-500 bg-green-200 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
+            >
+              Textbook View
+            </button>
             <Link
               to="/topic-index"
               className="w-full sm:w-auto sm:min-w-[220px] inline-flex items-center justify-center rounded-full border-2 border-green-300 bg-green-100 px-7 py-2.5 text-base font-bold text-green-900 shadow-sm transition hover:bg-green-200 hover:shadow-md"
@@ -618,8 +575,8 @@ const chapterPalettes = [
           </div>
         </div>
       </section>
-        {/* Content Explorer */}
-        <div className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
+        {/* Content Explorer — default Textbook View (chapter-based layout) */}
+        <div id="textbook-view" className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
           {getVisibleQuizData().map((gradeItem, gradeIndex) => {
           const gradeOpen = openGrades.has(gradeItem.grade);
 

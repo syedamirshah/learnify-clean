@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
+import { buildPublicNavItems } from "../../utils/publicNav";
 
 export default function TeacherAssignTask() {
   const navigate = useNavigate();
@@ -284,27 +285,8 @@ export default function TeacherAssignTask() {
     navigate("/", { replace: true });
   };
 
-  const navItems = [
-    { key: "home", label: "Home", href: "/learn" },
-    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
-    ...(role === "teacher"
-      ? [
-          {
-            key: "assessment",
-            label: "Assessment",
-            href: "/teacher/assessment",
-            children: [
-              { key: "student-results", label: "Student Results", href: "/teacher/assessment" },
-              { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
-              { key: "assign-task", label: "Assign Task", href: "/teacher/assign-task" },
-            ],
-          },
-        ]
-      : []),
-    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    { key: "membership", label: "Membership", href: "/membership" },
-    { key: "help-center", label: "Help Center", href: "/help-center" },
-  ];
+  const navItems = useMemo(() => buildPublicNavItems(role), [role]);
+
 
   return (
     <AppLayout

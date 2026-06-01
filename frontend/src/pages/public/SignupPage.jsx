@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import AppLayout from '../../components/layout/AppLayout';
+import { buildPublicNavItems } from "../../utils/publicNav";
 
 const SignupPage = () => {
   const [role, setRole] = useState('student');
@@ -177,23 +178,8 @@ const SignupPage = () => {
           { label: 'Madrassah', value: 'Madrassah' }
         ];
 
-  const navItems = [
-    { key: "home", label: "Home", href: "/" },
-    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
-    { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    { key: "membership", label: "Membership", href: "/membership" },
-    { key: "help-center", label: "Help Center", href: "/help-center" },
-    ...(!currentUserRole
-      ? [
-          {
-            key: "sign-up",
-            label: "Sign up",
-            href: "/signup",
-            children: [{ key: "create-account", label: "Create Account", href: "/signup" }],
-          },
-        ]
-      : []),
-  ];
+  const navItems = useMemo(() => buildPublicNavItems(currentUserRole), [currentUserRole]);
+
 
   return (
     <AppLayout
