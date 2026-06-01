@@ -1543,7 +1543,7 @@ def public_register_user(request):
         return Response(
             {
                 "success": True,
-                "message": "Account created. Please wait for admin approval.",
+                "message": "Account created successfully. Please complete payment to activate your account.",
                 "user": {
                     "username": user.username,
                     "email": user.email,

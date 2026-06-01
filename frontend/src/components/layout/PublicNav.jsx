@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 function DesktopChildItem({ child, onSelect }) {
   const itemClass =
-    "block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-gray-800 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600";
+    "block w-full rounded-md px-3 py-2 text-left text-base font-medium text-gray-800 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600";
 
   if (child.href) {
     return (
@@ -22,7 +22,7 @@ function DesktopChildItem({ child, onSelect }) {
 
 function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
   const baseClass =
-    "inline-flex items-center rounded-md px-2 py-2 text-[17px] font-medium text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 lg:px-3 lg:text-lg";
+    "inline-flex items-center rounded-md px-3 py-2 text-lg font-semibold leading-none text-white transition hover:bg-white/15 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600";
 
   if (Array.isArray(item.children) && item.children.length > 0) {
     return (

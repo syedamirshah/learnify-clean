@@ -441,9 +441,12 @@ const chapterPalettes = [
 
   const brandTitle = "Learnify Pakistan";
   const brandMotto = "Practicing Math Responsibly";
+  const isStudentOrTeacher = role === "student" || role === "teacher";
   const navItems = [
     { key: "home", label: "Home", href: "/learn" },
-    { key: "why-join", label: "Why Join Learnify?", href: "/why-join" },
+    ...(!isStudentOrTeacher
+      ? [{ key: "why-join", label: "Why Join Learnify?", href: "/why-join" }]
+      : []),
     ...(role === "student"
       ? [
           {
@@ -473,7 +476,9 @@ const chapterPalettes = [
         ]
       : []),
     { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    { key: "membership", label: "Membership", href: "/membership" },
+    ...(!isStudentOrTeacher
+      ? [{ key: "membership", label: "Membership", href: "/membership" }]
+      : []),
     { key: "help-center", label: "Help Center", href: "/help-center" },
     ...(!role
       ? [
