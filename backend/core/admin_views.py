@@ -93,7 +93,8 @@ def bulk_upload_students(request):
                         province=province,
                         subscription_plan=subscription_plan,
                         language_used_at_home=language_used_at_home or '',
-                        account_status='inactive'
+                        account_status='inactive',
+                        is_active=False,
                     )
                     user.set_password(password)  # ✅ Hash password
                     user.save()

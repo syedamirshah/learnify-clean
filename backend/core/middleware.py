@@ -10,5 +10,4 @@ class AutoExpireUserMiddleware(MiddlewareMixin):
             if user.subscription_expiry and user.subscription_expiry < timezone.now().date():
                 if user.account_status != 'expired':
                     user.account_status = 'expired'
-                    user.is_active = False
-                    user.save()
+                    user.save(update_fields=['account_status'])

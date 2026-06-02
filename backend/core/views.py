@@ -15,6 +15,7 @@ from core.models import StudentAnswer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from .permissions import has_active_subscription, HasPaidSubscription
 from django.utils.timezone import localtime
 from django.db import models
 from django.db.models import Prefetch
@@ -252,6 +253,8 @@ def start_quiz(request, quiz_id):
 
             if not user_grade_str or not quiz_grade_str or user_grade_str != quiz_grade_str:
                 preview_mode = True
+            elif not has_active_subscription(user):
+                preview_mode = True
 
     questions_output = []
     selected_question_ids = []
@@ -338,6 +341,9 @@ def submit_quiz(request, attempt_id):
     user = request.user
     if not user.is_authenticated or user.role != 'student':
         return JsonResponse({'error': 'Only authenticated students can submit quizzes.'}, status=403)
+
+    if not has_active_subscription(user):
+        return JsonResponse({'detail': 'Subscription required'}, status=403)
 
     try:
         attempt = StudentQuizAttempt.objects.get(id=attempt_id, student=user)
@@ -460,7 +466,7 @@ def submit_quiz(request, attempt_id):
     })
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def list_student_quiz_results(request):
     user = request.user
     if user.role != 'student':
@@ -527,7 +533,7 @@ def list_student_quiz_results(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def get_quiz_result(request, attempt_id):
     user = request.user
 
@@ -656,7 +662,7 @@ def calculate_grade(score):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def list_quiz_results(request):
     user = request.user
 
@@ -715,7 +721,7 @@ import uuid
 import traceback
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def submit_answer(request):
     user = request.user
     print("DEBUG: Incoming request from user:", user.username)
@@ -982,7 +988,7 @@ def update_week_progress(user, quiz):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def finalize_quiz(request):
     user = request.user
 
@@ -1151,7 +1157,7 @@ def finalize_quiz(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def student_subject_performance(request):
     user = request.user
     if user.role != 'student':
@@ -1701,7 +1707,7 @@ def change_password_view(request):
     return Response({"success": "Password changed successfully."}, status=200)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_student_list(request):
     user = request.user
     if user.role != 'teacher':
@@ -1743,7 +1749,7 @@ def teacher_student_list(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_student_quiz_history_view(request, username):
     if request.user.role != 'teacher':
         return Response({'error': 'Only teachers can access this view.'}, status=403)
@@ -1799,7 +1805,7 @@ def teacher_student_quiz_history_view(request, username):
     return Response({'full_name': student.full_name, 'results': results})
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def student_quiz_history_view(request):
     if request.user.role != 'student':
         return Response({'error': 'Only students can access this view.'}, status=403)
@@ -2025,7 +2031,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 # ================================
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_quizzes_by_grade(request):
     """
     GET /api/teacher/quizzes/?grade=<grade_id>
@@ -2055,7 +2061,7 @@ def teacher_quizzes_by_grade(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_create_task(request):
     """
     POST /api/teacher/tasks/create/
@@ -2150,7 +2156,7 @@ def teacher_create_task(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_tasks_list(request):
     """
     Optional:
@@ -2187,7 +2193,7 @@ def teacher_tasks_list(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
 def student_tasks_list(request):
     user = request.user
 

@@ -18,8 +18,9 @@ const ProtectedRoute = ({ children }) => {
   }, [accountStatus]);
 
   if (accountStatus === 'expired') {
-    alert("⛔ Your subscription has expired. Please renew.");
-    return <Navigate to="/account/renew-subscription" replace />;
+    const paymentUrl = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
+    window.location.href = paymentUrl;
+    return null;
   }
 
   if (!role) {

@@ -128,11 +128,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = self.user
         today = timezone.now().date()
 
-        # ‚Äö√∫√ñ Check expiry and mark status
         if user.subscription_expiry and user.subscription_expiry < today:
-            user.account_status = 'expired'
-            user.is_active = True  # ‚Äö√∫√ñ Allow login so frontend can redirect
-            user.save()
+            if user.account_status != 'expired':
+                user.account_status = 'expired'
+                user.save(update_fields=['account_status'])
 
         # ‚Äö√∫√ñ Pass extra info to frontend
         data['username'] = user.username
