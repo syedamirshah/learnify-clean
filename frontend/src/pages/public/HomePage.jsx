@@ -16,6 +16,7 @@ import resultsTable from "@/assets/screenshots/results-table.png";
 import teacherTasks from "@/assets/screenshots/teacher-tasks.png";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
+const SCHOOL_TEMPLATE_URL = "/student_bulk_upload_template.xlsx";
 
 const HomePage = () => {
   const [username, setUsername] = useState("");
@@ -178,46 +179,54 @@ const HomePage = () => {
 
       <main>
         <section className="border-b border-green-100 bg-white">
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-center gap-6 px-4 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:py-16">
-            <div className="rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 shadow-sm sm:p-8">
-              <p className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-green-800">
-                Learnify Pakistan
-                <span className="text-green-600/50">•</span>
-                Entry page
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-stretch gap-6 px-4 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:py-16">
+            <div className="h-full rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 shadow-sm sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-800">
+                School onboarding
               </p>
 
-              <h2 className="mt-4 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight text-green-950 sm:text-3xl lg:text-4xl">
-                Practice math responsibly—aligned with Pakistan’s curriculum.
+              <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-green-950 sm:text-3xl">
+                Bulk onboarding for schools—simple and supported.
               </h2>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-700 sm:text-base">
-                Learnify helps students build confidence through structured practice, clear results, and a focused,
-                child-safe experience designed for real improvement.
+              <p className="mt-3 text-sm leading-7 text-gray-700 sm:text-base">
+                Schools can onboard students in bulk using the official Excel template. Download it, fill student
+                information, and email it to our support team. We’ll assist with onboarding and activation.
               </p>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
-                  Curriculum-aligned
-                </span>
-                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
-                  Instant feedback
-                </span>
-                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
-                  Progress tracking
-                </span>
+              <div className="mt-4 rounded-2xl border border-green-100 bg-white/70 p-4">
+                <div className="text-sm font-bold text-green-950">
+                  Practice math responsibly—aligned with Pakistan’s curriculum.
+                </div>
+                <div className="mt-1 text-sm text-gray-700">
+                  Curriculum-aligned • Instant feedback • Progress tracking
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <a
+                  href={SCHOOL_TEMPLATE_URL}
+                  download
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 sm:w-auto"
+                >
+                  Download Excel Template
+                </a>
+                <a
+                  href="mailto:support@learnifypakistan.com"
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-green-200 bg-white px-5 py-3 text-sm font-bold text-green-800 shadow-sm transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 sm:w-auto"
+                >
+                  Email support@learnifypakistan.com
+                </a>
               </div>
             </div>
 
             <div
               id="login-card"
-              className="rounded-3xl border border-green-200 bg-white p-5 shadow-sm sm:p-7"
+              className="h-full rounded-3xl border border-green-200 bg-white p-5 shadow-sm sm:p-7"
             >
               <h3 className="text-2xl font-extrabold tracking-tight text-green-950">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Existing student and teacher accounts can sign in and continue to the learning experience.
-              </p>
-              <p className="mt-3 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs font-semibold text-green-900">
-                New users can create an account and activate subscription through payment.
               </p>
 
               <div className="mt-6 space-y-4">
