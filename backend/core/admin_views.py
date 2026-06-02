@@ -576,7 +576,7 @@ def admin_list_quizzes_view(request):
 def list_backups(request):
     """
     GET  -> Show backups on disk.
-    POST -> Create a fresh JSON backup ON DISK and stream-download it (no memory blowup).
+    POST -> Create a fresh JSON backup ON DISK and redirect back to the list.
     """
     backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
     os.makedirs(backup_dir, exist_ok=True)
@@ -595,10 +595,8 @@ def list_backups(request):
                 stdout=f
             )
 
-        # ✅ Stream file to browser (fast, safe)
-        resp = FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
-        resp['Content-Type'] = 'application/json'
-        return resp
+        messages.success(request, f"Backup '{filename}' created successfully.")
+        return redirect("list_backups")
 
     backup_files = [f for f in os.listdir(backup_dir) if f.endswith('.json')]
     backup_files.sort(reverse=True)

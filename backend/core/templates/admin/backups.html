@@ -13,7 +13,7 @@
   <!-- Actions -->
   <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
 
-    <!-- Create Data Backup (POST => immediate download) -->
+    <!-- Create Data Backup (POST => generate on server, then refresh list) -->
     <form method="post" class="inline-block">
       {% csrf_token %}
       <button type="submit"
