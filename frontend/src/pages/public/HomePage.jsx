@@ -178,32 +178,46 @@ const HomePage = () => {
 
       <main>
         <section className="border-b border-green-100 bg-white">
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-6 px-4 py-6 sm:gap-8 sm:py-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:py-16">
-            <div className="rounded-2xl border border-green-200 bg-white p-4 shadow-md sm:rounded-3xl sm:p-6 lg:p-8">
-              <p className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-green-700">
-                Entry Page
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-center gap-6 px-4 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:py-16">
+            <div className="rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 shadow-sm sm:p-8">
+              <p className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-green-800">
+                Learnify Pakistan
+                <span className="text-green-600/50">•</span>
+                Entry page
               </p>
 
-              <h2 className="mt-3 max-w-3xl text-xl font-extrabold leading-tight tracking-tight text-[#0f5132] sm:mt-4 sm:text-2xl lg:text-3xl"> 
-
-                A Complete Math Practicing Platform For Pakistani Students.
+              <h2 className="mt-4 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight text-green-950 sm:text-3xl lg:text-4xl">
+                Practice math responsibly—aligned with Pakistan’s curriculum.
               </h2>
 
-              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-700 sm:mt-5 sm:text-lg sm:leading-8">
-                Enter the platform to explore textbook exercises, topic practice,
-                weekly learning plans, and clear progress tracking in one focused
-                math environment.
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-700 sm:text-base">
+                Learnify helps students build confidence through structured practice, clear results, and a focused,
+                child-safe experience designed for real improvement.
               </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
+                  Curriculum-aligned
+                </span>
+                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
+                  Instant feedback
+                </span>
+                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-800 shadow-sm ring-1 ring-green-200">
+                  Progress tracking
+                </span>
+              </div>
             </div>
 
             <div
               id="login-card"
-              className="rounded-2xl border border-green-200 bg-white p-4 shadow-md sm:p-6"
+              className="rounded-3xl border border-green-200 bg-white p-5 shadow-sm sm:p-7"
             >
-              <h3 className="text-2xl font-bold text-[#0f5132]">Login to Continue</h3>
+              <h3 className="text-2xl font-extrabold tracking-tight text-green-950">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Existing student and teacher accounts can sign in here and continue to
-                the main learning page.
+                Existing student and teacher accounts can sign in and continue to the learning experience.
+              </p>
+              <p className="mt-3 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs font-semibold text-green-900">
+                New users can create an account and activate subscription through payment.
               </p>
 
               <div className="mt-6 space-y-4">
@@ -217,7 +231,7 @@ const HomePage = () => {
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-lg border border-[#cfe2d4] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#118C4F] focus:ring-2 focus:ring-[#118C4F]/15"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                   />
                 </div>
 
@@ -231,7 +245,7 @@ const HomePage = () => {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-[#cfe2d4] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#118C4F] focus:ring-2 focus:ring-[#118C4F]/15"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                   />
                 </div>
               </div>
@@ -239,7 +253,7 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="mt-5 w-full rounded-lg bg-green-600 py-3 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-green-700 hover:shadow-md"
+                className="mt-5 w-full rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-green-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
               >
                 Login
               </button>
