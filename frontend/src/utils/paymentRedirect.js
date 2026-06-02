@@ -13,10 +13,24 @@ export function paymentRedirectMessage(accountStatus) {
   return "";
 }
 
+function readStoredUsername() {
+  try {
+    return (
+      localStorage.getItem("username") ||
+      localStorage.getItem("user_username") ||
+      localStorage.getItem("user") || // legacy fallback (if ever used)
+      ""
+    ).trim();
+  } catch {
+    return "";
+  }
+}
+
 export function buildPaymentChooseUrl(apiBase, username) {
   const base = `${(apiBase || "").replace(/\/?$/, "/")}payments/choose/`;
-  if (username) {
-    return `${base}?username=${encodeURIComponent(username)}`;
+  const resolved = (username || readStoredUsername()).trim();
+  if (resolved) {
+    return `${base}?username=${encodeURIComponent(resolved)}`;
   }
   return base;
 }

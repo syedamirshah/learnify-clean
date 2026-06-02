@@ -68,6 +68,7 @@ const Login = () => {
       const fullName = userData.full_name;
 
       localStorage.setItem("account_status", status);
+      if (userData.username) localStorage.setItem("username", userData.username);
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("user_role", role);
       persistStudentGrade(userData);

@@ -260,6 +260,7 @@ const navLinkClass = () =>
       localStorage.setItem("user_role", role);
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("account_status", status);
+      if (me.data.username) localStorage.setItem("username", me.data.username);
       setRole(role);
       setFullName(fullName);
 
@@ -453,7 +454,7 @@ const chapterPalettes = [
     () =>
       buildPublicNavItems(role, {
         includePaymentInSignup: true,
-        paymentChooseUrl: `${API}payments/choose/`,
+        paymentChooseUrl: buildPaymentChooseUrl(API),
       }),
     [role]
   );

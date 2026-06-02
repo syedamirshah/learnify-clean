@@ -1,6 +1,7 @@
 // File: src/components/ProtectedRoute.jsx
 import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import { buildPaymentChooseUrl } from '../utils/paymentRedirect';
 
 const ProtectedRoute = ({ children }) => {
   const accountStatus = localStorage.getItem('account_status');
@@ -18,8 +19,7 @@ const ProtectedRoute = ({ children }) => {
   }, [accountStatus]);
 
   if (accountStatus === 'expired') {
-    const paymentUrl = `${import.meta.env.VITE_API_BASE_URL}payments/choose/`;
-    window.location.href = paymentUrl;
+    window.location.href = buildPaymentChooseUrl(import.meta.env.VITE_API_BASE_URL);
     return null;
   }
 

@@ -4,10 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import { buildPaymentChooseUrl } from "../../utils/paymentRedirect";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
-// If you already use a specific payments/choose URL, keep it consistent:
-const PAYMENT_LINK = `${API}payments/choose/`;
+const PAYMENT_LINK = buildPaymentChooseUrl(API);
 const SCHOOL_TEMPLATE_URL = "/student_bulk_upload_template.xlsx";
 
 const MembershipPage = () => {

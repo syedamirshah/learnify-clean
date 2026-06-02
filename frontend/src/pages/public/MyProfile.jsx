@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import { buildPaymentChooseUrl } from "../../utils/paymentRedirect";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 // Backend origin for media files (turns https://api.xxx.com/api/ into https://api.xxx.com/)
@@ -216,7 +217,7 @@ const MyProfile = () => {
                 </Link>
 
                 <a
-                  href={`${API}payments/choose/`}
+                  href={buildPaymentChooseUrl(API, me?.username)}
                   className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#42b72a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                 >
                   Make Payment

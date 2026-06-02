@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance"; // ✅ one folder up from /pages/public
+import { buildPaymentChooseUrl } from "../../utils/paymentRedirect";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -65,7 +66,7 @@ export default function PaymentResult() {
               If this was a mistake, you can try paying again.
             </p>
             <a
-              href={`${import.meta.env.VITE_API_BASE_URL}payments/choose/`}
+              href={buildPaymentChooseUrl(import.meta.env.VITE_API_BASE_URL)}
               className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
             >
               Make Payment
