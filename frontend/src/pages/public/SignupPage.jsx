@@ -6,7 +6,6 @@ import AppLayout from '../../components/layout/AppLayout';
 import { buildPublicNavItems } from "../../utils/publicNav";
 
 const SignupPage = () => {
-  const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
   const [grades, setGrades] = useState([]);
   const [currentUserRole, setCurrentUserRole] = useState(localStorage.getItem('user_role'));
@@ -72,24 +71,21 @@ const SignupPage = () => {
       return;
     }
 
-    // Basic client-side rule: grade required for student, ignored for teacher
-    if (role === 'student' && !formData.grade) {
+    // Student signup only
+    if (!formData.grade) {
       alert('Please select your Grade.');
       return;
     }
 
     const form = new FormData();
-    form.append('role', role);
+    form.append('role', 'student');
 
     for (const key in formData) {
       const val = formData[key];
       if (val === null || val === undefined) continue;
 
       if (key === 'grade') {
-        // Only send grade for students
-        if (role === 'student') {
-          form.append('grade', typeof formData.grade === 'object' ? formData.grade.id : formData.grade);
-        }
+        form.append('grade', typeof formData.grade === 'object' ? formData.grade.id : formData.grade);
       } else {
         form.append(key, val);
       }
@@ -167,16 +163,12 @@ const SignupPage = () => {
       }
   };
 
-  // Teacher has a single “I am Teacher” schooling option; students see school types
-  const schoolingOptions =
-    role === 'teacher'
-      ? [{ label: 'I am Teacher', value: 'I am teacher' }]
-      : [
-          { label: 'Public School', value: 'Public school' },
-          { label: 'Private School', value: 'Private school' },
-          { label: 'Homeschool', value: 'Homeschool' },
-          { label: 'Madrassah', value: 'Madrassah' }
-        ];
+  const schoolingOptions = [
+    { label: 'Public School', value: 'Public school' },
+    { label: 'Private School', value: 'Private school' },
+    { label: 'Homeschool', value: 'Homeschool' },
+    { label: 'Madrassah', value: 'Madrassah' },
+  ];
 
   const navItems = useMemo(() => buildPublicNavItems(currentUserRole), [currentUserRole]);
 
@@ -216,45 +208,33 @@ const SignupPage = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-green-200 bg-white/80 p-5 shadow-sm md:p-6">
+        <div className="rounded-2xl border border-green-200 bg-white/80 p-5 shadow-sm md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-10">
+          <div className="rounded-xl border border-green-100 bg-green-50/60 px-4 py-3 text-sm text-green-900">
+            After creating your account, you will be redirected to the payment page to activate your subscription.
+          </div>
 
-        <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row sm:gap-6">
-          <button
-            onClick={() => setRole('student')}
-            className={`w-full sm:w-auto rounded-xl px-6 py-2.5 font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
-              role === 'student' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'
-            }`}
-          >
-            I'm a Student
-          </button>
-          <button
-            onClick={() => setRole('teacher')}
-            className={`w-full sm:w-auto rounded-xl px-6 py-2.5 font-semibold text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
-              role === 'teacher' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'
-            }`}
-          >
-            I'm a Teacher
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
           <section className="min-w-0">
-            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Account Info</h2>
+            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Account Information</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              User ID <span className="text-red-600">*</span>
+            </label>
             <input name="username" value={formData.username} onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm" />
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password <span className="text-red-600">*</span>
+            </label>
             <input
               type={showPassword ? 'text' : 'password'}
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm"
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <label className="mt-1 inline-flex items-center text-sm text-gray-600">
               <input
@@ -268,57 +248,58 @@ const SignupPage = () => {
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password <span className="text-red-600">*</span>
+            </label>
             <input
               type={showPassword ? 'text' : 'password'}
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm"
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name <span className="text-red-600">*</span>
+            </label>
             <input name="full_name" value={formData.full_name} onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm" />
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email <span className="text-gray-400 text-sm">(optional)</span>
+            </label>
             <input name="email" value={formData.email} onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm" />
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Gender</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gender <span className="text-red-600">*</span>
+            </label>
             <select name="gender" value={formData.gender} onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm">
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500">
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
               </div>
-
-              <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Role</label>
-                <input
-                  value={role === "student" ? "Student" : "Teacher"}
-                  readOnly
-                  className="w-full min-w-0 border border-gray-300 bg-gray-50 px-3 py-2.5 rounded-xl text-sm text-gray-700"
-                />
-              </div>
             </div>
           </section>
 
           <section className="min-w-0">
-            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Profile & Context</h2>
+            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Student Profile</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Language Used at Home</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Language Used at Home <span className="text-gray-400 text-sm">(optional)</span>
+                </label>
                 <select name="language_used_at_home" value={formData.language_used_at_home} onChange={handleChange}
-                  className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm">
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500">
                   <option value="">Select Language</option>
                   <option value="Balochi">Balochi</option>
                   <option value="Brahui">Brahui</option>
@@ -335,9 +316,11 @@ const SignupPage = () => {
               </div>
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Schooling Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Schooling Status <span className="text-red-600">*</span>
+            </label>
             <select name="schooling_status" value={formData.schooling_status} onChange={handleChange}
-              className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm">
+              className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500">
               <option value="">Select Status</option>
               {schoolingOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -346,21 +329,25 @@ const SignupPage = () => {
               </div>
 
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">School Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  School Name <span className="text-gray-400 text-sm">(optional)</span>
+                </label>
                 <input name="school_name" value={formData.school_name} onChange={handleChange}
-                  className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm" />
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">City</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  City <span className="text-red-600">*</span>
+                </label>
                 <input name="city" value={formData.city} onChange={handleChange}
-                  className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm" />
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
-            {/* Grade — only for students */}
-            {role === 'student' && (
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Grade</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Grade <span className="text-red-600">*</span>
+                </label>
                 <select
                   name="grade"
                   value={formData.grade && typeof formData.grade === 'object' ? formData.grade.id : formData.grade}
@@ -373,7 +360,7 @@ const SignupPage = () => {
                       grade: selectedGrade || e.target.value, // keep id string if not mapped
                     }));
                   }}
-                  className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm"
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select Grade</option>
                   {grades.map((grade) => (
@@ -383,12 +370,13 @@ const SignupPage = () => {
                   ))}
                 </select>
               </div>
-            )}
 
               <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Province / Region</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Province <span className="text-red-600">*</span>
+            </label>
             <select name="province" value={formData.province} onChange={handleChange}
-                className="w-full min-w-0 border border-gray-300 px-3 py-2.5 rounded-xl text-sm">
+                className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500">
                 <option value="">Select Province</option>
                 <option value="Azad Kashmir">Azad Kashmir</option>
                 <option value="Balochistan">Balochistan</option>
@@ -403,10 +391,12 @@ const SignupPage = () => {
           </section>
 
           <section className="min-w-0">
-            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Subscription & Uploads</h2>
+            <h2 className="mb-4 border-b border-green-100 pb-2 text-lg font-bold text-green-900">Optional Details</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Profile Picture</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Picture <span className="text-gray-400 text-sm">(optional)</span>
+                </label>
                 <input type="file" name="profile_picture" onChange={handleChange}
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm" />
                 <p className="mt-1 text-xs text-gray-500 break-words">
@@ -420,7 +410,7 @@ const SignupPage = () => {
           <div aria-live="polite" className="mt-6 text-center">
             <button type="submit"
               className="w-full md:w-auto md:min-w-[280px] mx-auto bg-green-700 text-white py-3 px-6 rounded-xl hover:bg-green-800 transition-all duration-300 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
-              Create Account
+              Create Student Account
             </button>
             <div className="mt-3">
               <Link

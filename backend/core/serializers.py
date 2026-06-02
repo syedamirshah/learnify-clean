@@ -104,13 +104,16 @@ class PublicSignupSerializer(serializers.ModelSerializer):
         return value
 
     def validate_role(self, value):
-        if value not in ['student', 'teacher']:
-            raise serializers.ValidationError("Invalid role.")
-        return value
+        # Public signup is student-only. Teachers are created via admin tools.
+        if value and value != 'student':
+            raise serializers.ValidationError("Public signup is available for students only.")
+        return 'student'
 
     def create(self, validated_data):
         password = validated_data.pop('password')
-        role = validated_data.pop('role', 'student')  # ✅ use role from form
+        # Force public signup to student only (even if role was manipulated client-side)
+        validated_data.pop('role', None)
+        role = 'student'
         user = User(
             role=role,
             is_active=True,
