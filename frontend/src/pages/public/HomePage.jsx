@@ -123,12 +123,19 @@ const HomePage = () => {
 
   return (
     <div
-      className="min-h-screen bg-white text-gray-900"
+      className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-sky-50 text-gray-900"
       style={{
         fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif',
       }}
     >
-      <header className="sticky top-0 z-20 border-b border-green-100 bg-white/95 backdrop-blur-sm">
+      {/* decorative background (subtle, no new assets) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="absolute top-32 -right-28 h-72 w-72 rounded-full bg-sky-200/45 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-lime-200/35 blur-3xl" />
+      </div>
+
+      <header className="sticky top-0 z-20 border-b border-emerald-200/70 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col items-start gap-2 px-4 py-2 sm:py-3 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
         <div className="flex items-center gap-3 sm:gap-4">
             <img
@@ -157,19 +164,19 @@ const HomePage = () => {
           <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-3">
             <a
               href="#login-card"
-              className="rounded-md border border-green-300 bg-white px-4 py-2 text-center text-sm font-semibold text-green-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow"
+              className="rounded-xl border border-emerald-300 bg-white px-4 py-2 text-center text-sm font-bold text-emerald-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Login
             </a>
             <Link
               to="/signup"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow"
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-center text-sm font-bold text-gray-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Sign Up
             </Link>
             <Link
               to="/learn"
-              className="col-span-2 rounded-md bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow sm:col-span-1"
+              className="col-span-2 rounded-xl bg-emerald-600 px-4 py-2 text-center text-sm font-extrabold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:col-span-1"
             >
               Enter as Guest
             </Link>
@@ -178,9 +185,17 @@ const HomePage = () => {
       </header>
 
       <main>
-        <section className="border-b border-green-100 bg-white">
-          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-stretch gap-6 px-4 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[1.2fr_0.8fr] lg:py-16">
-            <div className="h-full rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 shadow-sm sm:p-8">
+        <section className="border-b border-emerald-100/70 bg-transparent">
+          <div className="mx-auto w-full max-w-[1240px] px-4 pt-6 sm:pt-10">
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-center text-xs font-semibold text-emerald-900">
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Curriculum-aligned</span>
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Instant feedback</span>
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Progress tracking</span>
+            </div>
+          </div>
+
+          <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-stretch gap-6 px-4 pb-10 sm:gap-10 sm:pb-14 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="h-full rounded-3xl border border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-5 shadow-md shadow-emerald-200/30 sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-800">
                 School onboarding
               </p>
@@ -194,8 +209,8 @@ const HomePage = () => {
                 information, and email it to our support team. We’ll assist with onboarding and activation.
               </p>
 
-              <div className="mt-4 rounded-2xl border border-green-100 bg-white/70 p-4">
-                <div className="text-sm font-bold text-green-950">
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white/80 p-4 shadow-sm">
+                <div className="text-sm font-extrabold text-emerald-950">
                   Practice math responsibly—aligned with Pakistan’s curriculum.
                 </div>
                 <div className="mt-1 text-sm text-gray-700">
@@ -207,13 +222,13 @@ const HomePage = () => {
                 <a
                   href={SCHOOL_TEMPLATE_URL}
                   download
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:w-auto"
                 >
                   Download Excel Template
                 </a>
                 <a
                   href="mailto:support@learnifypakistan.com"
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-green-200 bg-white px-5 py-3 text-sm font-bold text-green-800 shadow-sm transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-emerald-300 bg-white px-5 py-3 text-sm font-extrabold text-emerald-800 shadow-sm transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:w-auto"
                 >
                   Email support@learnifypakistan.com
                 </a>
@@ -222,9 +237,9 @@ const HomePage = () => {
 
             <div
               id="login-card"
-              className="h-full rounded-3xl border border-green-200 bg-white p-5 shadow-sm sm:p-7"
+              className="h-full rounded-3xl border border-emerald-300 bg-white/90 p-5 shadow-md shadow-emerald-200/30 backdrop-blur-sm sm:p-7"
             >
-              <h3 className="text-2xl font-extrabold tracking-tight text-green-950">Login to Continue</h3>
+              <h3 className="text-2xl font-extrabold tracking-tight text-emerald-950">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Existing student and teacher accounts can sign in and continue to the learning experience.
               </p>
@@ -240,7 +255,7 @@ const HomePage = () => {
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -254,7 +269,7 @@ const HomePage = () => {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
@@ -262,7 +277,7 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="mt-5 w-full rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-green-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+                className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white shadow-sm transition duration-200 hover:bg-emerald-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 Login
               </button>
