@@ -294,87 +294,90 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1240px] px-4 py-16">
+        <section className="mx-auto max-w-[1240px] px-4 py-14 sm:py-16">
           <div className="mx-auto max-w-4xl text-center">
-            <h3 className="text-4xl font-extrabold tracking-tight text-green-900 sm:text-5xl">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-extrabold uppercase tracking-[0.12em] text-emerald-800 shadow-sm ring-1 ring-emerald-200">
+              Product highlights
+            </p>
+            <h3 className="mt-4 text-4xl font-extrabold tracking-tight text-emerald-950 sm:text-5xl">
               How Learnify Supports Learning
             </h3>
-            <p className="mt-4 text-lg leading-8 text-gray-600">
+            <p className="mt-4 text-base leading-8 text-gray-700 sm:text-lg">
               Each feature of Learnify is designed to support structured learning, regular practice, and clear progress visibility.
             </p>
           </div>
 
           <div className="mt-12 space-y-16">
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-semibold text-[#0f5132]">Aligned with National Curriculum and Official Textbooks</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Aligned with National Curriculum and Official Textbooks</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify exercises follow the official textbook sequence chapter by chapter, so students build understanding in a structured progression.
                   This curriculum alignment makes the platform easy to integrate into school routines and classroom learning plans.
                 </p>
               </div>
-              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-3 shadow-sm">
                 <img src={textbookExercises} alt="Textbook exercises preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
-              <div className="order-2 lg:order-1 rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+              <div className="order-2 lg:order-1 rounded-3xl border border-emerald-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 shadow-sm">
                 <img src={resultsTable} alt="Progress results preview" className={screenshotClass} />
               </div>
               <div className="order-1 lg:order-2">
-                <h4 className="text-2xl font-semibold text-[#0f5132]">Track Progress Clearly</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Track Progress Clearly</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   The quiz history and results view makes performance easy to read through marks, percentages, and attempt history.
                   Students and teachers can identify weak areas quickly and monitor improvement over time with confidence.
                 </p>
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-semibold text-[#0f5132]">Unlimited, Affordable Practice</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Unlimited, Affordable Practice</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify supports both Learning Mode and Exam Mode with unlimited attempts, giving students space to practice repeatedly.
                   Since new questions are randomized each attempt, learners improve understanding instead of memorizing fixed answer patterns.
                 </p>
               </div>
-              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-lime-50 via-white to-emerald-50 p-3 shadow-sm">
                 <img src={quizAttempt} alt="Quiz experience preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div className="order-2 lg:order-1 space-y-4">
-                <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+                <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-3 shadow-sm transition duration-200 hover:shadow-md">
                   <img src={topicIndex} alt="Topic Practice preview" className={screenshotClass} />
                 </div>
-                <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+                <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-sky-50 via-white to-lime-50 p-3 shadow-sm transition duration-200 hover:shadow-md">
                   <img src={weeklyPlan} alt="Weekly Plan preview" className={screenshotClass} />
                 </div>
               </div>
               <div className="order-1 lg:order-2">
-                <h4 className="text-2xl font-semibold text-[#0f5132]">Multiple Ways to Organize Learning</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Multiple Ways to Organize Learning</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify offers three complementary learning paths: Textbook Exercises, Topic Index, and Weekly Plan.
                   Learners can follow textbook structure for guided progression or switch to topic-based and week-based practice for flexible revision.
                 </p>
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-200 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-semibold text-[#0f5132]">
+                <h4 className="text-2xl font-extrabold text-emerald-950">
                   Support for Teachers
                 </h4>
 
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify helps teachers monitor student learning outcomes clearly and efficiently.
                   Teachers can view quiz performance, identify weak areas, and understand where
                   students need additional support.
                 </p>
 
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   The platform also allows teachers to assign structured quiz tasks to an entire
                   grade or to specific students. By automating practice tracking and performance
                   visibility, Learnify saves valuable time and allows teachers to focus more on
@@ -382,7 +385,7 @@ const HomePage = () => {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-green-200 bg-white p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-3 shadow-sm">
                 <img
                   src={teacherTasks}
                   alt="Teacher assigning and monitoring quiz tasks"
@@ -394,9 +397,9 @@ const HomePage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-green-100 bg-green-50/30">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-6 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
-          <div className="font-semibold text-[#0f5132]">Learnify</div>
+      <footer className="border-t border-emerald-200/70 bg-gradient-to-br from-emerald-50/60 via-white to-sky-50/60">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-7 text-sm text-gray-700 md:flex-row md:items-center md:justify-between">
+          <div className="font-extrabold text-emerald-950">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/membership" className="hover:text-[#118C4F] hover:underline">
               Membership
