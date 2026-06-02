@@ -9,6 +9,11 @@ import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import AuthPanel from "../../components/layout/AuthPanel";
 import { persistStudentGrade } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import {
+  buildPaymentChooseUrl,
+  needsPaymentRedirect,
+  paymentRedirectMessage,
+} from "../../utils/paymentRedirect";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -102,12 +107,12 @@ const navLinkClass = () =>
       const token = localStorage.getItem("access_token");
   
       if (
-        token && // ✅ only redirect if we have a token (real login)
+        token &&
         (storedRole === "student" || storedRole === "teacher") &&
-        status === "expired"
+        needsPaymentRedirect(status)
       ) {
-        alert("Your subscription has expired. Redirecting to payment page...");
-        window.location.href = `${API}payments/choose/`;
+        alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
+        window.location.href = buildPaymentChooseUrl(API);
       }
     }, []);
 
@@ -258,8 +263,9 @@ const navLinkClass = () =>
       setRole(role);
       setFullName(fullName);
 
-      if ((role === "student" || role === "teacher") && status === "expired") {
-        window.location.href = `${API}payments/choose/`;
+      if ((role === "student" || role === "teacher") && needsPaymentRedirect(status)) {
+        alert(paymentRedirectMessage(status));
+        window.location.href = buildPaymentChooseUrl(API, username);
       } else {
         navigate("/learn");
       }

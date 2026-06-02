@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import axiosInstance from "../../utils/axiosInstance";
 import { persistStudentGrade } from "../../utils/auth";
+import {
+  buildPaymentChooseUrl,
+  needsPaymentRedirect,
+  paymentRedirectMessage,
+} from "../../utils/paymentRedirect";
 import textbookExercises from "@/assets/screenshots/textbook-exercises.png";
 import topicIndex from "@/assets/screenshots/topic-index.png";
 import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
@@ -42,10 +47,10 @@ const HomePage = () => {
       localStorage.setItem("role", roleFromToken);
       localStorage.setItem("account_status", statusFromToken);
 
-      if (statusFromToken === "expired") {
-        alert("Your subscription has expired. Redirecting to payment page...");
+      if (needsPaymentRedirect(statusFromToken)) {
+        alert(`${paymentRedirectMessage(statusFromToken)} Redirecting to payment page...`);
         setTimeout(() => {
-          window.location.href = `${API}payments/choose/`;
+          window.location.href = buildPaymentChooseUrl(API, username);
         }, 500);
         return;
       }
@@ -69,10 +74,10 @@ const HomePage = () => {
         return;
       }
 
-      if (status === "expired") {
-        alert("Your subscription has expired. Redirecting to payment page...");
+      if (needsPaymentRedirect(status)) {
+        alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
         setTimeout(() => {
-          window.location.href = `${API}payments/choose/`;
+          window.location.href = buildPaymentChooseUrl(API, username);
         }, 500);
         return;
       }

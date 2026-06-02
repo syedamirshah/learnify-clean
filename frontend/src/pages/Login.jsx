@@ -4,6 +4,11 @@ import axiosInstance from "../utils/axiosInstance";
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
 import { persistStudentGrade } from "../utils/auth";
+import {
+  buildPaymentChooseUrl,
+  needsPaymentRedirect,
+  paymentRedirectMessage,
+} from "../utils/paymentRedirect";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -45,11 +50,10 @@ const Login = () => {
 
       console.log("üîê Token Login ‚Üí Role:", roleFromToken, "Status:", statusFromToken);
 
-      // If expired right away, send to payment page (matches LandingPage behavior)
-      if (statusFromToken === "expired") {
-        alert("Your subscription has expired. Redirecting to payment page...");
+      if (needsPaymentRedirect(statusFromToken)) {
+        alert(`${paymentRedirectMessage(statusFromToken)} Redirecting to payment page...`);
         setTimeout(() => {
-          window.location.href = `${API}payments/choose/`;
+          window.location.href = buildPaymentChooseUrl(API, username);
         }, 500);
         return;
       }
@@ -76,11 +80,10 @@ const Login = () => {
         return;
       }
 
-      // If expired after /me, redirect to payment
-      if (status === "expired") {
-        alert("Your subscription has expired. Redirecting to payment page...");
+      if (needsPaymentRedirect(status)) {
+        alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
         setTimeout(() => {
-          window.location.href = `${API}payments/choose/`;
+          window.location.href = buildPaymentChooseUrl(API, username);
         }, 500);
         return;
       }

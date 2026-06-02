@@ -113,7 +113,8 @@ class PublicSignupSerializer(serializers.ModelSerializer):
         role = validated_data.pop('role', 'student')  # ✅ use role from form
         user = User(
             role=role,
-            is_active=False,  # Wait for approval
+            is_active=True,
+            account_status='inactive',
             **validated_data
         )
         user._plain_password = password          # ← so the signal can include it
