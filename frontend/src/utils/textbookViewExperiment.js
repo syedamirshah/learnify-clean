@@ -1,5 +1,5 @@
 /**
- * Experimental textbook view UI helpers (/learn) — V4 adventure mode.
+ * Experimental textbook view UI helpers (/learn) — V5 learning path.
  * Revert: delete this file and remove imports from LandingPage.jsx.
  */
 
@@ -28,53 +28,74 @@ const CHAPTER_ICON_RULES = [
   },
 ];
 
+export function getStarPointsForScore(percentage) {
+  if (percentage === null || percentage === undefined || Number.isNaN(Number(percentage))) {
+    return 0;
+  }
+  const pct = Number(percentage);
+  if (pct >= 95) return 3;
+  if (pct >= 80) return 2;
+  if (pct >= 60) return 1;
+  return 0;
+}
+
+export function getStarBankTotal(historyMap) {
+  return Object.values(historyMap || {}).reduce(
+    (sum, row) => sum + getStarPointsForScore(row?.percentage),
+    0
+  );
+}
+
 export function getExerciseStatus(percentage) {
   if (percentage === null || percentage === undefined || Number.isNaN(Number(percentage))) {
     return {
-      label: "Ready to Start",
+      label: "Ready",
       key: "none",
       icon: "⚪",
-      badgeClass: "text-gray-700",
-      cardAccent: "border-gray-200 bg-white hover:border-emerald-200 hover:shadow-emerald-100/50",
+      badgeClass: "bg-gray-100 text-gray-700",
+      cardAccent: "bg-white shadow-sm hover:shadow-md ring-1 ring-gray-100 hover:ring-emerald-200",
+      cta: "Start Challenge",
     };
   }
 
   const pct = Number(percentage);
-  if (pct >= 90) {
+  if (pct >= 95) {
     return {
       label: "Champion",
-      key: "mastered",
+      key: "champion",
       icon: "🏆",
-      badgeClass: "text-emerald-800",
-      cardAccent:
-        "border-emerald-200 bg-gradient-to-br from-emerald-50/90 to-white hover:border-emerald-300",
+      badgeClass: "bg-emerald-100 text-emerald-900",
+      cardAccent: "bg-white shadow-sm hover:shadow-md ring-1 ring-emerald-100 hover:ring-emerald-300",
+      cta: "Continue",
     };
   }
-  if (pct >= 70) {
+  if (pct >= 80) {
     return {
       label: "Great Job",
-      key: "good",
+      key: "great",
       icon: "🟢",
-      badgeClass: "text-sky-800",
-      cardAccent: "border-sky-200 bg-gradient-to-br from-sky-50/80 to-white hover:border-sky-300",
+      badgeClass: "bg-sky-100 text-sky-900",
+      cardAccent: "bg-white shadow-sm hover:shadow-md ring-1 ring-sky-100 hover:ring-sky-300",
+      cta: "Continue",
     };
   }
-  if (pct >= 50) {
+  if (pct >= 60) {
     return {
-      label: "Improving",
-      key: "improving",
+      label: "Building Skill",
+      key: "building",
       icon: "🟡",
-      badgeClass: "text-amber-800",
-      cardAccent:
-        "border-amber-200 bg-gradient-to-br from-amber-50/70 to-white hover:border-amber-300",
+      badgeClass: "bg-amber-100 text-amber-900",
+      cardAccent: "bg-white shadow-sm hover:shadow-md ring-1 ring-amber-100 hover:ring-amber-300",
+      cta: "Continue",
     };
   }
   return {
     label: "Practice Again",
     key: "needs",
     icon: "🔴",
-    badgeClass: "text-red-800",
-    cardAccent: "border-red-200 bg-gradient-to-br from-red-50/60 to-white hover:border-red-300",
+    badgeClass: "bg-red-100 text-red-800",
+    cardAccent: "bg-white shadow-sm hover:shadow-md ring-1 ring-red-100 hover:ring-red-300",
+    cta: "Practice Again",
   };
 }
 
@@ -86,7 +107,7 @@ export function getStarRating(percentage) {
   if (pct >= 95) return { stars: "⭐⭐⭐", count: 3, label: "3 stars" };
   if (pct >= 80) return { stars: "⭐⭐", count: 2, label: "2 stars" };
   if (pct >= 60) return { stars: "⭐", count: 1, label: "1 star" };
-  return { stars: "", count: 0, label: "No stars yet" };
+  return { stars: "", count: 0, label: "" };
 }
 
 export function getChapterIcon(chapterName) {
@@ -95,6 +116,102 @@ export function getChapterIcon(chapterName) {
     if (rule.test.test(name)) return rule.icon;
   }
   return "📘";
+}
+
+export function getChapterLevelStatus(progress) {
+  const attempted = progress?.attempted ?? 0;
+  const total = progress?.total ?? 0;
+  const progressPercent = progress?.progressPercent ?? 0;
+  const average = progress?.average;
+
+  if (average !== null && average !== undefined && average >= 90) {
+    return { label: "Champion", tone: "champion" };
+  }
+  if (attempted === 0) {
+    return { label: "Ready", tone: "ready" };
+  }
+  if (total > 0 && progressPercent >= 100) {
+    return { label: "Completed", tone: "completed" };
+  }
+  if (progressPercent >= 50) {
+    return { label: "In Progress", tone: "progress" };
+  }
+  return { label: "Started", tone: "started" };
+}
+
+const LEVEL_STATUS_STYLES = {
+  ready: "bg-white/90 text-gray-800",
+  started: "bg-white/90 text-sky-900",
+  progress: "bg-white/90 text-emerald-900",
+  completed: "bg-white/90 text-emerald-950",
+  champion: "bg-amber-100/95 text-amber-950 font-extrabold",
+};
+
+export function getChapterLevelStatusClass(tone) {
+  return LEVEL_STATUS_STYLES[tone] || LEVEL_STATUS_STYLES.ready;
+}
+
+export function getChapterCoachTip(progress) {
+  const attempted = progress?.attempted ?? 0;
+  const average = progress?.average;
+
+  if (attempted === 0) {
+    return "Start with the first exercise and build your progress step by step.";
+  }
+  if (average !== null && average >= 80) {
+    return "Great work! Keep practicing to stay sharp.";
+  }
+  if (average !== null && average >= 50) {
+    return "You are improving. Try a few more exercises to strengthen this chapter.";
+  }
+  return "Start with easier exercises and practice again to build confidence.";
+}
+
+export function getNextBestAction(sortedQuizzes, historyMap) {
+  const list = Array.isArray(sortedQuizzes) ? [...sortedQuizzes] : [];
+  if (!list.length) return null;
+
+  let lowest = null;
+  list.forEach((quiz) => {
+    const row = historyMap?.[String(quiz.id)];
+    if (row && Number(row.percentage) < 70) {
+      const pct = Number(row.percentage);
+      if (!lowest || pct < lowest.percentage) {
+        lowest = { quiz, percentage: pct, reason: "low_score" };
+      }
+    }
+  });
+
+  if (lowest) {
+    return {
+      ...lowest,
+      reasonText: "This exercise can help improve your chapter score.",
+      cta: "Practice Again",
+    };
+  }
+
+  for (const quiz of list) {
+    if (!historyMap?.[String(quiz.id)]) {
+      return {
+        quiz,
+        percentage: null,
+        reason: "not_attempted",
+        reasonText: "Ready to start your next challenge.",
+        cta: "Start Now",
+      };
+    }
+  }
+
+  const first = list[0];
+  const row = historyMap?.[String(first.id)];
+  const pct = row ? Number(row.percentage) : null;
+  return {
+    quiz: first,
+    percentage: pct,
+    reason: "default",
+    reasonText: "Try again to move closer to Champion level.",
+    cta: pct !== null && pct < 60 ? "Practice Again" : "Continue",
+  };
 }
 
 export function getLearningRank(completed) {
@@ -239,21 +356,8 @@ export function getChapterProgress(quizzes, historyMap) {
       : null;
 
   const progressPercent = Math.round((attempted / total) * 100);
-  const status = average !== null ? getExerciseStatus(average).label : null;
 
-  return { total, attempted, average, progressPercent, status };
-}
-
-export function formatProgressBlocks(percent, segments = 10) {
-  const filled = Math.min(
-    segments,
-    Math.max(0, Math.round((Number(percent) / 100) * segments))
-  );
-  return {
-    visual: `${"█".repeat(filled)}${"░".repeat(segments - filled)}`,
-    filled,
-    segments,
-  };
+  return { total, attempted, average, progressPercent, status: null };
 }
 
 export function formatChapterSummaryMeta(progress) {
@@ -262,57 +366,6 @@ export function formatChapterSummaryMeta(progress) {
   if (progress.attempted > 0) parts.push(`${progress.attempted} attempted`);
   if (progress.average !== null) parts.push(`Avg ${progress.average}%`);
   return parts.join(" · ");
-}
-
-export function findContinueLearningQuiz(sortedQuizzes, historyMap) {
-  const list = Array.isArray(sortedQuizzes) ? sortedQuizzes : [];
-  if (!list.length) return null;
-
-  for (const quiz of list) {
-    const row = historyMap?.[String(quiz.id)];
-    if (row && Number(row.percentage) < 60) {
-      return { quiz, reason: "needs_practice", percentage: Number(row.percentage) };
-    }
-  }
-
-  for (const quiz of list) {
-    if (!historyMap?.[String(quiz.id)]) {
-      return { quiz, reason: "not_attempted", percentage: null };
-    }
-  }
-
-  for (let i = list.length - 1; i >= 0; i -= 1) {
-    const quiz = list[i];
-    const row = historyMap?.[String(quiz.id)];
-    if (row) {
-      return {
-        quiz,
-        reason: "continue",
-        percentage: Number(row.percentage),
-      };
-    }
-  }
-
-  return null;
-}
-
-export function getMissionReasonText(reason, percentage) {
-  if (reason === "not_attempted") {
-    return "Ready to start this challenge.";
-  }
-  if (reason === "needs_practice" || (percentage !== null && percentage < 60)) {
-    return "Practice again to improve your score.";
-  }
-  return "Try again to become a champion.";
-}
-
-export function getMissionRecommendation(sortedQuizzes, historyMap) {
-  const pick = findContinueLearningQuiz(sortedQuizzes, historyMap);
-  if (!pick) return null;
-  return {
-    ...pick,
-    reasonText: getMissionReasonText(pick.reason, pick.percentage),
-  };
 }
 
 export function getFirstName(fullName) {
