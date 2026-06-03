@@ -5,6 +5,17 @@ import AppLayout from "../../components/layout/AppLayout";
 import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import {
+  DEFAULT_WEEK_COUNT,
+  findCurrentWeek,
+  getCurrentWeekMotivation,
+  getPlanSummary,
+  getWeekActionLabel,
+  getWeekAverageScore,
+  getWeekStatus,
+  getWeekTotals,
+  WEEK_CARD_STYLES,
+} from "../../utils/weeklyPlanView";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -275,24 +286,21 @@ const WeeklyPlanPage = () => {
     }, {});
   }, [dedupedWeeks]);
 
-  const completedWeeks = useMemo(() => {
-    return dedupedWeeks.filter(
-      (week) =>
-        Number(week?.total_quizzes || 0) > 0 &&
-        Number(week?.completed_quizzes || 0) >= Number(week?.total_quizzes || 0)
-    ).length;
-  }, [dedupedWeeks]);
+  const planSummary = useMemo(
+    () => getPlanSummary(dedupedWeeks, DEFAULT_WEEK_COUNT),
+    [dedupedWeeks]
+  );
 
-  const studentProgressAvailable = useMemo(() => {
-    if (!isStudent || dedupedWeeks.length === 0) return false;
-    return dedupedWeeks.every(
-      (week) =>
-        week?.completed_quizzes !== null &&
-        week?.completed_quizzes !== undefined &&
-        week?.total_quizzes !== null &&
-        week?.total_quizzes !== undefined
-    );
-  }, [isStudent, dedupedWeeks]);
+  const currentWeek = useMemo(() => findCurrentWeek(dedupedWeeks), [dedupedWeeks]);
+
+  const displayGradeLabel = useMemo(() => {
+    const fromWeek = dedupedWeeks[0]?.grade?.name;
+    if (fromWeek) return fromWeek;
+    if (isStudent) return localStorage.getItem("user_grade") || "Your Grade";
+    return selectedGradeId
+      ? grades.find((g) => String(g.id) === String(selectedGradeId))?.name || "Your Grade"
+      : "Your Grade";
+  }, [dedupedWeeks, isStudent, selectedGradeId, grades]);
 
   const handleWeekToggle = (weekId) => {
     setExpandedWeekIds((prev) => {
@@ -301,6 +309,171 @@ const WeeklyPlanPage = () => {
       else next.add(weekId);
       return next;
     });
+  };
+
+  const focusCurrentWeek = () => {
+    if (!currentWeek) return;
+    setExpandedWeekIds(new Set([currentWeek.id]));
+    const el = document.getElementById(`week-card-${currentWeek.id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const renderWeekCard = (week) => {
+    const { completed, total, progressPercent } = getWeekTotals(week);
+    const status = getWeekStatus(completed, total);
+    const styles = WEEK_CARD_STYLES[status.tone] || WEEK_CARD_STYLES.not_started;
+    const isExpanded = expandedWeekIds.has(week.id);
+    const percent = Number(week?.progress_percent ?? progressPercent);
+
+    return (
+      <article
+        id={`week-card-${week.id}`}
+        key={week.id}
+        className={`rounded-3xl border-2 p-4 shadow-md transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${styles.card}`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+              {week.order ? `Week ${week.order}` : "Week"}
+            </p>
+            <h2 className="text-lg font-black text-gray-900">{week.name}</h2>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${styles.badge}`}
+          >
+            {status.label}
+          </span>
+        </div>
+
+        <p className="mt-2 text-sm font-semibold text-gray-700">
+          {completed} / {total} exercises
+        </p>
+
+        {total > 0 && (
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/80">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${Math.min(100, percent)}%` }}
+            />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => handleWeekToggle(week.id)}
+          className="mt-4 w-full rounded-2xl bg-white/90 px-3 py-2 text-sm font-bold text-emerald-800 shadow-sm ring-1 ring-emerald-200 transition hover:bg-white"
+        >
+          {getWeekActionLabel(completed, total, isExpanded)}
+        </button>
+
+        {isExpanded && (
+          <div className="mt-3 border-t border-white/60 pt-3">
+            {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
+              Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
+                <div
+                  key={`week-chapter-${week.id}-${chapterName}`}
+                  className="mt-3 rounded-2xl border border-emerald-100 bg-white/80 p-3 first:mt-0"
+                >
+                  <h3 className="mb-2 text-sm font-semibold text-emerald-900">{chapterName}</h3>
+                  <div className="space-y-1.5">
+                    {quizzes.map((quiz) => (
+                      <div
+                        key={`week-quiz-${week.id}-${quiz.id}`}
+                        className="flex items-center justify-between gap-2 rounded-lg px-1 py-2 hover:bg-emerald-50/60"
+                      >
+                        <Link
+                          to={`/student/attempt-quiz/${quiz.id}`}
+                          className="text-sm font-medium text-emerald-800 hover:underline"
+                        >
+                          {quiz.title}
+                        </Link>
+                        {isStudent && historyMap[String(quiz.id)] ? (
+                          <span className="shrink-0 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700">
+                            {historyMap[String(quiz.id)].percentage}%
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
+            )}
+          </div>
+        )}
+      </article>
+    );
+  };
+
+  const renderPlanDashboard = () => {
+    if (!dedupedWeeks.length) return null;
+
+    const currentTotals = currentWeek ? getWeekTotals(currentWeek) : null;
+    const currentAvg = currentWeek && isStudent ? getWeekAverageScore(currentWeek, historyMap) : null;
+
+    return (
+      <div className="space-y-4">
+        {currentWeek && (
+          <section className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-5 shadow-lg md:p-6">
+            <p className="text-sm font-bold text-sky-900">🎯 Current Week</p>
+            <h2 className="mt-1 text-2xl font-black text-gray-900">{currentWeek.name}</h2>
+            {currentTotals && (
+              <>
+                <p className="mt-2 text-sm text-gray-700">
+                  <span className="font-semibold">Completed:</span>{" "}
+                  {currentTotals.completed} / {currentTotals.total} exercises
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">Progress:</span> {currentTotals.progressPercent}%
+                </p>
+                {currentAvg !== null && (
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold">Average Score:</span> {currentAvg}%
+                  </p>
+                )}
+              </>
+            )}
+            <p className="mt-3 text-sm font-medium text-gray-600">
+              {currentTotals &&
+                getCurrentWeekMotivation(currentTotals.completed, currentTotals.total)}
+            </p>
+            <button
+              type="button"
+              onClick={focusCurrentWeek}
+              className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-emerald-700"
+            >
+              Continue Week
+            </button>
+          </section>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-emerald-100">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+              Weeks Completed
+            </p>
+            <p className="mt-1 text-2xl font-black text-emerald-950">
+              {planSummary.weeksCompleted} / {planSummary.weekCount}
+            </p>
+          </div>
+          <div className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-sky-100">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+              Exercises Completed
+            </p>
+            <p className="mt-1 text-2xl font-black text-emerald-950">
+              {planSummary.exercisesCompleted} / {planSummary.exercisesTotal}
+            </p>
+          </div>
+          <div className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-violet-100">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+              Learning Pace
+            </p>
+            <p className="mt-1 text-xl font-black text-violet-950">{planSummary.pace}</p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -321,14 +494,25 @@ const WeeklyPlanPage = () => {
     >
       <LearningPathSelector activePath="weekly-plan" className="mt-0" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-2 space-y-6">
-        {isStudent && (
-          <p className="text-center">
-            <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-sm font-semibold text-green-800">
-              Weeks Completed: {completedWeeks} / 30
-            </span>
+      <div className="mx-auto max-w-7xl space-y-4 px-4 pb-8 pt-1 sm:px-6 lg:px-8">
+        <section className="rounded-3xl bg-gradient-to-r from-emerald-50 via-white to-sky-50 px-5 py-4 shadow-sm ring-1 ring-emerald-100">
+          <h1 className="text-xl font-black text-emerald-950 md:text-2xl">
+            Your Weekly Learning Plan
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Follow a steady weekly path, complete exercises, and build math confidence step by step.
           </p>
-        )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[displayGradeLabel, "Weekly Plan", `${planSummary.weekCount} Weeks`].map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </section>
 
         {!isStudent && (
           <div className="my-6 sm:my-8">
@@ -403,188 +587,28 @@ const WeeklyPlanPage = () => {
             </div>
           ) : (
             <>
+              {renderPlanDashboard()}
+
               {!isStudent && !selectedGradeId
                 ? Object.entries(weeksByGrade).map(([gradeName, gradeWeeks]) => (
-                    <div key={`weekly-grade-group-${gradeName}`} className="space-y-4">
-                      <div className="flex items-center justify-center gap-6 mt-4 mb-6">
-                        <div className="h-[2px] w-28 bg-green-300 rounded-full" />
-                        <div
-                          className="
-                            flex items-center justify-center gap-3 whitespace-nowrap
-                            px-10 py-4
-                            rounded-full
-                            border-2 border-green-300
-                            bg-green-100
-                            shadow-md
-                            hover:shadow-lg
-                            transition
-                            text-3xl
-                            font-extrabold
-                            text-green-900
-                          "
-                        >
+                    <div key={`weekly-grade-group-${gradeName}`} className="space-y-3">
+                      <div className="mb-2 flex items-center justify-center gap-6">
+                        <div className="h-[2px] w-28 rounded-full bg-green-300" />
+                        <div className="whitespace-nowrap rounded-full border-2 border-green-300 bg-green-100 px-10 py-4 text-3xl font-extrabold text-green-900 shadow-md">
                           {gradeName}
                         </div>
-                        <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+                        <div className="h-[2px] w-28 rounded-full bg-green-300" />
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {gradeWeeks.map((week) => {
-                          const completed = Number(week?.completed_quizzes || 0);
-                          const total = Number(week?.total_quizzes || week?.quiz_count || 0);
-                          const percent = Number(week?.progress_percent ?? 0);
-                          const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
-                          const isExpanded = expandedWeekIds.has(week.id);
-
-                          return (
-                            <article
-                              key={week.id}
-                              className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
-                                isComplete
-                                  ? "border-green-300 bg-green-50"
-                                  : "border-red-200 bg-red-50"
-                              }`}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => handleWeekToggle(week.id)}
-                                className="w-full text-left group"
-                              >
-                                <div className="flex items-center justify-between gap-3">
-                                  <h2 className="text-lg font-bold text-gray-900 group-hover:text-green-800 transition-colors">{week.name}</h2>
-                                  <span className="text-xs font-bold text-gray-700 bg-white/70 px-2 py-1 rounded-full border border-gray-200">
-                                    {isExpanded ? "Hide" : "View"}
-                                  </span>
-                                </div>
-                                <p className="mt-2 text-xs text-gray-600">
-                                  {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
-                                </p>
-                              </button>
-
-                              {isExpanded && (
-                                <div className="mt-3">
-                                  {isStudent && (
-                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                      <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
-                                    </div>
-                                  )}
-
-                                  {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
-                                    Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
-                                      <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3 rounded-xl border border-green-100 bg-white/70 p-3">
-                                        <h3 className="mb-2 text-sm font-semibold text-green-800">{chapterName}</h3>
-                                        <div className="space-y-1.5">
-                                          {quizzes.map((quiz) => (
-                                            <div
-                                              key={`week-quiz-${week.id}-${quiz.id}`}
-                                              className="flex justify-between items-center py-2 border-b border-gray-200/80 last:border-b-0 rounded-md px-1 hover:bg-green-50/60 transition-colors"
-                                            >
-                                              <Link
-                                                to={`/student/attempt-quiz/${quiz.id}`}
-                                                className="text-sm text-green-800 hover:text-green-900 hover:underline pr-3"
-                                              >
-                                                {quiz.title}
-                                              </Link>
-                                              {isStudent && historyMap[String(quiz.id)] ? (
-                                                <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
-                                                  <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                                    Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks ?? (((historyMap[String(quiz.id)].total_questions || 0) * (historyMap[String(quiz.id)].marks_per_question || 0)) || 100)}
-                                                  </span>
-                                                </div>
-                                              ) : null}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                                  )}
-                                </div>
-                              )}
-                            </article>
-                          );
-                        })}
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {gradeWeeks.map((week) => renderWeekCard(week))}
                       </div>
                     </div>
                   ))
-                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {dedupedWeeks.map((week) => {
-                const completed = Number(week?.completed_quizzes || 0);
-                const total = Number(week?.total_quizzes || week?.quiz_count || 0);
-                const percent = Number(week?.progress_percent ?? 0);
-                const isComplete = isStudent && studentProgressAvailable && total > 0 && completed >= total;
-                const isExpanded = expandedWeekIds.has(week.id);
-
-                return (
-                  <article
-                    key={week.id}
-                    className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition ${
-                      isComplete
-                        ? "border-green-300 bg-green-50"
-                        : "border-red-200 bg-red-50"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleWeekToggle(week.id)}
-                      className="w-full text-left group"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-lg font-bold text-gray-900 group-hover:text-green-800 transition-colors">{week.name}</h2>
-                        <span className="text-xs font-bold text-gray-700 bg-white/70 px-2 py-1 rounded-full border border-gray-200">
-                          {isExpanded ? "Hide" : "View"}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-xs text-gray-600">
-                        {isStudent ? `Completed ${completed} / ${total}` : `${week.quiz_count || 0} quizzes`}
-                      </p>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="mt-3">
-                        {isStudent && (
-                          <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${percent}%` }} />
-                          </div>
-                        )}
-
-                        {Array.isArray(week.quizzes) && week.quizzes.length > 0 ? (
-                          Object.entries(groupByChapter(week.quizzes)).map(([chapterName, quizzes]) => (
-                            <div key={`week-chapter-${week.id}-${chapterName}`} className="mt-3 rounded-xl border border-green-100 bg-white/70 p-3">
-                              <h3 className="mb-2 text-sm font-semibold text-green-800">{chapterName}</h3>
-                              <div className="space-y-1.5">
-                                {quizzes.map((quiz) => (
-                                  <div
-                                    key={`week-quiz-${week.id}-${quiz.id}`}
-                                    className="flex justify-between items-center py-2 border-b border-gray-200/80 last:border-b-0 rounded-md px-1 hover:bg-green-50/60 transition-colors"
-                                  >
-                                    <Link
-                                      to={`/student/attempt-quiz/${quiz.id}`}
-                                      className="text-sm text-green-800 hover:text-green-900 hover:underline pr-3"
-                                    >
-                                      {quiz.title}
-                                    </Link>
-                                    {isStudent && historyMap[String(quiz.id)] ? (
-                                      <div className="shrink-0 flex items-center justify-center gap-2 text-xs font-semibold">
-                                        <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                          Score: {historyMap[String(quiz.id)].marks_obtained}/{historyMap[String(quiz.id)].total_marks ?? (((historyMap[String(quiz.id)].total_questions || 0) * (historyMap[String(quiz.id)].marks_per_question || 0)) || 100)}
-                                        </span>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-gray-500">No quizzes assigned yet.</p>
-                        )}
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
-              </div>}
+                : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {dedupedWeeks.map((week) => renderWeekCard(week))}
+                  </div>
+                )}
             </>
           )}
         </section>
