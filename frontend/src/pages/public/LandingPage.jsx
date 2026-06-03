@@ -14,13 +14,17 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
-// EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
+// EXPERIMENTAL: textbook view UI V3 — revert by removing import + textbookViewExperiment.js
 import {
-  continueReasonLabel,
   findContinueLearningQuiz,
-  formatChapterSummaryLine,
+  formatChapterSummaryMeta,
+  formatProgressBlocks,
+  getAchievement,
   getChapterProgress,
   getExerciseStatus,
+  getFirstName,
+  getStudentTextbookStats,
+  missionReasonLabel,
 } from "../../utils/textbookViewExperiment";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
@@ -467,6 +471,20 @@ const chapterPalettes = [
     [role]
   );
 
+  const visibleQuizData = useMemo(() => getVisibleQuizData(), [role, quizData, userGrade]);
+
+  const studentTextbookStats = useMemo(() => {
+    if (role !== "student") return null;
+    return getStudentTextbookStats(visibleQuizData, historyMap);
+  }, [role, visibleQuizData, historyMap]);
+
+  const studentAchievement = useMemo(() => {
+    if (!studentTextbookStats) return null;
+    return getAchievement(studentTextbookStats);
+  }, [studentTextbookStats]);
+
+  const studentFirstName = useMemo(() => getFirstName(userFullName), [userFullName]);
+
   return (
     <AppLayout
       className="font-[Nunito]"
@@ -555,8 +573,58 @@ const chapterPalettes = [
 
       <LearningPathSelector activePath="textbook" />
         {/* Content Explorer — default Textbook View (chapter-based layout) */}
-        <div id="textbook-view" className="mt-10 px-3 md:px-4 max-w-[1400px] mx-auto">
-          {getVisibleQuizData().map((gradeItem, gradeIndex) => {
+        <div id="textbook-view" className="mx-auto mt-10 max-w-[1400px] px-3 md:px-4">
+          {role === "student" && (
+            <div className="mb-8 grid gap-4 md:grid-cols-[1.4fr_1fr]">
+              <section className="overflow-hidden rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-400 to-teal-400 p-6 text-white shadow-xl shadow-emerald-900/20 transition hover:shadow-2xl md:p-8">
+                <p className="text-lg font-bold md:text-xl">👋 Welcome Back</p>
+                <h2 className="mt-2 text-2xl font-black leading-tight md:text-3xl">
+                  Welcome back, {studentFirstName}!
+                </h2>
+                <p className="mt-2 text-sm font-medium text-emerald-50 md:text-base">
+                  Continue your learning journey.
+                </p>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/15 px-4 py-3 ring-1 ring-white/25 backdrop-blur-sm">
+                    <div className="text-xs font-bold uppercase tracking-wide text-emerald-50">
+                      Exercises completed
+                    </div>
+                    <div className="mt-1 text-2xl font-black">
+                      {historyLoading ? "…" : studentTextbookStats?.completed ?? 0}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 px-4 py-3 ring-1 ring-white/25 backdrop-blur-sm">
+                    <div className="text-xs font-bold uppercase tracking-wide text-emerald-50">
+                      Average score
+                    </div>
+                    <div className="mt-1 text-2xl font-black">
+                      {historyLoading
+                        ? "…"
+                        : studentTextbookStats?.average !== null
+                          ? `${studentTextbookStats.average}%`
+                          : "—"}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {studentAchievement && (
+                <section className="flex flex-col justify-center rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-5 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl md:p-6">
+                  <p className="text-sm font-bold text-amber-900">
+                    {studentAchievement.icon} Achievement
+                  </p>
+                  <h3 className="mt-2 text-xl font-black text-emerald-950">
+                    {studentAchievement.title}
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-gray-700">
+                    {studentAchievement.subtitle}
+                  </p>
+                </section>
+              )}
+            </div>
+          )}
+
+          {visibleQuizData.map((gradeItem, gradeIndex) => {
           const gradeOpen = openGrades.has(gradeItem.grade);
 
           return (
@@ -720,21 +788,32 @@ const chapterPalettes = [
                                             <div className={`truncate text-[17px] font-semibold md:text-[19px] ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
                                               {chapterItem.chapter}
                                             </div>
-                                            <div className="mt-1 text-xs font-semibold text-white/95">
-                                              {chapterProgress.total} exercises
-                                              {role === "student" && chapterProgress.attempted > 0
-                                                ? ` · ${chapterProgress.attempted} done`
-                                                : ""}
-                                              {role === "student" && chapterProgress.average !== null
-                                                ? ` · ${chapterProgress.average}% avg`
-                                                : ""}
-                                            </div>
-                                            {role === "student" && chapterProgress.total > 0 && (
-                                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/15">
+                                            {role === "student" && chapterProgress.total > 0 ? (
+                                              <>
                                                 <div
-                                                  className="h-full rounded-full bg-white/90 transition-all"
-                                                  style={{ width: `${chapterProgress.progressPercent}%` }}
-                                                />
+                                                  className="mt-2 font-mono text-sm tracking-tight text-white/95"
+                                                  aria-hidden="true"
+                                                >
+                                                  {
+                                                    formatProgressBlocks(
+                                                      chapterProgress.progressPercent
+                                                    ).visual
+                                                  }
+                                                </div>
+                                                <div className="mt-1 text-sm font-bold text-white">
+                                                  {chapterProgress.attempted} / {chapterProgress.total}{" "}
+                                                  completed
+                                                </div>
+                                                <div className="text-[10px] font-medium text-white/75">
+                                                  {chapterProgress.progressPercent}% attempted
+                                                  {chapterProgress.average !== null
+                                                    ? ` · avg ${chapterProgress.average}%`
+                                                    : ""}
+                                                </div>
+                                              </>
+                                            ) : (
+                                              <div className="mt-1 text-xs font-semibold text-white/90">
+                                                {chapterProgress.total} exercises
                                               </div>
                                             )}
                                           </div>
@@ -778,42 +857,63 @@ const chapterPalettes = [
                                     activeChapterObj.quizzes,
                                     role === "student" ? historyMap : {}
                                   );
-                                  const summary = formatChapterSummaryLine(
-                                    activeChapterObj.chapter,
-                                    activeProgress
-                                  );
-                                  const continuePick =
+                                  const chapterMeta = formatChapterSummaryMeta(activeProgress);
+                                  const missionPick =
                                     role === "student"
                                       ? findContinueLearningQuiz(activeQuizzes, historyMap)
                                       : null;
 
                                   return (
                                     <div className="space-y-5">
-                                      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-white to-sky-50/80 px-4 py-3 shadow-sm">
-                                        <div className="text-sm font-bold text-emerald-950 md:text-base">
-                                          {summary.title}
+                                      <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm">
+                                        <div className="text-lg font-black text-emerald-950 md:text-xl">
+                                          {activeChapterObj.chapter}
                                         </div>
-                                        <div className="mt-1 text-xs font-medium text-gray-700 md:text-sm">
-                                          {summary.meta}
-                                        </div>
+                                        {role === "student" && activeProgress.total > 0 && (
+                                          <>
+                                            <div
+                                              className="mt-2 font-mono text-base text-emerald-800"
+                                              aria-hidden="true"
+                                            >
+                                              {
+                                                formatProgressBlocks(activeProgress.progressPercent)
+                                                  .visual
+                                              }
+                                            </div>
+                                            <div className="mt-1 text-sm font-bold text-emerald-900">
+                                              {activeProgress.attempted} / {activeProgress.total} completed
+                                            </div>
+                                          </>
+                                        )}
+                                        {chapterMeta && (
+                                          <div className="mt-1 text-[11px] text-gray-500">
+                                            {chapterMeta}
+                                          </div>
+                                        )}
                                       </div>
 
-                                      {continuePick?.quiz && (
-                                        <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-4 shadow-md">
-                                          <div className="text-xs font-bold uppercase tracking-wide text-sky-800">
-                                            Continue Learning
-                                          </div>
-                                          <p className="mt-1 text-sm text-gray-700">
-                                            {continueReasonLabel[continuePick.reason] || "Recommended next"}:{" "}
-                                            <span className="font-bold text-gray-900">
-                                              {continuePick.quiz.title}
-                                            </span>
+                                      {missionPick?.quiz && (
+                                        <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-100 via-white to-emerald-50 p-5 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                                          <p className="text-lg font-black text-sky-900">
+                                            🎯 Today&apos;s Mission
+                                          </p>
+                                          <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                                            Recommended Exercise
+                                          </p>
+                                          <p className="mt-1 text-base font-bold text-gray-900">
+                                            {missionPick.quiz.title}
+                                          </p>
+                                          <p className="mt-2 text-sm text-gray-600">
+                                            <span className="font-semibold text-gray-700">Reason:</span>{" "}
+                                            {missionReasonLabel[missionPick.reason] ||
+                                              missionReasonLabel.continue}
                                           </p>
                                           <Link
-                                            to={`/student/attempt-quiz/${continuePick.quiz.id}`}
-                                            className="mt-3 inline-flex rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                                            to={`/student/attempt-quiz/${missionPick.quiz.id}`}
+                                            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-base font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl sm:w-auto"
                                           >
-                                            Practice Now
+                                            <span aria-hidden="true">▶</span>
+                                            Continue Learning
                                           </Link>
                                         </div>
                                       )}
@@ -846,9 +946,10 @@ const chapterPalettes = [
                                                 </div>
                                                 {role === "student" && (
                                                   <span
-                                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${status.badgeClass}`}
+                                                    className={`flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-bold shadow-sm ring-1 ring-gray-200 ${status.badgeClass}`}
                                                   >
-                                                    {status.label}
+                                                    <span aria-hidden="true">{status.icon}</span>
+                                                    <span>{status.label}</span>
                                                   </span>
                                                 )}
                                               </div>
