@@ -137,7 +137,97 @@ def _chapter_mastery_status(avg_percentage):
     return 'weak'
 
 
-def _build_parent_friendly_summary(full_name, strong_chapters, weak_chapters):
+def _learning_health_from_average(overall_avg):
+    score = int(round(overall_avg))
+    if score >= 80:
+        status = 'Strong'
+    elif score >= 50:
+        status = 'Improving'
+    else:
+        status = 'Needs Attention'
+    return score, status
+
+
+def _attention_required(chapter_mastery, limit=3):
+    weakest = sorted(chapter_mastery, key=lambda c: c['average_percentage'])
+    return [
+        {
+            'chapter_name': c['chapter_name'],
+            'percentage': int(round(c['average_percentage'])),
+        }
+        for c in weakest[:limit]
+    ]
+
+
+def _compute_learning_trend(student):
+    attempts = StudentQuizAttempt.objects.filter(
+        student=student,
+        completed_at__isnull=False,
+    ).select_related('quiz').order_by('-completed_at')
+
+    percentages = [_attempt_percentage(a) for a in attempts]
+    if not percentages:
+        return {
+            'recent_average': 0,
+            'previous_average': 0,
+            'trend': 'Stable',
+        }
+
+    recent_slice = percentages[:5]
+    previous_slice = percentages[5:10]
+    recent_avg = round(sum(recent_slice) / len(recent_slice), 2)
+    if previous_slice:
+        previous_avg = round(sum(previous_slice) / len(previous_slice), 2)
+    else:
+        previous_avg = recent_avg
+
+    diff = recent_avg - previous_avg
+    if diff > 5:
+        trend = 'Improving'
+    elif diff < -5:
+        trend = 'Declining'
+    else:
+        trend = 'Stable'
+
+    return {
+        'recent_average': recent_avg,
+        'previous_average': previous_avg,
+        'trend': trend,
+    }
+
+
+def _primary_subject_name(quiz_rows, chapter_mastery):
+    counts = {}
+    for row in quiz_rows:
+        name = (row.get('subject_name') or '').strip()
+        if name:
+            counts[name] = counts.get(name, 0) + 1
+    for chapter in chapter_mastery:
+        name = (chapter.get('subject_name') or '').strip()
+        if name:
+            counts[name] = counts.get(name, 0) + 1
+    if not counts:
+        return 'Mathematics'
+    return max(counts, key=counts.get)
+
+
+def _join_chapter_names(names, limit=3):
+    if not names:
+        return ''
+    shown = names[:limit]
+    text = ', '.join(shown)
+    if len(names) > limit:
+        text += f", and {len(names) - limit} more"
+    return text
+
+
+def _build_parent_friendly_summary(
+    full_name,
+    strong_chapters,
+    weak_chapters,
+    learning_trend=None,
+    primary_subject='Mathematics',
+):
     display = (full_name or '').strip() or 'The student'
     first_name = display.split()[0] if display else 'The student'
 
@@ -146,26 +236,52 @@ def _build_parent_friendly_summary(full_name, strong_chapters, weak_chapters):
             f"{first_name} has not completed enough quizzes yet for a full learning diagnosis."
         )
 
+    trend = (learning_trend or {}).get('trend', 'Stable')
+    if trend == 'Improving':
+        progress_phrase = 'making steady progress'
+    elif trend == 'Declining':
+        progress_phrase = 'would benefit from additional focused review'
+    else:
+        progress_phrase = 'is progressing steadily'
+
+    subject = (primary_subject or 'Mathematics').strip() or 'Mathematics'
     strong_names = [c['chapter_name'] for c in strong_chapters]
     weak_names = [c['chapter_name'] for c in weak_chapters]
 
-    def _join_names(names, limit=3):
-        if not names:
-            return ''
-        shown = names[:limit]
-        text = ', '.join(shown)
-        if len(names) > limit:
-            text += f", and {len(names) - limit} more"
-        return text
+    parts = [f"{first_name} is {progress_phrase} in {subject}."]
 
-    if strong_names and weak_names:
-        return (
-            f"{first_name} is doing well in {_join_names(strong_names)} "
-            f"but needs more practice in {_join_names(weak_names)}."
-        )
     if strong_names:
-        return f"{first_name} is doing well in {_join_names(strong_names)}."
-    return f"{first_name} needs more practice in {_join_names(weak_names)}."
+        parts.append(
+            f"Strong performance was observed in {_join_chapter_names(strong_names)}."
+        )
+    if weak_names:
+        parts.append(
+            f"Additional practice is recommended in {_join_chapter_names(weak_names)}."
+        )
+    elif not strong_names:
+        parts.append("Keep practicing regularly to build confidence across all chapters.")
+
+    return ' '.join(parts)
+
+
+def _learning_diagnosis_v2_fields(student, overall_avg, chapter_mastery, quiz_rows,
+                                  strong_chapters, weak_chapters):
+    learning_health_score, health_status = _learning_health_from_average(overall_avg)
+    learning_trend = _compute_learning_trend(student)
+    primary_subject = _primary_subject_name(quiz_rows, chapter_mastery)
+    return {
+        'learning_health_score': learning_health_score,
+        'health_status': health_status,
+        'attention_required': _attention_required(chapter_mastery),
+        'learning_trend': learning_trend,
+        'parent_friendly_summary': _build_parent_friendly_summary(
+            student.full_name,
+            strong_chapters,
+            weak_chapters,
+            learning_trend=learning_trend,
+            primary_subject=primary_subject,
+        ),
+    }
 
 
 @staff_member_required
@@ -1941,9 +2057,14 @@ def student_learning_diagnosis_view(request):
         })
 
     if not quiz_rows:
+        v2 = _learning_diagnosis_v2_fields(student, 0, [], [], [], [])
         return Response({
             'full_name': student.full_name,
             'has_data': False,
+            'learning_health_score': v2['learning_health_score'],
+            'health_status': v2['health_status'],
+            'attention_required': [],
+            'learning_trend': v2['learning_trend'],
             'overall': {
                 'total_attempted_quizzes': 0,
                 'overall_average_percentage': 0,
@@ -1954,7 +2075,7 @@ def student_learning_diagnosis_view(request):
             'chapter_mastery': [],
             'low_score_quizzes': [],
             'recommended_practice': [],
-            'parent_friendly_summary': _build_parent_friendly_summary(student.full_name, [], []),
+            'parent_friendly_summary': v2['parent_friendly_summary'],
         })
 
     chapter_buckets = {}
@@ -2041,10 +2162,17 @@ def student_learning_diagnosis_view(request):
         sum(r['percentage'] for r in quiz_rows) / len(quiz_rows),
         2,
     )
+    v2 = _learning_diagnosis_v2_fields(
+        student, overall_avg, chapter_mastery, quiz_rows, strong_chapters, weak_chapters,
+    )
 
     return Response({
         'full_name': student.full_name,
         'has_data': True,
+        'learning_health_score': v2['learning_health_score'],
+        'health_status': v2['health_status'],
+        'attention_required': v2['attention_required'],
+        'learning_trend': v2['learning_trend'],
         'overall': {
             'total_attempted_quizzes': len(quiz_rows),
             'overall_average_percentage': overall_avg,
@@ -2061,11 +2189,7 @@ def student_learning_diagnosis_view(request):
             for q in low_score_quizzes
         ],
         'recommended_practice': recommended_practice,
-        'parent_friendly_summary': _build_parent_friendly_summary(
-            student.full_name,
-            strong_chapters,
-            weak_chapters,
-        ),
+        'parent_friendly_summary': v2['parent_friendly_summary'],
     })
 
 
