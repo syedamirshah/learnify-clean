@@ -17,7 +17,6 @@ import {
 // EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
 import {
   formatChapterSummaryMeta,
-  getChapterCoachTip,
   getChapterIcon,
   getChapterLevelStatus,
   getChapterLevelStatusClass,
@@ -26,7 +25,6 @@ import {
   getExerciseStatus,
   getFirstName,
   getFiveStarFilledCount,
-  getNextBestAction,
   getProgressTrend,
   getStarRating,
   getStudentTextbookStats,
@@ -449,21 +447,88 @@ const navLinkClass = () =>
   const normalizeTitle = (t) => String(t || "").trim();
 
   
-  // 🎨 Bright (full tone) chapter colors for cards
+  // 🎨 Chapter colors + matching light quiz card tones (inheritance when chapter selected)
 const chapterPalettes = [
-  // 1️⃣ Calm & learning-friendly (best for first chapters)
-  { cardBg: "bg-sky-400",     cardBorder: "border-sky-600",     titleText: "text-white", panelBg: "bg-sky-100",     panelBorder: "border-sky-200",     accent: "text-sky-900" },
-  { cardBg: "bg-emerald-400", cardBorder: "border-emerald-600", titleText: "text-white", panelBg: "bg-emerald-100", panelBorder: "border-emerald-200", accent: "text-emerald-900" },
-  { cardBg: "bg-teal-400",    cardBorder: "border-teal-600",    titleText: "text-white", panelBg: "bg-teal-100",    panelBorder: "border-teal-200",    accent: "text-teal-900" },
-
-  // 2️⃣ Friendly warm energy (middle chapters)
-  { cardBg: "bg-lime-400",    cardBorder: "border-lime-600",    titleText: "text-white", panelBg: "bg-lime-100",    panelBorder: "border-lime-200",    accent: "text-lime-900" },
-  { cardBg: "bg-amber-400",   cardBorder: "border-amber-600",   titleText: "text-white", panelBg: "bg-amber-100",   panelBorder: "border-amber-200",   accent: "text-amber-900" },
-  { cardBg: "bg-rose-400",    cardBorder: "border-rose-600",    titleText: "text-white", panelBg: "bg-rose-100",    panelBorder: "border-rose-200",    accent: "text-rose-900" },
-
-  // 3️⃣ Special / advanced / highlight chapters
-  { cardBg: "bg-indigo-400",  cardBorder: "border-indigo-600",  titleText: "text-white", panelBg: "bg-indigo-100",  panelBorder: "border-indigo-200",  accent: "text-indigo-900" },
-  { cardBg: "bg-fuchsia-400", cardBorder: "border-fuchsia-600", titleText: "text-white", panelBg: "bg-fuchsia-100", panelBorder: "border-fuchsia-200", accent: "text-fuchsia-900" },
+  {
+    cardBg: "bg-sky-400",
+    cardBorder: "border-sky-600",
+    titleText: "text-white",
+    panelBg: "bg-sky-100",
+    panelBorder: "border-sky-200",
+    accent: "text-sky-900",
+    quizCardBg: "bg-sky-50",
+    quizCardBorder: "border-sky-200",
+  },
+  {
+    cardBg: "bg-emerald-400",
+    cardBorder: "border-emerald-600",
+    titleText: "text-white",
+    panelBg: "bg-emerald-100",
+    panelBorder: "border-emerald-200",
+    accent: "text-emerald-900",
+    quizCardBg: "bg-emerald-50",
+    quizCardBorder: "border-emerald-200",
+  },
+  {
+    cardBg: "bg-teal-400",
+    cardBorder: "border-teal-600",
+    titleText: "text-white",
+    panelBg: "bg-teal-100",
+    panelBorder: "border-teal-200",
+    accent: "text-teal-900",
+    quizCardBg: "bg-teal-50",
+    quizCardBorder: "border-teal-200",
+  },
+  {
+    cardBg: "bg-lime-400",
+    cardBorder: "border-lime-600",
+    titleText: "text-white",
+    panelBg: "bg-lime-100",
+    panelBorder: "border-lime-200",
+    accent: "text-lime-900",
+    quizCardBg: "bg-lime-50",
+    quizCardBorder: "border-lime-200",
+  },
+  {
+    cardBg: "bg-amber-400",
+    cardBorder: "border-amber-600",
+    titleText: "text-white",
+    panelBg: "bg-amber-100",
+    panelBorder: "border-amber-200",
+    accent: "text-amber-900",
+    quizCardBg: "bg-amber-50",
+    quizCardBorder: "border-amber-200",
+  },
+  {
+    cardBg: "bg-rose-400",
+    cardBorder: "border-rose-600",
+    titleText: "text-white",
+    panelBg: "bg-rose-100",
+    panelBorder: "border-rose-200",
+    accent: "text-rose-900",
+    quizCardBg: "bg-pink-50",
+    quizCardBorder: "border-pink-200",
+  },
+  {
+    cardBg: "bg-indigo-400",
+    cardBorder: "border-indigo-600",
+    titleText: "text-white",
+    panelBg: "bg-indigo-100",
+    panelBorder: "border-indigo-200",
+    accent: "text-indigo-900",
+    quizCardBg: "bg-violet-50",
+    quizCardBorder: "border-violet-200",
+  },
+  {
+    cardBg: "bg-fuchsia-400",
+    cardBorder: "border-fuchsia-600",
+    titleText: "text-white",
+    panelBg: "bg-fuchsia-100",
+    panelBorder: "border-fuchsia-200",
+    accent: "text-fuchsia-900",
+    quizCardBg: "bg-fuchsia-50",
+    quizCardBorder: "border-fuchsia-200",
+  },
 ];
 
   const getChapterPalette = (i) => chapterPalettes[i % chapterPalettes.length];
@@ -612,9 +677,9 @@ const chapterPalettes = [
 
       <LearningPathSelector activePath="textbook" />
         {/* Content Explorer — default Textbook View (chapter-based layout) */}
-        <div id="textbook-view" className="mx-auto mt-10 max-w-[1400px] px-3 md:px-4">
+        <div id="textbook-view" className="mx-auto mt-6 max-w-[1400px] px-3 md:px-4">
           {role === "student" && (
-            <div className="mb-8 grid gap-4 md:grid-cols-3">
+            <div className="mb-6 grid gap-4 md:grid-cols-3">
               <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-500 p-5 text-white shadow-lg md:p-6">
                 <p className="text-sm font-bold">👋 Welcome Back</p>
                 <h2 className="mt-2 text-2xl font-black">Hi, {studentFirstName}!</h2>
@@ -647,7 +712,7 @@ const chapterPalettes = [
               </section>
 
               {studentDailyGoal && (
-                <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-5 shadow-md ring-1 ring-sky-100 md:p-6">
+                <section className="flex min-h-[220px] flex-col rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-5 shadow-lg md:p-6">
                   <p className="text-sm font-bold text-sky-900">🎯 Today&apos;s Goal</p>
                   {studentDailyGoal.completed ? (
                     <p className="mt-4 text-xl font-black text-emerald-800">
@@ -685,8 +750,8 @@ const chapterPalettes = [
               )}
 
               {studentProgressTrend && (
-                <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-5 shadow-md ring-1 ring-emerald-100 md:p-6">
-                  <p className="text-sm font-bold text-emerald-900">📈 Progress Trend</p>
+                <section className="flex min-h-[220px] flex-col rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-5 shadow-lg md:p-6">
+                  <p className="text-sm font-bold text-violet-900">📈 Progress Trend</p>
                   {studentProgressTrend.hasData ? (
                     <div className="mt-4 space-y-2 text-sm text-gray-700">
                       <p>
@@ -697,7 +762,7 @@ const chapterPalettes = [
                         <span className="font-semibold">Previous:</span>{" "}
                         {studentProgressTrend.previousAverage}%
                       </p>
-                      <p className="text-lg font-black text-emerald-950">
+                      <p className="text-lg font-black text-violet-950">
                         {studentProgressTrend.trend}{" "}
                         <span aria-hidden="true">{studentProgressTrend.arrow}</span>
                       </p>
@@ -750,7 +815,7 @@ const chapterPalettes = [
                 </div>
 
               {!gradeOpen ? null : (
-                <div className="mt-6 space-y-10">
+                <div className="mt-4 space-y-6">
                   {gradeItem.subjects.map((subjectItem, subjectIndex) => {
                     // ✅ Keep sorting + attach a stable UI color index
                     const chaptersSorted = sortedChapters(subjectItem.chapters).map((ch, idxSorted) => ({
@@ -780,54 +845,9 @@ const chapterPalettes = [
                     const activeQuizzesForSubject = activeChapterObj
                       ? sortedQuizzes(activeChapterObj.quizzes)
                       : [];
-                    const nextBestAction =
-                      role === "student" && activeChapterObj
-                        ? getNextBestAction(activeQuizzesForSubject, historyMap)
-                        : null;
-                    const displayGradeLabel =
-                      userGrade || gradeItem.grade || "Your Grade";
 
                     return (
-                      <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-5">
-                        <header className="rounded-3xl bg-gradient-to-r from-emerald-50 via-white to-sky-50 px-5 py-5 shadow-sm ring-1 ring-emerald-100">
-                          <h2 className="text-xl font-black text-emerald-950 md:text-2xl">
-                            Your Math Learning Path
-                          </h2>
-                          <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                            Complete exercises, earn stars, and strengthen your skills chapter by
-                            chapter.
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {[
-                              displayGradeLabel,
-                              "Textbook View",
-                              "Math Practice",
-                            ].map((chip) => (
-                              <span
-                                key={chip}
-                                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm ring-1 ring-emerald-200"
-                              >
-                                {chip}
-                              </span>
-                            ))}
-                          </div>
-                        </header>
-
-                        {nextBestAction?.quiz && (
-                          <div className="rounded-3xl bg-gradient-to-r from-orange-50 to-emerald-50 px-5 py-4 shadow-md ring-1 ring-orange-200">
-                            <p className="text-base font-black text-orange-900">
-                              🔥 Next Best Action
-                            </p>
-                            <p className="mt-2 font-bold text-gray-900">{nextBestAction.quiz.title}</p>
-                            <p className="mt-1 text-sm text-gray-600">{nextBestAction.reasonText}</p>
-                            <Link
-                              to={`/student/attempt-quiz/${nextBestAction.quiz.id}`}
-                              className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-emerald-700"
-                            >
-                              {nextBestAction.cta}
-                            </Link>
-                          </div>
-                        )}
+                      <section key={`subject-${gradeIndex}-${subjectIndex}`} className="space-y-4">
                         {/*
                           ✅ Subject heading hidden temporarily because Learnify is now math-exclusive
                         <div className="flex justify-center">
@@ -947,10 +967,26 @@ const chapterPalettes = [
                                 </div>
                               </div>
                             </div>
-                          {/* RIGHT: Challenges */}
-                          <div className="min-w-0 overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-emerald-100">
-                            <div className="border-b border-emerald-50 bg-emerald-50/40 px-4 py-3">
-                              <div className="text-lg font-black text-emerald-950">Exercises</div>
+                          {/* RIGHT: Exercises (colors inherit active chapter) */}
+                          <div
+                            className={`min-w-0 overflow-hidden rounded-3xl bg-white shadow-md ring-1 ${
+                              activePalette ? activePalette.panelBorder : "ring-emerald-100"
+                            }`}
+                          >
+                            <div
+                              className={`border-b px-4 py-3 ${
+                                activePalette
+                                  ? `${activePalette.panelBg} ${activePalette.panelBorder}`
+                                  : "border-emerald-50 bg-emerald-50/40"
+                              }`}
+                            >
+                              <div
+                                className={`text-lg font-black ${
+                                  activePalette ? activePalette.accent : "text-emerald-950"
+                                }`}
+                              >
+                                Exercises
+                              </div>
                             </div>
 
                             <div className="p-4 md:p-5">
@@ -967,15 +1003,15 @@ const chapterPalettes = [
                                   );
                                   const chapterMeta = formatChapterSummaryMeta(activeProgress);
                                   const activeChapterIcon = getChapterIcon(activeChapterObj.chapter);
-                                  const coachTip =
-                                    role === "student"
-                                      ? getChapterCoachTip(activeProgress)
-                                      : null;
 
                                   return (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                       <div>
-                                        <div className="flex items-center gap-2 text-lg font-black text-emerald-950">
+                                        <div
+                                          className={`flex items-center gap-2 text-lg font-black ${
+                                            activePalette ? activePalette.accent : "text-emerald-950"
+                                          }`}
+                                        >
                                           <span aria-hidden="true">{activeChapterIcon}</span>
                                           <span>{activeChapterObj.chapter}</span>
                                         </div>
@@ -983,12 +1019,6 @@ const chapterPalettes = [
                                           <p className="mt-0.5 text-[11px] text-gray-400">{chapterMeta}</p>
                                         )}
                                       </div>
-
-                                      {coachTip && (
-                                        <div className="rounded-2xl bg-sky-50/80 px-3 py-2.5 text-sm text-sky-950 ring-1 ring-sky-100">
-                                          <span className="font-bold">💡 Coach tip:</span> {coachTip}
-                                        </div>
-                                      )}
 
                                       <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                                         {activeQuizzes.map((quiz) => {
@@ -1005,11 +1035,15 @@ const chapterPalettes = [
                                             role === "student" ? pct : null
                                           );
 
+                                          const quizCardClass = activePalette
+                                            ? `border-2 ${activePalette.quizCardBg} ${activePalette.quizCardBorder} hover:shadow-md`
+                                            : `border-2 border-gray-200 bg-white ${status.cardAccent}`;
+
                                           return (
                                             <Link
                                               key={`quiz-${quiz.id}`}
                                               to={`/student/attempt-quiz/${quiz.id}`}
-                                              className={`group block rounded-2xl px-4 py-3 transition duration-200 hover:-translate-y-0.5 ${status.cardAccent}`}
+                                              className={`group block rounded-2xl px-4 py-3 transition duration-200 hover:-translate-y-0.5 ${quizCardClass}`}
                                             >
                                               <div className="flex items-start justify-between gap-2">
                                                 {role === "student" && (
@@ -1030,7 +1064,11 @@ const chapterPalettes = [
                                                 )}
                                               </div>
 
-                                              <div className="mt-2 font-semibold leading-snug text-emerald-950">
+                                              <div
+                                                className={`mt-2 font-semibold leading-snug ${
+                                                  activePalette ? activePalette.accent : "text-emerald-950"
+                                                }`}
+                                              >
                                                 {quiz.title}
                                               </div>
 
