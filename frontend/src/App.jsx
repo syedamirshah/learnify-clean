@@ -13,6 +13,7 @@ import TeacherAssessment from './pages/teacher/TeacherAssessment';
 import StudentQuizHistory from './pages/teacher/StudentQuizHistory';
 import StudentSubjectPerformance from './pages/student/StudentSubjectPerformance';
 import StudentQuizHistoryTable from './pages/student/StudentQuizHistoryTable';
+import LearningDiagnosis from './pages/student/LearningDiagnosis';
 import GuestAssessment from './pages/public/GuestAssessment';
 import MembershipPage from '@/pages/public/MembershipPage';
 import HelpCenter from '@/pages/public/HelpCenter';
@@ -56,6 +57,7 @@ function App() {
           <Route path="/teacher/assessment" element={<TeacherAssessment />} />
           <Route path="/teacher/student/:username/quiz-history" element={<StudentQuizHistory />} />
           <Route path="/student/assessment" element={<StudentSubjectPerformance />} />
+          <Route path="/student/learning-diagnosis" element={<LearningDiagnosis />} />
           <Route path="/student/quiz-history" element={<StudentQuizHistoryTable />} />
           <Route path="/assessment/public" element={<GuestAssessment />} />
           <Route path="/membership" element={<MembershipPage />} />

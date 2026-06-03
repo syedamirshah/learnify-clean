@@ -27,6 +27,11 @@ export function buildPublicNavItems(role, options = {}) {
     ...(role === "student"
       ? [
           {
+            key: "learning-diagnosis",
+            label: "Learning Diagnosis",
+            href: "/student/learning-diagnosis",
+          },
+          {
             key: "subject-performance",
             label: "Subject Performance",
             href: "/student/assessment",

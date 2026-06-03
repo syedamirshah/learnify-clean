@@ -51,6 +51,7 @@ from .views import (
     teacher_student_quiz_history_view,
     student_subject_performance as student_subject_performance_view,  # keep the alias only
     student_quiz_history_view,
+    student_learning_diagnosis_view,
     get_all_grades,
     privacy_policy,   # ✅ add this
 
@@ -140,6 +141,7 @@ urlpatterns = [
     path('api/teacher/student/<str:username>/quiz-history/', teacher_student_quiz_history_view, name='teacher-student-quiz-history'),
     path('api/student/subject-performance/', student_subject_performance_view, name='student-subject-performance'),
     path('student/quiz-history/', student_quiz_history_view, name='student_quiz_history'),
+    path('student/learning-diagnosis/', student_learning_diagnosis_view, name='student_learning_diagnosis'),
 
     # ---------- Admin dashboard shortcuts ----------
     path('admin/dashboard/users/', user_dashboard, name='admin-user-dashboard'),

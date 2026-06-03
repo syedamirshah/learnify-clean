@@ -118,6 +118,56 @@ def calculate_grade(percentage):
     else:
         return "F"
 
+
+def _attempt_percentage(attempt):
+    """Percentage from stored attempt score (same basis as student quiz history)."""
+    quiz = attempt.quiz
+    total_questions = quiz.assignments.aggregate(total=models.Sum('num_questions'))['total'] or 0
+    total_marks = total_questions * quiz.marks_per_question
+    if not total_marks:
+        return 0.0
+    return round((attempt.score / total_marks) * 100, 2)
+
+
+def _chapter_mastery_status(avg_percentage):
+    if avg_percentage >= 80:
+        return 'strong'
+    if avg_percentage >= 50:
+        return 'improving'
+    return 'weak'
+
+
+def _build_parent_friendly_summary(full_name, strong_chapters, weak_chapters):
+    display = (full_name or '').strip() or 'The student'
+    first_name = display.split()[0] if display else 'The student'
+
+    if not strong_chapters and not weak_chapters:
+        return (
+            f"{first_name} has not completed enough quizzes yet for a full learning diagnosis."
+        )
+
+    strong_names = [c['chapter_name'] for c in strong_chapters]
+    weak_names = [c['chapter_name'] for c in weak_chapters]
+
+    def _join_names(names, limit=3):
+        if not names:
+            return ''
+        shown = names[:limit]
+        text = ', '.join(shown)
+        if len(names) > limit:
+            text += f", and {len(names) - limit} more"
+        return text
+
+    if strong_names and weak_names:
+        return (
+            f"{first_name} is doing well in {_join_names(strong_names)} "
+            f"but needs more practice in {_join_names(weak_names)}."
+        )
+    if strong_names:
+        return f"{first_name} is doing well in {_join_names(strong_names)}."
+    return f"{first_name} needs more practice in {_join_names(weak_names)}."
+
+
 @staff_member_required
 def bulk_upload_scq(request, bank_id):
     from core.forms import UploadSCQForm
@@ -1854,6 +1904,170 @@ def student_quiz_history_view(request):
         'full_name': student.full_name,
         'results': results
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def student_learning_diagnosis_view(request):
+    if request.user.role != 'student':
+        return Response({'error': 'Only students can access this view.'}, status=403)
+
+    student = request.user
+    from django.db.models import Max
+
+    latest_attempt_times = StudentQuizAttempt.objects.filter(
+        student=student,
+        completed_at__isnull=False,
+    ).values('quiz').annotate(latest=Max('completed_at')).values_list('latest', flat=True)
+
+    attempts = StudentQuizAttempt.objects.filter(
+        student=student,
+        completed_at__in=latest_attempt_times,
+    ).select_related('quiz', 'quiz__subject', 'quiz__chapter', 'quiz__grade')
+
+    quiz_rows = []
+    for attempt in attempts:
+        quiz = attempt.quiz
+        percentage = _attempt_percentage(attempt)
+        chapter = quiz.chapter
+        quiz_rows.append({
+            'quiz_id': quiz.id,
+            'quiz_title': quiz.title,
+            'chapter_id': chapter.id if chapter else None,
+            'chapter_name': chapter.name if chapter else 'General',
+            'subject_name': quiz.subject.name if quiz.subject else '',
+            'percentage': percentage,
+            'practice_path': f'/student/attempt-quiz/{quiz.id}',
+        })
+
+    if not quiz_rows:
+        return Response({
+            'full_name': student.full_name,
+            'has_data': False,
+            'overall': {
+                'total_attempted_quizzes': 0,
+                'overall_average_percentage': 0,
+                'strong_chapters_count': 0,
+                'improving_chapters_count': 0,
+                'weak_chapters_count': 0,
+            },
+            'chapter_mastery': [],
+            'low_score_quizzes': [],
+            'recommended_practice': [],
+            'parent_friendly_summary': _build_parent_friendly_summary(student.full_name, [], []),
+        })
+
+    chapter_buckets = {}
+    for row in quiz_rows:
+        key = row['chapter_id'] if row['chapter_id'] is not None else f"none:{row['chapter_name']}"
+        if key not in chapter_buckets:
+            chapter_buckets[key] = {
+                'chapter_id': row['chapter_id'],
+                'chapter_name': row['chapter_name'],
+                'subject_name': row['subject_name'],
+                'percentages': [],
+                'quiz_ids': set(),
+            }
+        chapter_buckets[key]['percentages'].append(row['percentage'])
+        chapter_buckets[key]['quiz_ids'].add(row['quiz_id'])
+
+    chapter_mastery = []
+    for bucket in chapter_buckets.values():
+        avg_pct = round(sum(bucket['percentages']) / len(bucket['percentages']), 2)
+        status = _chapter_mastery_status(avg_pct)
+        chapter_mastery.append({
+            'chapter_id': bucket['chapter_id'],
+            'chapter_name': bucket['chapter_name'],
+            'subject_name': bucket['subject_name'],
+            'quizzes_attempted': len(bucket['quiz_ids']),
+            'average_percentage': avg_pct,
+            'status': status,
+        })
+
+    chapter_mastery.sort(key=lambda c: (c['status'] != 'weak', c['average_percentage']))
+
+    low_score_quizzes = [
+        {k: v for k, v in row.items() if k != 'practice_path'}
+        for row in quiz_rows
+        if row['percentage'] < 50
+    ]
+    low_score_quizzes.sort(key=lambda q: q['percentage'])
+
+    strong_chapters = [c for c in chapter_mastery if c['status'] == 'strong']
+    improving_chapters = [c for c in chapter_mastery if c['status'] == 'improving']
+    weak_chapters = [c for c in chapter_mastery if c['status'] == 'weak']
+
+    recommended_practice = []
+    seen_quiz_ids = set()
+
+    for chapter in weak_chapters:
+        chapter_quizzes = [
+            r for r in quiz_rows
+            if (r['chapter_id'] == chapter['chapter_id']
+                and chapter['chapter_id'] is not None)
+            or (chapter['chapter_id'] is None and r['chapter_name'] == chapter['chapter_name'])
+        ]
+        chapter_quizzes.sort(key=lambda r: r['percentage'])
+        for row in chapter_quizzes:
+            if row['quiz_id'] in seen_quiz_ids:
+                continue
+            seen_quiz_ids.add(row['quiz_id'])
+            recommended_practice.append({
+                'quiz_id': row['quiz_id'],
+                'quiz_title': row['quiz_title'],
+                'chapter_name': row['chapter_name'],
+                'subject_name': row['subject_name'],
+                'percentage': row['percentage'],
+                'reason': 'weak_chapter',
+                'practice_path': row['practice_path'],
+            })
+
+    for row in low_score_quizzes:
+        if row['quiz_id'] in seen_quiz_ids:
+            continue
+        seen_quiz_ids.add(row['quiz_id'])
+        full_row = next(r for r in quiz_rows if r['quiz_id'] == row['quiz_id'])
+        recommended_practice.append({
+            'quiz_id': row['quiz_id'],
+            'quiz_title': row['quiz_title'],
+            'chapter_name': row['chapter_name'],
+            'subject_name': row['subject_name'],
+            'percentage': row['percentage'],
+            'reason': 'low_score',
+            'practice_path': full_row['practice_path'],
+        })
+
+    overall_avg = round(
+        sum(r['percentage'] for r in quiz_rows) / len(quiz_rows),
+        2,
+    )
+
+    return Response({
+        'full_name': student.full_name,
+        'has_data': True,
+        'overall': {
+            'total_attempted_quizzes': len(quiz_rows),
+            'overall_average_percentage': overall_avg,
+            'strong_chapters_count': len(strong_chapters),
+            'improving_chapters_count': len(improving_chapters),
+            'weak_chapters_count': len(weak_chapters),
+        },
+        'chapter_mastery': chapter_mastery,
+        'strong_chapters': strong_chapters,
+        'improving_chapters': improving_chapters,
+        'weak_chapters': weak_chapters,
+        'low_score_quizzes': [
+            {**q, 'practice_path': f"/student/attempt-quiz/{q['quiz_id']}"}
+            for q in low_score_quizzes
+        ],
+        'recommended_practice': recommended_practice,
+        'parent_friendly_summary': _build_parent_friendly_summary(
+            student.full_name,
+            strong_chapters,
+            weak_chapters,
+        ),
+    })
+
 
 @api_view(['GET'])
 def list_public_quizzes(request):
