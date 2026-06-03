@@ -14,6 +14,14 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
+// EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
+import {
+  continueReasonLabel,
+  findContinueLearningQuiz,
+  formatChapterSummaryLine,
+  getChapterProgress,
+  getExerciseStatus,
+} from "../../utils/textbookViewExperiment";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -629,27 +637,25 @@ const chapterPalettes = [
                           </div>
                         </div>
                         */}
-                        {/* Modern two-panel layout */}
-                        <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
+                        {/* Modern two-panel layout (experimental textbook UI) */}
+                        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[420px_1fr]">
                           {/* LEFT: Chapters */}
                             <div
-                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
-                                ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
+                              className={`overflow-hidden rounded-3xl border-2 bg-white shadow-lg shadow-emerald-900/5
+                                ${activePalette ? activePalette.panelBorder : "border-emerald-200"}
                               `}
                             >
-                              {/* Header bar (matches Exercises header style) */}
                               <div
-                                className={`px-5 py-4 border-b
-                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
-                                  ${activePalette ? activePalette.panelBorder : "border-[#42b72a]"}
+                                className={`border-b px-5 py-4
+                                  ${activePalette ? activePalette.panelBg : "bg-gradient-to-r from-emerald-50 to-white"}
+                                  ${activePalette ? activePalette.panelBorder : "border-emerald-200"}
                                 `}
                               >
-                                <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
+                                <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-emerald-950"}`}>
                                   Chapters
                                 </div>
                               </div>
 
-                              {/* Body */}
                               <div className="p-4">
                                 <div className="space-y-2">
                                   {chaptersSorted.map((chapterItem, idx) => {
@@ -661,6 +667,10 @@ const chapterPalettes = [
 
                                     const pinned = pinnedChapterBySubject[subjectKey] === chapterKey;
                                     const palette = getChapterPalette(chapterItem._colorIndex ?? idx);
+                                    const chapterProgress = getChapterProgress(
+                                      chapterItem.quizzes,
+                                      role === "student" ? historyMap : {}
+                                    );
 
                                     return (
                                       <button
@@ -691,33 +701,47 @@ const chapterPalettes = [
                                             return { ...prev, [subjectKey]: chapterKey };
                                           });
                                         }}
-                                        className={`w-full flex items-center gap-3 text-left p-3 rounded-xl border-2 transition shadow-sm
+                                        className={`w-full rounded-2xl border-2 p-3 text-left shadow-sm transition duration-200
                                           ${palette.cardBg} ${palette.cardBorder}
-                                          ${pinned ? "ring-2 ring-offset-2 ring-green-400" : "hover:shadow-md"}
+                                          ${pinned ? "ring-2 ring-offset-2 ring-emerald-400" : "hover:-translate-y-0.5 hover:shadow-md"}
                                         `}
                                         title="Hover to preview exercises • Click to keep exercises open"
                                       >
-                                        <div
-                                          className={`h-10 w-10 rounded-lg flex items-center justify-center font-extrabold border-2 bg-white/70
-                                            ${palette.cardBorder} text-gray-900
-                                          `}
-                                        >
-                                          {idx + 1}
-                                        </div>
-
-                                        <div className="min-w-0">
-                                          <div className={`font-normal text-[18px] md:text-[20px] truncate ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
-                                            {chapterItem.chapter}
+                                        <div className="flex items-start gap-3">
+                                          <div
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 bg-white/80 font-extrabold
+                                              ${palette.cardBorder} text-gray-900
+                                            `}
+                                          >
+                                            {idx + 1}
                                           </div>
-                                          <div className="mt-1 inline-block text-xs font-semibold text-gray-900 bg-white/80 px-2 py-0.5 rounded">
-                                            {Array.isArray(chapterItem.quizzes)
-                                              ? `${chapterItem.quizzes.length} exercises`
-                                              : "0 exercises"}
-                                          </div>
-                                        </div>
 
-                                        <div className="ml-auto font-bold text-gray-500">
-                                          {pinned ? "📌" : "›"}
+                                          <div className="min-w-0 flex-1">
+                                            <div className={`truncate text-[17px] font-semibold md:text-[19px] ${palette.titleText} drop-shadow-[0_0.5px_0_rgba(0,0,0,0.30)]`}>
+                                              {chapterItem.chapter}
+                                            </div>
+                                            <div className="mt-1 text-xs font-semibold text-white/95">
+                                              {chapterProgress.total} exercises
+                                              {role === "student" && chapterProgress.attempted > 0
+                                                ? ` · ${chapterProgress.attempted} done`
+                                                : ""}
+                                              {role === "student" && chapterProgress.average !== null
+                                                ? ` · ${chapterProgress.average}% avg`
+                                                : ""}
+                                            </div>
+                                            {role === "student" && chapterProgress.total > 0 && (
+                                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/15">
+                                                <div
+                                                  className="h-full rounded-full bg-white/90 transition-all"
+                                                  style={{ width: `${chapterProgress.progressPercent}%` }}
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          <div className="shrink-0 pt-1 font-bold text-white/90">
+                                            {pinned ? "📌" : "›"}
+                                          </div>
                                         </div>
                                       </button>
                                     );
@@ -727,73 +751,131 @@ const chapterPalettes = [
                             </div>
                           {/* RIGHT: Exercises */}
                           <div
-                              className={`rounded-2xl border-2 shadow-sm overflow-hidden bg-white
-                                ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                              className={`min-w-0 overflow-hidden rounded-3xl border-2 bg-white shadow-lg shadow-emerald-900/5
+                                ${activePalette ? activePalette.panelBorder : "border-emerald-200"}
                               `}
                             >
                             <div
-                                className={`px-5 py-4 border-b
-                                  ${activePalette ? activePalette.panelBg : "bg-gray-50"}
-                                  ${activePalette ? activePalette.panelBorder : "border-gray-200"}
+                                className={`border-b px-5 py-4
+                                  ${activePalette ? activePalette.panelBg : "bg-gradient-to-r from-emerald-50 via-white to-sky-50"}
+                                  ${activePalette ? activePalette.panelBorder : "border-emerald-200"}
                                 `}
                               >
-                              <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-green-900"} drop-shadow-[0_0.6px_0_rgba(0,0,0,0.25)]`}>
-                                {activeChapterObj ? `Exercises — ${activeChapterObj.chapter}` : "Exercises"}
+                              <div className={`text-xl font-black ${activePalette ? activePalette.accent : "text-emerald-950"}`}>
+                                Exercises
                               </div>
-                              
                             </div>
 
                             <div className="p-5">
                               {!activeChapterObj ? (
-                                <div className="text-gray-500 text-center py-12">
+                                <div className="py-12 text-center text-gray-500">
                                   Select a chapter to view exercises.
                                 </div>
                               ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {sortedQuizzes(activeChapterObj.quizzes).map((quiz) => {
-                                    const history = historyMap[String(quiz.id)];
+                                (() => {
+                                  const activeQuizzes = sortedQuizzes(activeChapterObj.quizzes);
+                                  const activeProgress = getChapterProgress(
+                                    activeChapterObj.quizzes,
+                                    role === "student" ? historyMap : {}
+                                  );
+                                  const summary = formatChapterSummaryLine(
+                                    activeChapterObj.chapter,
+                                    activeProgress
+                                  );
+                                  const continuePick =
+                                    role === "student"
+                                      ? findContinueLearningQuiz(activeQuizzes, historyMap)
+                                      : null;
 
-                                    return (
-                                      <Link
-                                        key={`quiz-${quiz.id}`}
-                                        to={`/student/attempt-quiz/${quiz.id}`}
-                                        className={`block rounded-xl border px-4 py-3 transition duration-150 hover:shadow-md hover:brightness-95
-                                          ${
-                                            activePalette
-                                              ? `${activePalette.panelBorder} ${activePalette.panelBg}`
-                                              : "border-gray-200 bg-white"
-                                          }
-                                        `}
-                                      >
-                                        {/* Title */}
-                                        <div
-                                          className={`font-medium ${
-                                            activePalette ? activePalette.accent : "text-green-900"
-                                          } drop-shadow-[0_0.5px_0_rgba(0,0,0,0.22)]`}
-                                        >
-                                          {quiz.title}
+                                  return (
+                                    <div className="space-y-5">
+                                      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-white to-sky-50/80 px-4 py-3 shadow-sm">
+                                        <div className="text-sm font-bold text-emerald-950 md:text-base">
+                                          {summary.title}
                                         </div>
+                                        <div className="mt-1 text-xs font-medium text-gray-700 md:text-sm">
+                                          {summary.meta}
+                                        </div>
+                                      </div>
 
-                                        {/* ✅ Score + Grade */}
-                                        {role === "student" && history && (
-                                          <div className="mt-1 flex items-center justify-center gap-2 text-xs font-semibold">
-                                            <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                              Score: {history.marks_obtained}/{history.total_marks}
-                                            </span>
-                                            <span className="px-2 py-0.5 rounded-full bg-white/70 border border-gray-200 text-gray-700">
-                                              {history.percentage}% • {history.grade_letter}
-                                            </span>
+                                      {continuePick?.quiz && (
+                                        <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-4 shadow-md">
+                                          <div className="text-xs font-bold uppercase tracking-wide text-sky-800">
+                                            Continue Learning
                                           </div>
-                                        )}
+                                          <p className="mt-1 text-sm text-gray-700">
+                                            {continueReasonLabel[continuePick.reason] || "Recommended next"}:{" "}
+                                            <span className="font-bold text-gray-900">
+                                              {continuePick.quiz.title}
+                                            </span>
+                                          </p>
+                                          <Link
+                                            to={`/student/attempt-quiz/${continuePick.quiz.id}`}
+                                            className="mt-3 inline-flex rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                                          >
+                                            Practice Now
+                                          </Link>
+                                        </div>
+                                      )}
 
-                                        {/* Loading hint */}
-                                        {role === "student" && !history && historyLoading && (
-                                          <div className="mt-1 text-[11px] text-gray-500">Loading score…</div>
-                                        )}
-                                      </Link>
-                                    );
-                                  })}
-                                </div>
+                                      <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
+                                        {activeQuizzes.map((quiz) => {
+                                          const history = historyMap[String(quiz.id)];
+                                          const pct =
+                                            history?.percentage !== undefined &&
+                                            history?.percentage !== null
+                                              ? Number(history.percentage)
+                                              : null;
+                                          const status = getExerciseStatus(
+                                            role === "student" ? pct : null
+                                          );
+
+                                          return (
+                                            <Link
+                                              key={`quiz-${quiz.id}`}
+                                              to={`/student/attempt-quiz/${quiz.id}`}
+                                              className={`block rounded-2xl border-2 px-4 py-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${status.cardAccent}`}
+                                            >
+                                              <div className="flex items-start justify-between gap-2">
+                                                <div
+                                                  className={`min-w-0 flex-1 font-semibold leading-snug ${
+                                                    activePalette ? activePalette.accent : "text-emerald-950"
+                                                  }`}
+                                                >
+                                                  {quiz.title}
+                                                </div>
+                                                {role === "student" && (
+                                                  <span
+                                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${status.badgeClass}`}
+                                                  >
+                                                    {status.label}
+                                                  </span>
+                                                )}
+                                              </div>
+
+                                              {role === "student" && history && (
+                                                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-gray-700">
+                                                  <span className="rounded-full border border-gray-200 bg-white/80 px-2 py-0.5">
+                                                    {history.marks_obtained}/{history.total_marks}
+                                                  </span>
+                                                  <span className="rounded-full border border-gray-200 bg-white/80 px-2 py-0.5">
+                                                    {history.percentage}% · {history.grade_letter}
+                                                  </span>
+                                                </div>
+                                              )}
+
+                                              {role === "student" && !history && historyLoading && (
+                                                <div className="mt-2 text-[11px] text-gray-500">
+                                                  Loading score…
+                                                </div>
+                                              )}
+                                            </Link>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })()
                               )}
                             </div>
                           </div>
