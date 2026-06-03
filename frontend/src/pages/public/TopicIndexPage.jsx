@@ -7,7 +7,6 @@ import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "..
 import { buildPublicNavItems } from "../../utils/publicNav";
 import axiosInstance from "../../utils/axiosInstance";
 import {
-  findContinueLearningTopic,
   getSkillStatus,
   getTopicGroupIcon,
   getTopicGroupPalette,
@@ -193,11 +192,6 @@ const TopicIndexPage = () => {
     return localStorage.getItem("user_grade") || topicsByGrade[0]?.[0] || "Your Grade";
   }, [topicsByGrade]);
 
-  const continueLearning = useMemo(() => {
-    if (!isStudent || !topics.length) return null;
-    return findContinueLearningTopic(topics, historyMap);
-  }, [isStudent, topics, historyMap]);
-
   const handleLogout = () => {
     clearAuth();
     navigate("/", { replace: true });
@@ -221,7 +215,7 @@ const TopicIndexPage = () => {
     >
       <LearningPathSelector activePath="topic-index" className="mt-0" />
 
-      <div className="mx-auto max-w-6xl space-y-5 px-4 pb-8 pt-2 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4 px-4 pb-8 pt-1 sm:px-6 lg:px-8">
         <section className="rounded-3xl bg-gradient-to-r from-emerald-50 via-white to-sky-50 px-5 py-4 shadow-sm ring-1 ring-emerald-100">
           <h1 className="text-xl font-black text-emerald-950 md:text-2xl">Explore by Topic</h1>
           <p className="mt-1 text-sm text-gray-600">
@@ -239,28 +233,7 @@ const TopicIndexPage = () => {
           </div>
         </section>
 
-        {isStudent && continueLearning?.quiz && (
-          <section className="rounded-3xl bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4 shadow-md ring-1 ring-sky-200">
-            <p className="text-sm font-bold text-sky-900">🎯 Continue Learning</p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Recommended next
-            </p>
-            <p className="mt-1 font-bold text-gray-900">
-              {displayQuizTitle(continueLearning.quiz.title)}
-            </p>
-            {continueLearning.topic?.name && (
-              <p className="text-sm text-gray-600">{continueLearning.topic.name}</p>
-            )}
-            <Link
-              to={`/student/attempt-quiz/${continueLearning.quiz.id}`}
-              className="mt-3 inline-flex rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-emerald-700"
-            >
-              {continueLearning.cta || "Start Practice"}
-            </Link>
-          </section>
-        )}
-
-        <section className="space-y-4">
+        <section className="space-y-3">
           {isStudent && !gradeId && accessToken && (hydrating || !hydrationChecked) ? (
             <div className="py-10 text-center text-gray-500">Loading your learning path...</div>
           ) : isStudent && !gradeId && accessToken && hydrationChecked ? (
@@ -282,7 +255,7 @@ const TopicIndexPage = () => {
           ) : (
             topicsByGrade.map(([gradeName, gradeTopics]) => (
               <div key={gradeName} className="space-y-4">
-                <div className="mb-4 flex items-center justify-center gap-6">
+                <div className="mb-2 flex items-center justify-center gap-6">
                   <div className="h-[2px] w-28 rounded-full bg-green-300" />
                   <div className="whitespace-nowrap rounded-full border-2 border-green-300 bg-green-100 px-10 py-4 text-3xl font-extrabold text-green-900 shadow-md">
                     {gradeName}
