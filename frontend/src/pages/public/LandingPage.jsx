@@ -14,10 +14,9 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
-// EXPERIMENTAL: textbook view UI V5 — revert by removing import + textbookViewExperiment.js
+// EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
 import {
   formatChapterSummaryMeta,
-  getCelebrationBanner,
   getChapterCoachTip,
   getChapterIcon,
   getChapterLevelStatus,
@@ -26,11 +25,14 @@ import {
   getDailyGoalProgress,
   getExerciseStatus,
   getFirstName,
-  getLearningRank,
+  getFiveStarFilledCount,
   getNextBestAction,
-  getStarBankTotal,
+  getProgressTrend,
   getStarRating,
   getStudentTextbookStats,
+  getTodayAverage,
+  getTodayGoalMessage,
+  getWelcomeMotivation,
 } from "../../utils/textbookViewExperiment";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
@@ -484,27 +486,43 @@ const chapterPalettes = [
     return getStudentTextbookStats(visibleQuizData, historyMap);
   }, [role, visibleQuizData, historyMap]);
 
-  const studentLearningRank = useMemo(() => {
-    if (!studentTextbookStats) return null;
-    return getLearningRank(studentTextbookStats.completed);
-  }, [studentTextbookStats]);
-
   const studentDailyGoal = useMemo(() => {
     if (role !== "student" || !studentTextbookStats) return null;
     return getDailyGoalProgress(historyMap, studentTextbookStats);
   }, [role, historyMap, studentTextbookStats]);
 
-  const studentCelebration = useMemo(() => {
-    if (!studentTextbookStats) return null;
-    return getCelebrationBanner(studentTextbookStats.average);
-  }, [studentTextbookStats]);
+  const studentTodayAverage = useMemo(() => {
+    if (role !== "student") return null;
+    return getTodayAverage(historyMap);
+  }, [role, historyMap]);
+
+  const studentProgressTrend = useMemo(() => {
+    if (role !== "student") return null;
+    return getProgressTrend(historyMap);
+  }, [role, historyMap]);
 
   const studentFirstName = useMemo(() => getFirstName(userFullName), [userFullName]);
 
-  const studentStarBank = useMemo(() => {
-    if (role !== "student") return 0;
-    return getStarBankTotal(historyMap);
-  }, [role, historyMap]);
+  const renderFiveStarRating = (average) => {
+    const filled = getFiveStarFilledCount(average);
+    return (
+      <div
+        className="mt-1 flex gap-0.5"
+        role="img"
+        aria-label={`${filled} out of 5 stars based on average score`}
+      >
+        {[1, 2, 3, 4, 5].map((i) => (
+          <span
+            key={i}
+            className={`text-xl leading-none ${i <= filled ? "text-amber-400" : "text-gray-300"}`}
+            aria-hidden="true"
+          >
+            {i <= filled ? "★" : "☆"}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <AppLayout
@@ -596,84 +614,101 @@ const chapterPalettes = [
         {/* Content Explorer — default Textbook View (chapter-based layout) */}
         <div id="textbook-view" className="mx-auto mt-10 max-w-[1400px] px-3 md:px-4">
           {role === "student" && (
-            <div className="mb-6 space-y-3">
-              {studentCelebration && (
-                <p
-                  className={`rounded-xl px-3 py-2 text-center text-sm font-bold ${
-                    studentCelebration.tone === "gold"
-                      ? "bg-amber-50 text-amber-900"
-                      : "bg-emerald-50 text-emerald-900"
-                  }`}
-                >
-                  {studentCelebration.icon} {studentCelebration.text}
+            <div className="mb-8 grid gap-4 md:grid-cols-3">
+              <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-500 p-5 text-white shadow-lg md:p-6">
+                <p className="text-sm font-bold">👋 Welcome Back</p>
+                <h2 className="mt-2 text-2xl font-black">Hi, {studentFirstName}!</h2>
+                {!historyLoading &&
+                  renderFiveStarRating(studentTextbookStats?.average ?? null)}
+                {historyLoading && (
+                  <p className="mt-2 text-sm text-emerald-100">Loading your progress…</p>
+                )}
+                <div className="mt-4 space-y-1 text-sm">
+                  <p>
+                    <span className="text-emerald-100">Exercises Completed:</span>{" "}
+                    <span className="font-bold">
+                      {historyLoading ? "…" : studentTextbookStats?.completed ?? 0}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-emerald-100">Average Score:</span>{" "}
+                    <span className="font-bold">
+                      {historyLoading
+                        ? "…"
+                        : studentTextbookStats?.average !== null
+                          ? `${studentTextbookStats.average}%`
+                          : "—"}
+                    </span>
+                  </p>
+                </div>
+                <p className="mt-auto pt-4 text-sm font-medium text-emerald-50">
+                  {getWelcomeMotivation(studentDailyGoal, studentTextbookStats)}
                 </p>
+              </section>
+
+              {studentDailyGoal && (
+                <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-5 shadow-md ring-1 ring-sky-100 md:p-6">
+                  <p className="text-sm font-bold text-sky-900">🎯 Today&apos;s Goal</p>
+                  {studentDailyGoal.completed ? (
+                    <p className="mt-4 text-xl font-black text-emerald-800">
+                      🎉 {getTodayGoalMessage(studentDailyGoal)}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="mt-3 text-lg font-bold text-gray-800">
+                        {studentDailyGoal.progress} / {studentDailyGoal.target} exercises
+                        completed
+                      </p>
+                      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-sky-100">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (studentDailyGoal.progress / studentDailyGoal.target) * 100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      {studentTodayAverage !== null && (
+                        <p className="mt-3 text-sm text-gray-700">
+                          <span className="font-semibold">Today&apos;s Average:</span>{" "}
+                          {studentTodayAverage}%
+                        </p>
+                      )}
+                    </>
+                  )}
+                  <p className="mt-auto pt-4 text-sm font-medium text-gray-600">
+                    {getTodayGoalMessage(studentDailyGoal)}
+                  </p>
+                </section>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <section className="rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-500 p-5 text-white shadow-lg sm:col-span-2 xl:col-span-1">
-                  <p className="text-sm font-bold">👋 Welcome Back</p>
-                  <h2 className="mt-1 text-xl font-black md:text-2xl">
-                    Hi, {studentFirstName}!
-                  </h2>
-                  <p className="mt-1 text-xs text-emerald-50">
-                    Continue your learning journey.
-                  </p>
-                  <p className="mt-3 text-[11px] text-emerald-100/90">
-                    {historyLoading ? "…" : studentTextbookStats?.completed ?? 0} done ·{" "}
-                    {studentTextbookStats?.average !== null
-                      ? `${studentTextbookStats.average}% avg`
-                      : "— avg"}
-                  </p>
-                </section>
-
-                <section className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-emerald-100">
-                  <p className="text-xs font-bold text-emerald-800">⭐ Stars Earned</p>
-                  <p className="mt-1 text-2xl font-black text-emerald-950">
-                    {historyLoading ? "…" : studentStarBank}
-                  </p>
-                  <p className="text-xs text-gray-500">stars earned</p>
-                </section>
-
-                {studentDailyGoal && (
-                  <section className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-sky-100">
-                    <p className="text-xs font-bold text-sky-800">🎯 Today&apos;s Goal</p>
-                    {studentDailyGoal.completed ? (
-                      <p className="mt-2 text-lg font-black text-emerald-800">🎉 Done!</p>
-                    ) : (
-                      <>
-                        <p className="mt-1 text-lg font-black text-gray-900">
-                          {studentDailyGoal.progress}/{studentDailyGoal.target}
-                        </p>
-                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
-                          <div
-                            className="h-full rounded-full bg-emerald-500 transition-all"
-                            style={{
-                              width: `${Math.min(
-                                100,
-                                (studentDailyGoal.progress / studentDailyGoal.target) * 100
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </section>
-                )}
-
-                {studentLearningRank && (
-                  <section className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-amber-100">
-                    <p className="text-xs font-bold text-amber-900">🏅 Learning Rank</p>
-                    <p className="mt-1 text-lg font-black text-emerald-950">
-                      {studentLearningRank.title}
-                    </p>
-                    {!studentLearningRank.isMaxRank && (
-                      <p className="mt-1 text-[11px] text-gray-500">
-                        {studentLearningRank.remaining} to {studentLearningRank.nextTitle}
+              {studentProgressTrend && (
+                <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-5 shadow-md ring-1 ring-emerald-100 md:p-6">
+                  <p className="text-sm font-bold text-emerald-900">📈 Progress Trend</p>
+                  {studentProgressTrend.hasData ? (
+                    <div className="mt-4 space-y-2 text-sm text-gray-700">
+                      <p>
+                        <span className="font-semibold">Recent:</span>{" "}
+                        {studentProgressTrend.recentAverage}%
                       </p>
-                    )}
-                  </section>
-                )}
-              </div>
+                      <p>
+                        <span className="font-semibold">Previous:</span>{" "}
+                        {studentProgressTrend.previousAverage}%
+                      </p>
+                      <p className="text-lg font-black text-emerald-950">
+                        {studentProgressTrend.trend}{" "}
+                        <span aria-hidden="true">{studentProgressTrend.arrow}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-relaxed text-gray-600">
+                      {studentProgressTrend.message}
+                    </p>
+                  )}
+                </section>
+              )}
             </div>
           )}
 

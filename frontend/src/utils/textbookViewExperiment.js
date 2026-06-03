@@ -1,17 +1,9 @@
 /**
- * Experimental textbook view UI helpers (/learn) — V5 learning path.
+ * Experimental textbook view UI helpers (/learn).
  * Revert: delete this file and remove imports from LandingPage.jsx.
  */
 
 export const DAILY_GOAL_TARGET = 3;
-
-const LEARNING_RANKS = [
-  { min: 60, title: "Learning Hero" },
-  { min: 30, title: "Problem Solver" },
-  { min: 15, title: "Number Champion" },
-  { min: 5, title: "Math Adventurer" },
-  { min: 0, title: "Beginner Explorer" },
-];
 
 const CHAPTER_ICON_RULES = [
   { test: /hcf|lcm/i, icon: "➗" },
@@ -28,22 +20,16 @@ const CHAPTER_ICON_RULES = [
   },
 ];
 
-export function getStarPointsForScore(percentage) {
-  if (percentage === null || percentage === undefined || Number.isNaN(Number(percentage))) {
+export function getFiveStarFilledCount(average) {
+  if (average === null || average === undefined || Number.isNaN(Number(average))) {
     return 0;
   }
-  const pct = Number(percentage);
-  if (pct >= 95) return 3;
-  if (pct >= 80) return 2;
-  if (pct >= 60) return 1;
-  return 0;
-}
-
-export function getStarBankTotal(historyMap) {
-  return Object.values(historyMap || {}).reduce(
-    (sum, row) => sum + getStarPointsForScore(row?.percentage),
-    0
-  );
+  const avg = Number(average);
+  if (avg >= 95) return 5;
+  if (avg >= 80) return 4;
+  if (avg >= 65) return 3;
+  if (avg >= 50) return 2;
+  return 1;
 }
 
 export function getExerciseStatus(percentage) {
@@ -214,29 +200,6 @@ export function getNextBestAction(sortedQuizzes, historyMap) {
   };
 }
 
-export function getLearningRank(completed) {
-  const count = Math.max(0, Number(completed) || 0);
-  let currentIndex = LEARNING_RANKS.length - 1;
-  for (let i = 0; i < LEARNING_RANKS.length; i += 1) {
-    if (count >= LEARNING_RANKS[i].min) {
-      currentIndex = i;
-      break;
-    }
-  }
-
-  const current = LEARNING_RANKS[currentIndex];
-  const next = currentIndex > 0 ? LEARNING_RANKS[currentIndex - 1] : null;
-  const remaining = next ? Math.max(0, next.min - count) : 0;
-
-  return {
-    title: current.title,
-    completed: count,
-    nextTitle: next?.title ?? null,
-    remaining,
-    isMaxRank: !next,
-  };
-}
-
 export function parseAttemptedOnDate(attemptedOn) {
   if (!attemptedOn) return null;
   const match = String(attemptedOn).match(/(\d{2})-(\d{2})-(\d{4})/);
@@ -284,16 +247,114 @@ export function getDailyGoalProgress(historyMap, stats, target = DAILY_GOAL_TARG
   };
 }
 
-export function getCelebrationBanner(average) {
-  if (average === null || average === undefined) return null;
-  const avg = Number(average);
-  if (avg >= 90) {
-    return { icon: "🏆", text: "Outstanding Performance!", tone: "gold" };
+export function getTodayAverage(historyMap) {
+  const today = new Date();
+  const isToday = (date) =>
+    date &&
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+
+  const percentages = [];
+  Object.values(historyMap || {}).forEach((row) => {
+    const date = parseAttemptedOnDate(row?.attempted_on);
+    if (
+      isToday(date) &&
+      row?.percentage !== null &&
+      row?.percentage !== undefined
+    ) {
+      percentages.push(Number(row.percentage));
+    }
+  });
+
+  if (!percentages.length) return null;
+  return Math.round(percentages.reduce((sum, n) => sum + n, 0) / percentages.length);
+}
+
+export function getWelcomeMotivation(dailyGoal, stats) {
+  if (dailyGoal && !dailyGoal.completed) {
+    const remaining = dailyGoal.target - dailyGoal.progress;
+    if (remaining === 1) {
+      return "Only 1 more exercise to reach today's goal!";
+    }
+    if (remaining > 0) {
+      return `Only ${remaining} more exercises to reach today's goal!`;
+    }
   }
-  if (avg >= 80) {
-    return { icon: "🎉", text: "Excellent Progress!", tone: "emerald" };
+  if (stats?.average !== null && stats.average >= 80) {
+    return "You are doing great — keep up the momentum!";
   }
-  return null;
+  if (stats?.completed > 0) {
+    return "Every exercise makes you stronger. Keep going!";
+  }
+  return "Start your first exercise and begin earning stars!";
+}
+
+export function getTodayGoalMessage(dailyGoal) {
+  if (!dailyGoal) return "";
+  if (dailyGoal.completed) {
+    return "Excellent! Today's learning goal completed.";
+  }
+  const remaining = dailyGoal.target - dailyGoal.progress;
+  if (remaining === 1) {
+    return "Keep going! One more exercise to reach today's target.";
+  }
+  return `Keep going! ${remaining} more exercises to reach today's target.`;
+}
+
+function getSortedHistoryPercentages(historyMap) {
+  const rows = Object.values(historyMap || {})
+    .filter(
+      (row) => row?.percentage !== null && row?.percentage !== undefined
+    )
+    .map((row) => ({
+      percentage: Number(row.percentage),
+      date: parseAttemptedOnDate(row?.attempted_on)?.getTime() ?? 0,
+    }));
+
+  const hasDates = rows.some((row) => row.date > 0);
+  if (hasDates) {
+    return rows.sort((a, b) => b.date - a.date).map((row) => row.percentage);
+  }
+  return rows.map((row) => row.percentage);
+}
+
+export function getProgressTrend(historyMap) {
+  const percentages = getSortedHistoryPercentages(historyMap);
+  if (percentages.length < 4) {
+    return {
+      hasData: false,
+      message: "Complete more exercises to see your progress trend.",
+    };
+  }
+
+  const recent = percentages.slice(0, Math.min(5, percentages.length));
+  const previous = percentages.slice(5, 10);
+  const recentAverage = Math.round(
+    recent.reduce((sum, n) => sum + n, 0) / recent.length
+  );
+  const previousAverage = previous.length
+    ? Math.round(previous.reduce((sum, n) => sum + n, 0) / previous.length)
+    : recentAverage;
+
+  const diff = recentAverage - previousAverage;
+  let trend = "Stable";
+  let arrow = "→";
+  if (diff > 5) {
+    trend = "Improving";
+    arrow = "↗";
+  } else if (diff < -5) {
+    trend = "Declining";
+    arrow = "↘";
+  }
+
+  return {
+    hasData: true,
+    recentAverage,
+    previousAverage,
+    trend,
+    arrow,
+  };
 }
 
 export function collectQuizzesFromGradeData(gradeData) {
