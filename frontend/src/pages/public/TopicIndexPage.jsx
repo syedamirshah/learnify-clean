@@ -6,6 +6,13 @@ import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import { clearAuth, getAuthSnapshot, hydrateStudentGradeIdFromProfile } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import axiosInstance from "../../utils/axiosInstance";
+import {
+  findContinueLearningTopic,
+  getSkillStatus,
+  getTopicGroupIcon,
+  getTopicGroupPalette,
+  getTopicGroupProgress,
+} from "../../utils/topicIndexView";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
@@ -112,7 +119,9 @@ const TopicIndexPage = () => {
         params.set("include_quizzes", "1");
         if (isStudent && gradeId) params.set("grade", gradeId);
 
-        const res = await fetch(`${API}landing/topics/?${params.toString()}`, { signal: controller.signal });
+        const res = await fetch(`${API}landing/topics/?${params.toString()}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error(`Failed to fetch topics (${res.status})`);
         const data = await res.json();
         setTopics(Array.isArray(data?.results) ? data.results : []);
@@ -168,7 +177,9 @@ const TopicIndexPage = () => {
         const aOrder = Number.isFinite(Number(a?.order)) ? Number(a.order) : null;
         const bOrder = Number.isFinite(Number(b?.order)) ? Number(b.order) : null;
         if (aOrder !== null && bOrder !== null && aOrder !== bOrder) return aOrder - bOrder;
-        return String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" });
+        return String(a?.name || "").localeCompare(String(b?.name || ""), undefined, {
+          sensitivity: "base",
+        });
       });
     });
 
@@ -177,17 +188,15 @@ const TopicIndexPage = () => {
     );
   }, [topics]);
 
-  const scoreTextForQuiz = (quizId) => {
-    if (!isStudent) return null;
-    const row = historyMap[String(quizId)];
-    if (!row) return null;
+  const displayGradeLabel = useMemo(() => {
+    if (topicsByGrade.length === 1) return topicsByGrade[0][0];
+    return localStorage.getItem("user_grade") || topicsByGrade[0]?.[0] || "Your Grade";
+  }, [topicsByGrade]);
 
-    const marks = row.marks_obtained ?? row.score ?? null;
-    const total = row.total_marks ?? (((row.total_questions || 0) * (row.marks_per_question || 0)) || null);
-    if (marks !== null && total) return `Score: ${marks}/${total}`;
-    if (row.percentage !== null && row.percentage !== undefined) return `Score: ${row.percentage}%`;
-    return null;
-  };
+  const continueLearning = useMemo(() => {
+    if (!isStudent || !topics.length) return null;
+    return findContinueLearningTopic(topics, historyMap);
+  }, [isStudent, topics, historyMap]);
 
   const handleLogout = () => {
     clearAuth();
@@ -212,84 +221,159 @@ const TopicIndexPage = () => {
     >
       <LearningPathSelector activePath="topic-index" className="mt-0" />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-2 space-y-5">
+      <div className="mx-auto max-w-6xl space-y-5 px-4 pb-8 pt-2 sm:px-6 lg:px-8">
+        <section className="rounded-3xl bg-gradient-to-r from-emerald-50 via-white to-sky-50 px-5 py-4 shadow-sm ring-1 ring-emerald-100">
+          <h1 className="text-xl font-black text-emerald-950 md:text-2xl">Explore by Topic</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Choose a skill area and practice exercises grouped by concept.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {["Topic Index", displayGradeLabel, "Math Skills"].map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 ring-1 ring-emerald-200"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {isStudent && continueLearning?.quiz && (
+          <section className="rounded-3xl bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4 shadow-md ring-1 ring-sky-200">
+            <p className="text-sm font-bold text-sky-900">🎯 Continue Learning</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Recommended next
+            </p>
+            <p className="mt-1 font-bold text-gray-900">
+              {displayQuizTitle(continueLearning.quiz.title)}
+            </p>
+            {continueLearning.topic?.name && (
+              <p className="text-sm text-gray-600">{continueLearning.topic.name}</p>
+            )}
+            <Link
+              to={`/student/attempt-quiz/${continueLearning.quiz.id}`}
+              className="mt-3 inline-flex rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-emerald-700"
+            >
+              {continueLearning.cta || "Start Practice"}
+            </Link>
+          </section>
+        )}
+
         <section className="space-y-4">
           {isStudent && !gradeId && accessToken && (hydrating || !hydrationChecked) ? (
-            <div className="text-center py-10 text-gray-500">Loading your learning path...</div>
+            <div className="py-10 text-center text-gray-500">Loading your learning path...</div>
           ) : isStudent && !gradeId && accessToken && hydrationChecked ? (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-4">
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-600">
               Your grade is not set. Please contact admin.
             </div>
           ) : loading ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">Loading topics...</div>
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+              Loading topics...
+            </div>
           ) : error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
+            <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+              {error}
+            </div>
           ) : topics.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600">No topics created yet.</div>
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+              No topics created yet.
+            </div>
           ) : (
             topicsByGrade.map(([gradeName, gradeTopics]) => (
               <div key={gradeName} className="space-y-4">
-                <div className="flex items-center justify-center gap-6 mt-4 mb-6">
-                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
-                  <div
-                    className="
-                      flex items-center justify-center whitespace-nowrap
-                      px-10 py-4
-                      rounded-full
-                      border-2 border-green-300
-                      bg-green-100
-                      shadow-md
-                      text-3xl
-                      font-extrabold
-                      text-green-900
-                    "
-                  >
+                <div className="mb-4 flex items-center justify-center gap-6">
+                  <div className="h-[2px] w-28 rounded-full bg-green-300" />
+                  <div className="whitespace-nowrap rounded-full border-2 border-green-300 bg-green-100 px-10 py-4 text-3xl font-extrabold text-green-900 shadow-md">
                     {gradeName}
                   </div>
-                  <div className="h-[2px] w-28 bg-green-300 rounded-full" />
+                  <div className="h-[2px] w-28 rounded-full bg-green-300" />
                 </div>
-                <div className="columns-1 md:columns-2 gap-6">
-                  {gradeTopics.map((topic) => (
-                    <article
-                      key={topic.id}
-                      className="mb-6 break-inside-avoid rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
-                    >
-                      <div className="flex items-baseline gap-3">
-                        <h3 className="text-2xl font-bold text-green-700">{topic.name}</h3>
-                      </div>
 
-                      <div className="mt-3 max-h-72 space-y-1.5 overflow-y-auto pr-1">
-                        {Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
-                          topic.quizzes.map((quiz, index) => {
-                            const scoreText = scoreTextForQuiz(quiz.id);
-                            return (
-                              <Link
-                                key={`topic-quiz-${topic.id}-${quiz.id}`}
-                                to={`/student/attempt-quiz/${quiz.id}`}
-                                className="group block rounded-md px-2 py-1 hover:bg-green-50"
-                              >
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="text-sm sm:text-[1.05rem] leading-snug text-gray-900">
-                                    <span className="mr-2 text-black">{index + 1}</span>
-                                    <span className="text-green-800 group-hover:text-green-900">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {gradeTopics.map((topic, topicIndex) => {
+                    const palette = getTopicGroupPalette(topicIndex);
+                    const topicIcon = getTopicGroupIcon(topic.name, topicIndex);
+                    const progress = getTopicGroupProgress(topic.quizzes, historyMap);
+                    const skillLabel = progress.total === 1 ? "skill" : "skills";
+
+                    return (
+                      <article
+                        key={topic.id}
+                        className={`flex flex-col overflow-hidden rounded-3xl border-2 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg ${palette.cardBg} ${palette.cardBorder}`}
+                      >
+                        <div className={`border-b px-4 py-3 ${palette.headerBg} ${palette.cardBorder}`}>
+                          <div className="flex items-start gap-2">
+                            <span className="text-2xl" aria-hidden="true">
+                              {topicIcon}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className={`text-lg font-black leading-tight ${palette.accent}`}>
+                                {topic.name}
+                              </h3>
+                              <p className="mt-0.5 text-sm font-semibold text-gray-700">
+                                {progress.total} {skillLabel}
+                                {isStudent && progress.attempted > 0
+                                  ? ` · ${progress.attempted} completed`
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                          {isStudent && progress.total > 0 && (
+                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/70">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all"
+                                style={{ width: `${progress.progressPercent}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-2 p-3">
+                          {Array.isArray(topic.quizzes) && topic.quizzes.length > 0 ? (
+                            topic.quizzes.map((quiz) => {
+                              const status = getSkillStatus(quiz.id, historyMap, isStudent);
+                              const row = historyMap[String(quiz.id)];
+                              const pct =
+                                row?.percentage !== undefined && row?.percentage !== null
+                                  ? Number(row.percentage)
+                                  : null;
+
+                              return (
+                                <Link
+                                  key={`topic-quiz-${topic.id}-${quiz.id}`}
+                                  to={`/student/attempt-quiz/${quiz.id}`}
+                                  className={`group flex items-center gap-3 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${palette.skillHover}`}
+                                >
+                                  <span
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-sm ring-1 ring-gray-100"
+                                    aria-hidden="true"
+                                  >
+                                    {status.icon}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold leading-snug text-gray-900 group-hover:text-emerald-900">
                                       {displayQuizTitle(quiz.title)}
-                                    </span>
-                                  </p>
-                                  {scoreText ? (
-                                    <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
-                                      {scoreText}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </Link>
-                            );
-                          })
-                        ) : (
-                          <p className="text-sm text-gray-500">No quizzes assigned yet.</p>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                                    </p>
+                                    {isStudent && pct !== null && (
+                                      <p className="mt-0.5 text-xs text-gray-500">{pct}%</p>
+                                    )}
+                                  </div>
+                                  <span
+                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${status.badgeClass}`}
+                                  >
+                                    {status.label}
+                                  </span>
+                                </Link>
+                              );
+                            })
+                          ) : (
+                            <p className="px-2 py-3 text-sm text-gray-500">No quizzes assigned yet.</p>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </div>
             ))

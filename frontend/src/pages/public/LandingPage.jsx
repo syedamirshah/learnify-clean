@@ -862,10 +862,28 @@ const chapterPalettes = [
                         </div>
                         */}
                         <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[400px_1fr]">
-                          {/* LEFT: Chapter levels */}
-                            <div className="overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-emerald-100">
-                              <div className="border-b border-emerald-50 bg-emerald-50/50 px-4 py-3">
-                                <div className="text-lg font-black text-emerald-950">Chapter Levels</div>
+                          {/* LEFT: Chapter levels (inherits active chapter light palette) */}
+                            <div
+                              className={`overflow-hidden rounded-3xl shadow-md ring-1 ${
+                                activePalette
+                                  ? `${activePalette.quizCardBg} ${activePalette.panelBorder}`
+                                  : "bg-white ring-emerald-100"
+                              }`}
+                            >
+                              <div
+                                className={`border-b px-4 py-3 ${
+                                  activePalette
+                                    ? `${activePalette.panelBg} ${activePalette.panelBorder}`
+                                    : "border-emerald-50 bg-emerald-50/50"
+                                }`}
+                              >
+                                <div
+                                  className={`text-lg font-black ${
+                                    activePalette ? activePalette.accent : "text-emerald-950"
+                                  }`}
+                                >
+                                  Chapter Levels
+                                </div>
                               </div>
 
                               <div className="p-4">
