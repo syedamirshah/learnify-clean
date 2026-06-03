@@ -1,7 +1,32 @@
 /**
- * Experimental textbook view UI helpers (/learn) — V3 child-friendly.
+ * Experimental textbook view UI helpers (/learn) — V4 adventure mode.
  * Revert: delete this file and remove imports from LandingPage.jsx.
  */
+
+export const DAILY_GOAL_TARGET = 3;
+
+const LEARNING_RANKS = [
+  { min: 60, title: "Learning Hero" },
+  { min: 30, title: "Problem Solver" },
+  { min: 15, title: "Number Champion" },
+  { min: 5, title: "Math Adventurer" },
+  { min: 0, title: "Beginner Explorer" },
+];
+
+const CHAPTER_ICON_RULES = [
+  { test: /hcf|lcm/i, icon: "➗" },
+  { test: /fraction/i, icon: "🍕" },
+  { test: /decimal/i, icon: "💰" },
+  { test: /distance|time|speed/i, icon: "🕒" },
+  { test: /perimeter|area/i, icon: "🏠" },
+  { test: /geometr/i, icon: "📐" },
+  { test: /money|rupee|price/i, icon: "💵" },
+  { test: /data|graph|chart/i, icon: "📊" },
+  {
+    test: /number|counting|whole|addition|subtraction|multiplication|division|place.?value/i,
+    icon: "🔢",
+  },
+];
 
 export function getExerciseStatus(percentage) {
   if (percentage === null || percentage === undefined || Number.isNaN(Number(percentage))) {
@@ -53,6 +78,107 @@ export function getExerciseStatus(percentage) {
   };
 }
 
+export function getStarRating(percentage) {
+  if (percentage === null || percentage === undefined || Number.isNaN(Number(percentage))) {
+    return { stars: "", count: 0, label: "" };
+  }
+  const pct = Number(percentage);
+  if (pct >= 95) return { stars: "⭐⭐⭐", count: 3, label: "3 stars" };
+  if (pct >= 80) return { stars: "⭐⭐", count: 2, label: "2 stars" };
+  if (pct >= 60) return { stars: "⭐", count: 1, label: "1 star" };
+  return { stars: "", count: 0, label: "No stars yet" };
+}
+
+export function getChapterIcon(chapterName) {
+  const name = String(chapterName || "");
+  for (const rule of CHAPTER_ICON_RULES) {
+    if (rule.test.test(name)) return rule.icon;
+  }
+  return "📘";
+}
+
+export function getLearningRank(completed) {
+  const count = Math.max(0, Number(completed) || 0);
+  let currentIndex = LEARNING_RANKS.length - 1;
+  for (let i = 0; i < LEARNING_RANKS.length; i += 1) {
+    if (count >= LEARNING_RANKS[i].min) {
+      currentIndex = i;
+      break;
+    }
+  }
+
+  const current = LEARNING_RANKS[currentIndex];
+  const next = currentIndex > 0 ? LEARNING_RANKS[currentIndex - 1] : null;
+  const remaining = next ? Math.max(0, next.min - count) : 0;
+
+  return {
+    title: current.title,
+    completed: count,
+    nextTitle: next?.title ?? null,
+    remaining,
+    isMaxRank: !next,
+  };
+}
+
+export function parseAttemptedOnDate(attemptedOn) {
+  if (!attemptedOn) return null;
+  const match = String(attemptedOn).match(/(\d{2})-(\d{2})-(\d{4})/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const year = Number(match[3]);
+  const date = new Date(year, month, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function countCompletedToday(historyMap) {
+  const today = new Date();
+  const isToday = (date) =>
+    date &&
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+
+  let count = 0;
+  Object.values(historyMap || {}).forEach((row) => {
+    const date = parseAttemptedOnDate(row?.attempted_on);
+    if (isToday(date)) count += 1;
+  });
+  return count;
+}
+
+export function historyHasAttemptDates(historyMap) {
+  return Object.values(historyMap || {}).some((row) =>
+    Boolean(parseAttemptedOnDate(row?.attempted_on))
+  );
+}
+
+export function getDailyGoalProgress(historyMap, stats, target = DAILY_GOAL_TARGET) {
+  const todayCount = countCompletedToday(historyMap);
+  const hasDates = historyHasAttemptDates(historyMap);
+  const fallback = Math.min(stats?.completed ?? 0, target);
+  const progress = hasDates ? todayCount : fallback;
+
+  return {
+    target,
+    progress,
+    completed: progress >= target,
+    usedFallback: !hasDates,
+  };
+}
+
+export function getCelebrationBanner(average) {
+  if (average === null || average === undefined) return null;
+  const avg = Number(average);
+  if (avg >= 90) {
+    return { icon: "🏆", text: "Outstanding Performance!", tone: "gold" };
+  }
+  if (avg >= 80) {
+    return { icon: "🎉", text: "Excellent Progress!", tone: "emerald" };
+  }
+  return null;
+}
+
 export function collectQuizzesFromGradeData(gradeData) {
   const quizzes = [];
   (gradeData || []).forEach((grade) => {
@@ -87,30 +213,6 @@ export function getStudentTextbookStats(visibleGradeData, historyMap) {
   const progressPercent = total ? Math.round((completed / total) * 100) : 0;
 
   return { total, completed, average, progressPercent };
-}
-
-export function getAchievement(stats) {
-  const completed = stats?.completed ?? 0;
-
-  if (completed >= 5) {
-    return {
-      icon: "⭐",
-      title: "Quiz Explorer",
-      subtitle: `Completed ${completed} exercises`,
-    };
-  }
-  if (completed >= 1) {
-    return {
-      icon: "🏅",
-      title: "First Exercise Completed",
-      subtitle: "You started your learning journey!",
-    };
-  }
-  return {
-    icon: "🌱",
-    title: "Ready to Learn",
-    subtitle: "Complete your first exercise to earn a badge!",
-  };
 }
 
 export function getChapterProgress(quizzes, historyMap) {
@@ -168,32 +270,50 @@ export function findContinueLearningQuiz(sortedQuizzes, historyMap) {
 
   for (const quiz of list) {
     const row = historyMap?.[String(quiz.id)];
-    if (row && Number(row.percentage) < 50) {
-      return { quiz, reason: "needs_practice" };
+    if (row && Number(row.percentage) < 60) {
+      return { quiz, reason: "needs_practice", percentage: Number(row.percentage) };
     }
   }
 
   for (const quiz of list) {
     if (!historyMap?.[String(quiz.id)]) {
-      return { quiz, reason: "not_attempted" };
+      return { quiz, reason: "not_attempted", percentage: null };
     }
   }
 
   for (let i = list.length - 1; i >= 0; i -= 1) {
     const quiz = list[i];
-    if (historyMap?.[String(quiz.id)]) {
-      return { quiz, reason: "continue" };
+    const row = historyMap?.[String(quiz.id)];
+    if (row) {
+      return {
+        quiz,
+        reason: "continue",
+        percentage: Number(row.percentage),
+      };
     }
   }
 
   return null;
 }
 
-export const missionReasonLabel = {
-  needs_practice: "Let's boost your score on this one!",
-  not_attempted: "A new exercise is waiting for you!",
-  continue: "Continue where you left off.",
-};
+export function getMissionReasonText(reason, percentage) {
+  if (reason === "not_attempted") {
+    return "Ready to start this challenge.";
+  }
+  if (reason === "needs_practice" || (percentage !== null && percentage < 60)) {
+    return "Practice again to improve your score.";
+  }
+  return "Try again to become a champion.";
+}
+
+export function getMissionRecommendation(sortedQuizzes, historyMap) {
+  const pick = findContinueLearningQuiz(sortedQuizzes, historyMap);
+  if (!pick) return null;
+  return {
+    ...pick,
+    reasonText: getMissionReasonText(pick.reason, pick.percentage),
+  };
+}
 
 export function getFirstName(fullName) {
   const display = (fullName || "").trim();

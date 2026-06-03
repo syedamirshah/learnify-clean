@@ -14,17 +14,20 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
-// EXPERIMENTAL: textbook view UI V3 — revert by removing import + textbookViewExperiment.js
+// EXPERIMENTAL: textbook view UI V4 — revert by removing import + textbookViewExperiment.js
 import {
-  findContinueLearningQuiz,
   formatChapterSummaryMeta,
   formatProgressBlocks,
-  getAchievement,
+  getCelebrationBanner,
+  getChapterIcon,
   getChapterProgress,
+  getDailyGoalProgress,
   getExerciseStatus,
   getFirstName,
+  getLearningRank,
+  getMissionRecommendation,
+  getStarRating,
   getStudentTextbookStats,
-  missionReasonLabel,
 } from "../../utils/textbookViewExperiment";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
@@ -478,9 +481,19 @@ const chapterPalettes = [
     return getStudentTextbookStats(visibleQuizData, historyMap);
   }, [role, visibleQuizData, historyMap]);
 
-  const studentAchievement = useMemo(() => {
+  const studentLearningRank = useMemo(() => {
     if (!studentTextbookStats) return null;
-    return getAchievement(studentTextbookStats);
+    return getLearningRank(studentTextbookStats.completed);
+  }, [studentTextbookStats]);
+
+  const studentDailyGoal = useMemo(() => {
+    if (role !== "student" || !studentTextbookStats) return null;
+    return getDailyGoalProgress(historyMap, studentTextbookStats);
+  }, [role, historyMap, studentTextbookStats]);
+
+  const studentCelebration = useMemo(() => {
+    if (!studentTextbookStats) return null;
+    return getCelebrationBanner(studentTextbookStats.average);
   }, [studentTextbookStats]);
 
   const studentFirstName = useMemo(() => getFirstName(userFullName), [userFullName]);
@@ -575,52 +588,112 @@ const chapterPalettes = [
         {/* Content Explorer — default Textbook View (chapter-based layout) */}
         <div id="textbook-view" className="mx-auto mt-10 max-w-[1400px] px-3 md:px-4">
           {role === "student" && (
-            <div className="mb-8 grid gap-4 md:grid-cols-[1.4fr_1fr]">
-              <section className="overflow-hidden rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-400 to-teal-400 p-6 text-white shadow-xl shadow-emerald-900/20 transition hover:shadow-2xl md:p-8">
-                <p className="text-lg font-bold md:text-xl">👋 Welcome Back</p>
-                <h2 className="mt-2 text-2xl font-black leading-tight md:text-3xl">
-                  Welcome back, {studentFirstName}!
-                </h2>
-                <p className="mt-2 text-sm font-medium text-emerald-50 md:text-base">
-                  Continue your learning journey.
-                </p>
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 ring-1 ring-white/25 backdrop-blur-sm">
-                    <div className="text-xs font-bold uppercase tracking-wide text-emerald-50">
-                      Exercises completed
-                    </div>
-                    <div className="mt-1 text-2xl font-black">
-                      {historyLoading ? "…" : studentTextbookStats?.completed ?? 0}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-white/15 px-4 py-3 ring-1 ring-white/25 backdrop-blur-sm">
-                    <div className="text-xs font-bold uppercase tracking-wide text-emerald-50">
-                      Average score
-                    </div>
-                    <div className="mt-1 text-2xl font-black">
-                      {historyLoading
-                        ? "…"
-                        : studentTextbookStats?.average !== null
-                          ? `${studentTextbookStats.average}%`
-                          : "—"}
-                    </div>
-                  </div>
+            <div className="mb-8 space-y-4">
+              {studentCelebration && (
+                <div
+                  className={`rounded-2xl border-2 px-4 py-3 text-center text-sm font-bold shadow-md md:text-base ${
+                    studentCelebration.tone === "gold"
+                      ? "border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-950"
+                      : "border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-950"
+                  }`}
+                >
+                  {studentCelebration.icon} {studentCelebration.text}
                 </div>
-              </section>
-
-              {studentAchievement && (
-                <section className="flex flex-col justify-center rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-5 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl md:p-6">
-                  <p className="text-sm font-bold text-amber-900">
-                    {studentAchievement.icon} Achievement
-                  </p>
-                  <h3 className="mt-2 text-xl font-black text-emerald-950">
-                    {studentAchievement.title}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium text-gray-700">
-                    {studentAchievement.subtitle}
-                  </p>
-                </section>
               )}
+
+              <div className="grid gap-4 lg:grid-cols-3">
+                <section className="overflow-hidden rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-400 to-teal-400 p-6 text-white shadow-xl shadow-emerald-900/20 lg:col-span-1 md:p-7">
+                  <p className="text-lg font-bold">👋 Welcome Back</p>
+                  <h2 className="mt-2 text-2xl font-black leading-tight md:text-3xl">
+                    Welcome back, {studentFirstName}!
+                  </h2>
+                  <p className="mt-2 text-sm font-medium text-emerald-50">
+                    Continue your learning journey.
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-emerald-50/90">
+                    <div>
+                      <span className="font-semibold uppercase tracking-wide">Completed</span>
+                      <div className="text-lg font-black text-white">
+                        {historyLoading ? "…" : studentTextbookStats?.completed ?? 0}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-semibold uppercase tracking-wide">Avg score</span>
+                      <div className="text-lg font-black text-white">
+                        {historyLoading
+                          ? "…"
+                          : studentTextbookStats?.average !== null
+                            ? `${studentTextbookStats.average}%`
+                            : "—"}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {studentDailyGoal && (
+                  <section className="flex flex-col justify-center rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-5 shadow-lg md:p-6">
+                    <p className="text-sm font-bold text-sky-900">🎯 Today&apos;s Goal</p>
+                    {studentDailyGoal.completed ? (
+                      <p className="mt-3 text-xl font-black text-emerald-800">🎉 Goal Completed</p>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Target: {studentDailyGoal.target} exercises
+                        </p>
+                        <p className="mt-2 text-2xl font-black text-emerald-950">
+                          {studentDailyGoal.progress} / {studentDailyGoal.target} completed
+                        </p>
+                        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-sky-100">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.round(
+                                  (studentDailyGoal.progress / studentDailyGoal.target) * 100
+                                )
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </section>
+                )}
+
+                {studentLearningRank && (
+                  <section className="flex flex-col justify-center rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-5 shadow-lg md:p-6">
+                    <p className="text-sm font-bold text-amber-900">🏅 Learning Rank</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Current Rank
+                    </p>
+                    <h3 className="mt-1 text-xl font-black text-emerald-950">
+                      {studentLearningRank.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-gray-700">
+                      <span className="font-semibold">Completed:</span>{" "}
+                      {studentLearningRank.completed} exercises
+                    </p>
+                    {!studentLearningRank.isMaxRank && studentLearningRank.nextTitle && (
+                      <>
+                        <p className="mt-2 text-sm text-gray-700">
+                          <span className="font-semibold">Next rank:</span>{" "}
+                          {studentLearningRank.nextTitle}
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-emerald-800">
+                          {studentLearningRank.remaining} more exercise
+                          {studentLearningRank.remaining === 1 ? "" : "s"} to go
+                        </p>
+                      </>
+                    )}
+                    {studentLearningRank.isMaxRank && (
+                      <p className="mt-2 text-sm font-bold text-emerald-800">
+                        You reached the top rank — amazing work!
+                      </p>
+                    )}
+                  </section>
+                )}
+              </div>
             </div>
           )}
 
@@ -739,6 +812,7 @@ const chapterPalettes = [
                                       chapterItem.quizzes,
                                       role === "student" ? historyMap : {}
                                     );
+                                    const chapterIcon = getChapterIcon(chapterItem.chapter);
 
                                     return (
                                       <button
@@ -777,11 +851,14 @@ const chapterPalettes = [
                                       >
                                         <div className="flex items-start gap-3">
                                           <div
-                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 bg-white/80 font-extrabold
+                                            className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border-2 bg-white/85
                                               ${palette.cardBorder} text-gray-900
                                             `}
                                           >
-                                            {idx + 1}
+                                            <span className="text-lg leading-none" aria-hidden="true">
+                                              {chapterIcon}
+                                            </span>
+                                            <span className="mt-0.5 text-[10px] font-extrabold">{idx + 1}</span>
                                           </div>
 
                                           <div className="min-w-0 flex-1">
@@ -860,14 +937,16 @@ const chapterPalettes = [
                                   const chapterMeta = formatChapterSummaryMeta(activeProgress);
                                   const missionPick =
                                     role === "student"
-                                      ? findContinueLearningQuiz(activeQuizzes, historyMap)
+                                      ? getMissionRecommendation(activeQuizzes, historyMap)
                                       : null;
+                                  const activeChapterIcon = getChapterIcon(activeChapterObj.chapter);
 
                                   return (
                                     <div className="space-y-5">
                                       <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm">
-                                        <div className="text-lg font-black text-emerald-950 md:text-xl">
-                                          {activeChapterObj.chapter}
+                                        <div className="flex items-center gap-2 text-lg font-black text-emerald-950 md:text-xl">
+                                          <span aria-hidden="true">{activeChapterIcon}</span>
+                                          <span>{activeChapterObj.chapter}</span>
                                         </div>
                                         {role === "student" && activeProgress.total > 0 && (
                                           <>
@@ -893,20 +972,16 @@ const chapterPalettes = [
                                       </div>
 
                                       {missionPick?.quiz && (
-                                        <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-100 via-white to-emerald-50 p-5 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
-                                          <p className="text-lg font-black text-sky-900">
-                                            🎯 Today&apos;s Mission
+                                        <div className="rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-5 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                                          <p className="text-lg font-black text-orange-900">
+                                            🔥 Recommended Next
                                           </p>
-                                          <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                                            Recommended Exercise
-                                          </p>
-                                          <p className="mt-1 text-base font-bold text-gray-900">
+                                          <p className="mt-2 text-base font-bold text-gray-900">
                                             {missionPick.quiz.title}
                                           </p>
                                           <p className="mt-2 text-sm text-gray-600">
                                             <span className="font-semibold text-gray-700">Reason:</span>{" "}
-                                            {missionReasonLabel[missionPick.reason] ||
-                                              missionReasonLabel.continue}
+                                            {missionPick.reasonText}
                                           </p>
                                           <Link
                                             to={`/student/attempt-quiz/${missionPick.quiz.id}`}
@@ -929,6 +1004,9 @@ const chapterPalettes = [
                                           const status = getExerciseStatus(
                                             role === "student" ? pct : null
                                           );
+                                          const stars = getStarRating(
+                                            role === "student" ? pct : null
+                                          );
 
                                           return (
                                             <Link
@@ -936,32 +1014,47 @@ const chapterPalettes = [
                                               to={`/student/attempt-quiz/${quiz.id}`}
                                               className={`block rounded-2xl border-2 px-4 py-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${status.cardAccent}`}
                                             >
-                                              <div className="flex items-start justify-between gap-2">
-                                                <div
-                                                  className={`min-w-0 flex-1 font-semibold leading-snug ${
-                                                    activePalette ? activePalette.accent : "text-emerald-950"
-                                                  }`}
-                                                >
-                                                  {quiz.title}
-                                                </div>
-                                                {role === "student" && (
+                                              {role === "student" && history && (
+                                                <div className="mb-2 flex flex-wrap items-center gap-2">
+                                                  {stars.count > 0 && (
+                                                    <span
+                                                      className="text-xl leading-none tracking-wide"
+                                                      aria-label={stars.label}
+                                                    >
+                                                      {stars.stars}
+                                                    </span>
+                                                  )}
+                                                  <span className="text-sm font-bold text-gray-600">
+                                                    {history.percentage}%
+                                                  </span>
                                                   <span
-                                                    className={`flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-bold shadow-sm ring-1 ring-gray-200 ${status.badgeClass}`}
+                                                    className={`flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold ring-1 ring-gray-200 ${status.badgeClass}`}
                                                   >
                                                     <span aria-hidden="true">{status.icon}</span>
-                                                    <span>{status.label}</span>
+                                                    {status.label}
                                                   </span>
-                                                )}
+                                                </div>
+                                              )}
+
+                                              <div
+                                                className={`font-semibold leading-snug ${
+                                                  activePalette ? activePalette.accent : "text-emerald-950"
+                                                }`}
+                                              >
+                                                {quiz.title}
                                               </div>
 
+                                              {role === "student" && !history && (
+                                                <div className="mt-2 flex items-center gap-1 text-xs font-bold text-gray-600">
+                                                  <span aria-hidden="true">⚪</span>
+                                                  Ready to Start
+                                                </div>
+                                              )}
+
                                               {role === "student" && history && (
-                                                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-gray-700">
-                                                  <span className="rounded-full border border-gray-200 bg-white/80 px-2 py-0.5">
-                                                    {history.marks_obtained}/{history.total_marks}
-                                                  </span>
-                                                  <span className="rounded-full border border-gray-200 bg-white/80 px-2 py-0.5">
-                                                    {history.percentage}% · {history.grade_letter}
-                                                  </span>
+                                                <div className="mt-2 text-[11px] font-medium text-gray-500">
+                                                  {history.marks_obtained}/{history.total_marks} ·{" "}
+                                                  {history.grade_letter}
                                                 </div>
                                               )}
 
