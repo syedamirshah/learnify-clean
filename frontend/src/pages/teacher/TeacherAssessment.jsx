@@ -5,9 +5,24 @@ import logo from '../../assets/logo.png';
 import AppLayout from '../../components/layout/AppLayout';
 import { buildPublicNavItems } from "../../utils/publicNav";
 
+const getStudentsLoadErrorMessage = (err) => {
+  const status = err?.response?.status;
+  if (status === 401) {
+    return 'Your session has expired. Please log in again.';
+  }
+  if (status === 403) {
+    return 'You do not have permission or active subscription to view students.';
+  }
+  if (status >= 500) {
+    return 'Could not load students due to a server error.';
+  }
+  return 'Could not load students. Please try again.';
+};
+
 const TeacherAssessment = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [role, setRole] = useState(localStorage.getItem('user_role'));
   const [userFullName, setUserFullName] = useState(localStorage.getItem('user_full_name') || '');
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -114,14 +129,23 @@ const TeacherAssessment = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
+      setLoadError('');
       try {
         const token = localStorage.getItem('access_token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axiosInstance.get('teacher/students/', { headers });
 
-        setStudents(Array.isArray(res.data) ? res.data : []);
+        if (!Array.isArray(res.data)) {
+          setStudents([]);
+          setLoadError('Unexpected response from server.');
+          return;
+        }
+
+        setStudents(res.data);
       } catch (err) {
         console.error('Failed to load students:', err);
+        setStudents([]);
+        setLoadError(getStudentsLoadErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -228,6 +252,19 @@ const TeacherAssessment = () => {
           {loading ? (
             <div aria-live="polite" className="mx-auto max-w-2xl rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
               <p className="text-lg font-semibold text-green-700">Loading students...</p>
+            </div>
+          ) : loadError ? (
+            <div
+              aria-live="polite"
+              className="mx-auto max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center shadow-sm sm:p-8"
+            >
+              <p className="text-lg font-bold text-amber-950">{loadError}</p>
+              {loadError.includes('subscription') && (
+                <p className="mt-3 text-sm leading-relaxed text-gray-700">
+                  Ask an admin to set your account status to active and assign a valid subscription expiry
+                  date, then reload this page.
+                </p>
+              )}
             </div>
           ) : students.length === 0 ? (
             <div
