@@ -1901,6 +1901,7 @@ def teacher_student_list(request):
     student_data = []
     for s in qs.exclude(city__isnull=True).exclude(city__exact=""):
         student_data.append({
+            'id': s.id,
             'full_name': s.full_name,
             'email': s.email,
             'grade': getattr(s.grade, "name", "") if s.grade else "",

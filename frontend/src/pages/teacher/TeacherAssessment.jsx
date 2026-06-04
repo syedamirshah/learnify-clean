@@ -48,7 +48,7 @@ const TeacherAssessment = () => {
   const groupedByGrade = useMemo(() => {
     const groups = {};
     for (const s of students) {
-      const g = norm(s.grade) || 'Unknown Grade';
+      const g = norm(s.grade) || 'Unassigned Grade';
       if (!groups[g]) groups[g] = [];
       groups[g].push(s);
     }
@@ -217,8 +217,10 @@ const TeacherAssessment = () => {
       <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6] text-gray-800">
         <section className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
-            <h1 className="text-2xl font-extrabold text-green-900 sm:text-3xl">Assessment</h1>
-            <p className="mt-1 text-sm text-gray-600 sm:text-base">Track your students’ performance</p>
+            <h1 className="text-2xl font-extrabold text-green-900 sm:text-3xl">My Students</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">
+              View students from your school/city and open their quiz history.
+            </p>
           </div>
         </section>
 
@@ -228,8 +230,15 @@ const TeacherAssessment = () => {
               <p className="text-lg font-semibold text-green-700">Loading students...</p>
             </div>
           ) : students.length === 0 ? (
-            <div aria-live="polite" className="mx-auto max-w-2xl rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
-              <p className="text-lg font-semibold text-gray-600">No students found.</p>
+            <div
+              aria-live="polite"
+              className="mx-auto max-w-2xl rounded-2xl border border-green-200 bg-white p-6 text-center shadow-sm sm:p-8"
+            >
+              <p className="text-lg font-bold text-green-900">No students found for your school and city.</p>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                Students will appear here when they register with the same school name and city as your
+                teacher account.
+              </p>
             </div>
           ) : (
             <>
@@ -345,27 +354,36 @@ const TeacherAssessment = () => {
 
                         <div className="space-y-3 p-3 sm:p-4 md:hidden">
                           {list.map((student, idx) => (
-                            <article key={`${student.username}-${idx}`} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                              <div className="mb-3 border-b border-gray-100 pb-2">
-                                <h3 className="break-words text-base font-bold text-gray-900">{student.full_name}</h3>
+                            <article
+                              key={`${student.username}-${idx}`}
+                              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                            >
+                              <div className="mb-3 flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500">#{idx + 1}</p>
+                                  <h3 className="break-words text-base font-bold text-gray-900">
+                                    {student.full_name}
+                                  </h3>
+                                </div>
+                                <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-800 ring-1 ring-green-200">
+                                  {norm(student.grade) || 'Unassigned'}
+                                </span>
                               </div>
 
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-start justify-between gap-3">
-                                  <span className="text-gray-500">Gender</span>
-                                  <span className="text-right font-semibold text-gray-800">{student.gender}</span>
+                                  <span className="text-gray-500">Username</span>
+                                  <span className="text-right font-semibold text-gray-800">{student.username}</span>
                                 </div>
                                 <div className="flex items-start justify-between gap-3">
                                   <span className="text-gray-500">School</span>
-                                  <span className="break-words text-right font-semibold text-gray-800">{student.school_name}</span>
+                                  <span className="break-words text-right font-semibold text-gray-800">
+                                    {student.school_name}
+                                  </span>
                                 </div>
                                 <div className="flex items-start justify-between gap-3">
                                   <span className="text-gray-500">City</span>
                                   <span className="text-right font-semibold text-gray-800">{student.city}</span>
-                                </div>
-                                <div className="flex items-start justify-between gap-3">
-                                  <span className="text-gray-500">Province</span>
-                                  <span className="text-right font-semibold text-gray-800">{student.province}</span>
                                 </div>
                               </div>
 
@@ -374,8 +392,7 @@ const TeacherAssessment = () => {
                                   to={`/teacher/student/${student.username}/quiz-history`}
                                   className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                                 >
-                                  <span>View Quiz History</span>
-                                  <span aria-hidden="true">→</span>
+                                  View Quiz History
                                 </Link>
                               </div>
                             </article>
@@ -386,22 +403,30 @@ const TeacherAssessment = () => {
                           <table className="min-w-full text-sm">
                             <thead className="bg-white font-semibold text-green-900">
                               <tr>
+                                <th scope="col" className="border-b px-3 py-3 text-center">
+                                  #
+                                </th>
                                 <th
                                   scope="col"
                                   className="cursor-pointer border-b px-4 py-3 text-left hover:bg-green-100"
                                   onClick={() => handleDesktopSort('full_name')}
                                   title="Sort by name"
                                 >
-                                  Full Name{getDesktopSortArrow('full_name')}
+                                  Student Name{getDesktopSortArrow('full_name')}
                                 </th>
-                                <th scope="col" className="border-b px-4 py-3 text-center">Gender</th>
+                                <th scope="col" className="border-b px-4 py-3 text-left">
+                                  Username
+                                </th>
+                                <th scope="col" className="border-b px-4 py-3 text-center">
+                                  Grade
+                                </th>
                                 <th
                                   scope="col"
                                   className="cursor-pointer border-b px-4 py-3 text-center hover:bg-green-100"
                                   onClick={() => handleDesktopSort('school_name')}
                                   title="Sort by school"
                                 >
-                                  School{getDesktopSortArrow('school_name')}
+                                  School Name{getDesktopSortArrow('school_name')}
                                 </th>
                                 <th
                                   scope="col"
@@ -411,8 +436,9 @@ const TeacherAssessment = () => {
                                 >
                                   City{getDesktopSortArrow('city')}
                                 </th>
-                                <th scope="col" className="border-b px-4 py-3 text-center">Province</th>
-                                <th scope="col" className="border-b px-4 py-3 text-center">Action</th>
+                                <th scope="col" className="border-b px-4 py-3 text-center">
+                                  Quiz History
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -421,20 +447,22 @@ const TeacherAssessment = () => {
                                   key={`${student.username}-${idx}`}
                                   className={`${idx % 2 === 0 ? 'bg-white' : 'bg-green-50/35'} transition hover:bg-green-100/50`}
                                 >
+                                  <td className="border-b px-3 py-3 text-center text-gray-600">{idx + 1}</td>
                                   <td className="border-b px-4 py-3 text-left font-medium text-gray-900">
                                     {student.full_name}
                                   </td>
-                                  <td className="border-b px-4 py-3 text-center">{student.gender}</td>
+                                  <td className="border-b px-4 py-3 text-left text-gray-700">{student.username}</td>
+                                  <td className="border-b px-4 py-3 text-center">
+                                    {norm(student.grade) || '—'}
+                                  </td>
                                   <td className="border-b px-4 py-3 text-center">{student.school_name}</td>
                                   <td className="border-b px-4 py-3 text-center">{student.city}</td>
-                                  <td className="border-b px-4 py-3 text-center">{student.province}</td>
                                   <td className="border-b px-4 py-3 text-center">
                                     <Link
                                       to={`/teacher/student/${student.username}/quiz-history`}
-                                      className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                                      className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                                     >
-                                      <span>View Quiz History</span>
-                                      <span aria-hidden="true">→</span>
+                                      View Quiz History
                                     </Link>
                                   </td>
                                 </tr>
