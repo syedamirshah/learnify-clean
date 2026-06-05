@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import AuthPanel from "./AuthPanel";
 import MobileDrawer from "./MobileDrawer";
 import PublicHeader from "./PublicHeader";
 import PublicNav from "./PublicNav";
+import { useStudentPendingTaskCount } from "../../hooks/useStudentPendingTaskCount";
 
 export default function AppLayout({
   children,
@@ -32,6 +33,14 @@ export default function AppLayout({
   className = "",
 }) {
   const drawerId = "primary-mobile-drawer";
+  const pendingTaskCount = useStudentPendingTaskCount(isAuthenticated);
+
+  const displayNavItems = useMemo(() => {
+    if (!pendingTaskCount) return navItems;
+    return navItems.map((item) =>
+      item.key === "tasks" ? { ...item, badgeCount: pendingTaskCount } : item
+    );
+  }, [navItems, pendingTaskCount]);
 
   const desktopAuth = (
     <AuthPanel
@@ -66,13 +75,13 @@ export default function AppLayout({
         mobileActionContent={mobileAuthContent}
       />
 
-      <PublicNav items={navItems} />
+      <PublicNav items={displayNavItems} />
 
       <MobileDrawer
         id={drawerId}
         isOpen={isMobileDrawerOpen}
         onClose={onCloseMobileDrawer}
-        items={navItems}
+        items={displayNavItems}
         headerTitle={brandTitle || "Menu"}
       />
 

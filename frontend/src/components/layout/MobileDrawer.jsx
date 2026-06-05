@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import NavItemLabel from "./NavItemLabel";
 
 function DrawerLink({ item, onClose, className = "" }) {
   const baseClass =
@@ -9,14 +10,14 @@ function DrawerLink({ item, onClose, className = "" }) {
   if (item.href) {
     return (
       <Link to={item.href} onClick={onClose} className={mergedClass}>
-        {item.label}
+        <NavItemLabel label={item.label} badgeCount={item.badgeCount} />
       </Link>
     );
   }
 
   return (
     <button type="button" onClick={item.onClick} className={mergedClass}>
-      {item.label}
+      <NavItemLabel label={item.label} badgeCount={item.badgeCount} />
     </button>
   );
 }

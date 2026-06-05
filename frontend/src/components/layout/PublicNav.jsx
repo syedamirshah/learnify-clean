@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import NavItemLabel from "./NavItemLabel";
 
 function DesktopChildItem({ child, onSelect }) {
   const itemClass =
@@ -34,7 +35,7 @@ function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
           aria-expanded={isOpen}
           aria-controls={`desktop-menu-${item.key || item.label}`}
         >
-          {item.label}
+          <NavItemLabel label={item.label} badgeCount={item.badgeCount} />
         </button>
 
         {isOpen ? (
@@ -58,14 +59,14 @@ function DesktopNavItem({ item, isOpen, onToggle, onClose }) {
   if (item.href) {
     return (
       <Link to={item.href} className={baseClass}>
-        {item.label}
+        <NavItemLabel label={item.label} badgeCount={item.badgeCount} />
       </Link>
     );
   }
 
   return (
     <button type="button" onClick={item.onClick} className={baseClass}>
-      {item.label}
+      <NavItemLabel label={item.label} badgeCount={item.badgeCount} />
     </button>
   );
 }

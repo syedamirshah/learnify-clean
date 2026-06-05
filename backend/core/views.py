@@ -2704,9 +2704,11 @@ def student_tasks_list(request):
 
     tasks_out = []
     pending_quiz_count = 0
+    pending_tasks_count = 0
 
     for task in qs:
         quizzes_out = []
+        task_has_pending_quiz = False
 
         # IMPORTANT: quizzes are through TeacherTaskQuiz
         for tq in task.task_quizzes.all():
@@ -2722,6 +2724,7 @@ def student_tasks_list(request):
 
             if not attempted:
                 pending_quiz_count += 1
+                task_has_pending_quiz = True
 
             quizzes_out.append({
                 "quiz_id": quiz.id,
@@ -2731,6 +2734,9 @@ def student_tasks_list(request):
                 "chapter": quiz.chapter.name if quiz.chapter else "",
                 "attempted": attempted,
             })
+
+        if quizzes_out and task_has_pending_quiz:
+            pending_tasks_count += 1
 
         tasks_out.append({
             "task_id": task.id,
@@ -2756,6 +2762,7 @@ def student_tasks_list(request):
         "summary": {
             "tasks_count": len(tasks_out),
             "pending_quiz_count": pending_quiz_count,
+            "pending_tasks_count": pending_tasks_count,
         }
     }, status=200)
 
