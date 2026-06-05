@@ -11,6 +11,8 @@ def has_active_subscription(user):
         return False
 
     role = getattr(user, "role", None) or ""
+    if role == "teacher":
+        return True
     if (
         getattr(user, "is_superuser", False)
         or getattr(user, "is_staff", False)

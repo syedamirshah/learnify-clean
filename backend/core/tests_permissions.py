@@ -49,6 +49,17 @@ class HasActiveSubscriptionTests(SimpleTestCase):
     def test_manager_bypass(self):
         self.assertTrue(has_active_subscription(self._user(role="manager")))
 
+    def test_teacher_bypass_without_subscription(self):
+        self.assertTrue(
+            has_active_subscription(
+                self._user(
+                    role="teacher",
+                    account_status="inactive",
+                    subscription_expiry=None,
+                )
+            )
+        )
+
     def test_staff_bypass(self):
         self.assertTrue(has_active_subscription(self._user(role="student", is_staff=True)))
 
