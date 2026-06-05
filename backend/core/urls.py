@@ -61,6 +61,7 @@ from core.views import (
     teacher_quizzes_by_grade,
     teacher_create_task,
     teacher_tasks_list,
+    teacher_delete_task,
     student_tasks_list,
 )
 from django.views.generic import TemplateView
@@ -170,6 +171,7 @@ urlpatterns = [
 
     path('api/teacher/quizzes/', teacher_quizzes_by_grade, name='teacher-quizzes-by-grade'),
     path('api/teacher/tasks/create/', teacher_create_task, name='teacher-create-task'),
+    path('api/teacher/tasks/<int:task_id>/delete/', teacher_delete_task, name='teacher-delete-task'),
     path('api/teacher/tasks/', teacher_tasks_list, name='teacher-tasks-list'),
     path('api/student/tasks/', student_tasks_list, name='student-tasks-list'),
 

@@ -2369,6 +2369,111 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 # Teacher Tasks / Recommendations
 # ================================
 
+def _teacher_scoped_students_queryset(teacher):
+    teacher_city = (teacher.city or "").strip()
+    teacher_school = (teacher.school_name or "").strip()
+    if not teacher_city:
+        return User.objects.none()
+    qs = User.objects.filter(role="student", city__iexact=teacher_city)
+    if teacher_school:
+        qs = qs.filter(school_name__iexact=teacher_school)
+    return qs.exclude(city__isnull=True).exclude(city__exact="")
+
+
+def _task_assigned_students(task, teacher):
+    scoped = _teacher_scoped_students_queryset(teacher).select_related("grade")
+    if task.target_students.exists():
+        student_ids = task.target_students.values_list("id", flat=True)
+        return list(scoped.filter(id__in=student_ids).order_by("full_name", "username"))
+    if task.target_grade_id:
+        return list(scoped.filter(grade_id=task.target_grade_id).order_by("full_name", "username"))
+    return []
+
+
+def _quiz_total_marks(quiz):
+    total_questions = quiz.assignments.aggregate(total=Sum("num_questions"))["total"] or 0
+    return total_questions * quiz.marks_per_question
+
+
+def _latest_attempts_map(student_ids, quiz_ids):
+    if not student_ids or not quiz_ids:
+        return {}
+
+    attempts_map = {}
+    attempts_qs = (
+        StudentQuizAttempt.objects.filter(
+            student_id__in=student_ids,
+            quiz_id__in=quiz_ids,
+            completed_at__isnull=False,
+        )
+        .order_by("student_id", "quiz_id", "-completed_at")
+    )
+    for attempt in attempts_qs:
+        key = (attempt.student_id, attempt.quiz_id)
+        if key not in attempts_map:
+            attempts_map[key] = attempt
+    return attempts_map
+
+
+def _task_status_label(task):
+    today = timezone.now().date()
+    if not task.is_active:
+        return "inactive"
+    if task.due_date and task.due_date < today:
+        return "expired"
+    return "active"
+
+
+def _serialize_student_task_progress(student, task_quizzes, attempts_map, quiz_totals):
+    quiz_rows = []
+    completed_count = 0
+
+    for tq in task_quizzes:
+        quiz = tq.quiz
+        if not quiz:
+            continue
+
+        total_marks = quiz_totals.get(quiz.id, 0)
+        attempt = attempts_map.get((student.id, quiz.id))
+
+        if attempt:
+            completed_count += 1
+            percentage = round((attempt.score / total_marks) * 100, 2) if total_marks else 0
+            quiz_rows.append({
+                "quiz_id": quiz.id,
+                "quiz_title": quiz.title,
+                "completed": True,
+                "marks_obtained": attempt.score,
+                "total_marks": total_marks,
+                "percentage": percentage,
+                "grade": calculate_grade(percentage),
+            })
+        else:
+            quiz_rows.append({
+                "quiz_id": quiz.id,
+                "quiz_title": quiz.title,
+                "completed": False,
+                "marks_obtained": None,
+                "total_marks": total_marks or None,
+                "percentage": None,
+                "grade": None,
+            })
+
+    total_quizzes = len(quiz_rows)
+    return {
+        "id": student.id,
+        "full_name": student.full_name or student.username,
+        "username": student.username,
+        "grade": student.grade.name if student.grade else "",
+        "school_name": student.school_name or "",
+        "city": student.city or "",
+        "quizzes": quiz_rows,
+        "overall_task_completed": total_quizzes > 0 and completed_count == total_quizzes,
+        "completed_count": completed_count,
+        "total_quizzes": total_quizzes,
+    }
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_quizzes_by_grade(request):
@@ -2498,9 +2603,8 @@ def teacher_create_task(request):
 @permission_classes([IsAuthenticated, HasPaidSubscription])
 def teacher_tasks_list(request):
     """
-    Optional:
     GET /api/teacher/tasks/
-    Returns tasks created by this teacher.
+    Returns tasks created by this teacher with student progress.
     """
     user = request.user
     if user.role != 'teacher':
@@ -2509,25 +2613,66 @@ def teacher_tasks_list(request):
     tasks = (
         TeacherTask.objects
         .filter(teacher=user)
-        .prefetch_related('task_quizzes__quiz', 'target_students', 'target_grade')
+        .prefetch_related(
+            Prefetch('task_quizzes', queryset=TeacherTaskQuiz.objects.select_related('quiz')),
+            'target_students',
+            'target_grade',
+        )
         .order_by('-created_at')
     )
 
     data = []
     for t in tasks:
-        quizzes = [x.quiz.title for x in t.task_quizzes.all()]
+        task_quizzes = [tq for tq in t.task_quizzes.all() if tq.quiz]
+        quiz_objs = [tq.quiz for tq in task_quizzes]
+        quiz_totals = {q.id: _quiz_total_marks(q) for q in quiz_objs}
+
+        assigned_students = _task_assigned_students(t, user)
+        student_ids = [s.id for s in assigned_students]
+        quiz_ids = [q.id for q in quiz_objs]
+        attempts_map = _latest_attempts_map(student_ids, quiz_ids)
+
+        is_grade_wide = bool(t.target_grade_id) and not t.target_students.exists()
+        target_type = "grade_wide" if is_grade_wide else "selected_students"
+
         data.append({
+            'task_id': t.id,
             'id': t.id,
             'message': t.message,
-            'due_date': t.due_date,
+            'due_date': t.due_date.strftime('%Y-%m-%d') if t.due_date else None,
             'is_active': t.is_active,
+            'status': _task_status_label(t),
+            'target_type': target_type,
             'target_grade': t.target_grade.name if t.target_grade else None,
-            'target_students_count': t.target_students.count(),
-            'quizzes': quizzes,
+            'target_students_count': len(assigned_students),
+            'quizzes': [{'id': q.id, 'title': q.title} for q in quiz_objs],
+            'assigned_students': [
+                _serialize_student_task_progress(s, task_quizzes, attempts_map, quiz_totals)
+                for s in assigned_students
+            ],
             'created_at': t.created_at.strftime('%Y-%m-%d') if t.created_at else None,
         })
 
     return Response(data, status=200)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def teacher_delete_task(request, task_id):
+    user = request.user
+    if user.role != 'teacher':
+        return Response({'error': 'Only teachers can delete tasks.'}, status=403)
+
+    try:
+        task = TeacherTask.objects.get(id=task_id, teacher=user)
+    except TeacherTask.DoesNotExist:
+        return Response({'error': 'Task not found.'}, status=404)
+
+    task.delete()
+    return Response({
+        'success': True,
+        'message': 'Task deleted successfully.',
+    }, status=200)
 
 
 
