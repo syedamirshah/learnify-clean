@@ -20,7 +20,11 @@ export function buildPublicNavItems(role, options = {}) {
   }
 
   return [
-    { key: "home", label: "Home", href: "/learn" },
+    {
+      key: "home",
+      label: "Home",
+      href: role === "teacher" ? "/teacher/dashboard" : "/learn",
+    },
     ...(!isStudentOrTeacher
       ? [{ key: "why-join", label: "Why Join Learnify?", href: "/why-join" }]
       : []),

@@ -58,6 +58,7 @@ from .views import (
 )
 
 from core.views import (
+    teacher_dashboard_summary,
     teacher_quizzes_by_grade,
     teacher_create_task,
     teacher_tasks_list,
@@ -169,6 +170,7 @@ urlpatterns = [
     # ---------- Default redirect ----------
     path('', lambda request: redirect('/admin/', permanent=False)),
 
+    path('api/teacher/dashboard-summary/', teacher_dashboard_summary, name='teacher-dashboard-summary'),
     path('api/teacher/quizzes/', teacher_quizzes_by_grade, name='teacher-quizzes-by-grade'),
     path('api/teacher/tasks/create/', teacher_create_task, name='teacher-create-task'),
     path('api/teacher/tasks/<int:task_id>/delete/', teacher_delete_task, name='teacher-delete-task'),

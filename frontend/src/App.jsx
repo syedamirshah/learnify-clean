@@ -21,6 +21,7 @@ import PaymentResult from "./pages/public/PaymentResult";
 import StudentTasks from "./pages/student/StudentTasks";
 import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import MyProfile from "./pages/public/MyProfile";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import OfflineOverlay from "./components/OfflineOverlay";
@@ -54,6 +55,7 @@ function App() {
           <Route path="/why-join" element={<WhyJoin />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/assessment" element={<TeacherAssessment />} />
           <Route path="/teacher/student/:username/quiz-history" element={<StudentQuizHistory />} />
           <Route path="/student/assessment" element={<StudentSubjectPerformance />} />

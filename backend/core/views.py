@@ -2395,6 +2395,13 @@ def _quiz_total_marks(quiz):
     return total_questions * quiz.marks_per_question
 
 
+def _attempt_percentage(attempt, quiz):
+    total_marks = _quiz_total_marks(quiz)
+    if not total_marks:
+        return 0.0
+    return round((attempt.score / total_marks) * 100, 2)
+
+
 def _latest_attempts_map(student_ids, quiz_ids):
     if not student_ids or not quiz_ids:
         return {}
@@ -2472,6 +2479,189 @@ def _serialize_student_task_progress(student, task_quizzes, attempts_map, quiz_t
         "completed_count": completed_count,
         "total_quizzes": total_quizzes,
     }
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def teacher_dashboard_summary(request):
+    user = request.user
+    if user.role != 'teacher':
+        return Response({'error': 'Only teachers can access this endpoint.'}, status=403)
+
+    students = list(
+        _teacher_scoped_students_queryset(user).select_related("grade").order_by("full_name", "username")
+    )
+    student_ids = [s.id for s in students]
+
+    student_stats = {
+        s.id: {
+            "student": s,
+            "pending_task_items": 0,
+            "percentages": [],
+            "attempt_count": 0,
+        }
+        for s in students
+    }
+
+    active_tasks = list(
+        TeacherTask.objects.filter(teacher=user, is_active=True).prefetch_related(
+            Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
+            "target_students",
+            "target_grade",
+        )
+    )
+
+    pending_task_items_count = 0
+    completed_task_items_count = 0
+    grade_pending = defaultdict(int)
+
+    for task in active_tasks:
+        assigned = _task_assigned_students(task, user)
+        task_quizzes = [tq for tq in task.task_quizzes.all() if tq.quiz]
+        quiz_ids = [tq.quiz.id for tq in task_quizzes]
+        attempts_map = _latest_attempts_map([s.id for s in assigned], quiz_ids)
+
+        for student in assigned:
+            grade_name = student.grade.name if student.grade else "Unassigned Grade"
+            for tq in task_quizzes:
+                if attempts_map.get((student.id, tq.quiz.id)):
+                    completed_task_items_count += 1
+                else:
+                    pending_task_items_count += 1
+                    student_stats[student.id]["pending_task_items"] += 1
+                    grade_pending[grade_name] += 1
+
+    attempts_qs = StudentQuizAttempt.objects.filter(
+        student_id__in=student_ids,
+        completed_at__isnull=False,
+    ).select_related("quiz", "student")
+
+    latest_for_avg = {}
+    for att in attempts_qs.order_by("student_id", "quiz_id", "-completed_at"):
+        key = (att.student_id, att.quiz_id)
+        if key not in latest_for_avg:
+            latest_for_avg[key] = att
+
+    all_percentages = []
+    for att in latest_for_avg.values():
+        pct = _attempt_percentage(att, att.quiz)
+        all_percentages.append(pct)
+        student_stats[att.student_id]["percentages"].append(pct)
+        student_stats[att.student_id]["attempt_count"] += 1
+
+    average_student_score = (
+        round(sum(all_percentages) / len(all_percentages)) if all_percentages else None
+    )
+
+    attention_candidates = []
+    for stats in student_stats.values():
+        s = stats["student"]
+        avg = (
+            round(sum(stats["percentages"]) / len(stats["percentages"]))
+            if stats["percentages"]
+            else None
+        )
+        pending = stats["pending_task_items"]
+        attempt_count = stats["attempt_count"]
+
+        if not ((pending > 0) or (avg is not None and avg < 50) or (attempt_count == 0)):
+            continue
+
+        if avg is not None and avg < 50:
+            reason = "Low average score"
+            detail = f"Average score {avg}%"
+            tier = 0
+            sort_key = avg
+        elif pending > 0:
+            reason = "Pending assigned work"
+            detail = f"{pending} quiz item{'s' if pending != 1 else ''} not completed"
+            tier = 1
+            sort_key = -pending
+        else:
+            reason = "No quiz activity"
+            detail = "No completed quizzes yet"
+            tier = 2
+            sort_key = 0
+
+        attention_candidates.append({
+            "tier": tier,
+            "sort_key": sort_key,
+            "student_id": s.id,
+            "username": s.username,
+            "full_name": s.full_name or s.username,
+            "grade": s.grade.name if s.grade else "",
+            "reason": reason,
+            "detail": detail,
+            "quiz_history_path": f"/teacher/student/{s.username}/quiz-history",
+        })
+
+    attention_candidates.sort(key=lambda row: (row["tier"], row["sort_key"]))
+    students_requiring_attention = [
+        {k: v for k, v in row.items() if k not in ("tier", "sort_key")}
+        for row in attention_candidates[:5]
+    ]
+
+    recent_attempts = (
+        StudentQuizAttempt.objects.filter(
+            student_id__in=student_ids,
+            completed_at__isnull=False,
+        )
+        .select_related("student", "quiz")
+        .order_by("-completed_at")[:5]
+    )
+    recent_activity = [
+        {
+            "student_name": att.student.full_name or att.student.username,
+            "quiz_title": att.quiz.title,
+            "percentage": _attempt_percentage(att, att.quiz),
+            "completed_at": att.completed_at.strftime("%Y-%m-%d") if att.completed_at else None,
+        }
+        for att in recent_attempts
+    ]
+
+    grade_groups = defaultdict(list)
+    for s in students:
+        grade_name = s.grade.name if s.grade else "Unassigned Grade"
+        grade_groups[grade_name].append(s)
+
+    def _grade_sort_key(name):
+        num = int("".join(ch for ch in name if ch.isdigit()) or "99999")
+        return (num, name)
+
+    grade_snapshot = []
+    for grade_name in sorted(grade_groups.keys(), key=_grade_sort_key):
+        group = grade_groups[grade_name]
+        grade_percentages = []
+        for s in group:
+            grade_percentages.extend(student_stats[s.id]["percentages"])
+        grade_snapshot.append({
+            "grade": grade_name,
+            "students_count": len(group),
+            "average_score": (
+                round(sum(grade_percentages) / len(grade_percentages))
+                if grade_percentages
+                else None
+            ),
+            "pending_tasks_count": grade_pending.get(grade_name, 0),
+        })
+
+    return Response({
+        "teacher": {
+            "full_name": user.full_name or user.username,
+            "school_name": user.school_name or "",
+            "city": user.city or "",
+        },
+        "summary": {
+            "students_count": len(students),
+            "active_tasks_count": len(active_tasks),
+            "pending_task_items_count": pending_task_items_count,
+            "completed_task_items_count": completed_task_items_count,
+            "average_student_score": average_student_score,
+        },
+        "students_requiring_attention": students_requiring_attention,
+        "recent_activity": recent_activity,
+        "grade_snapshot": grade_snapshot,
+    }, status=200)
 
 
 @api_view(['GET'])
