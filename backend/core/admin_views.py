@@ -235,7 +235,7 @@ def complete_user_data_view(request):
     users = users.order_by(sort_by)
 
     # Distinct cleaned-up filter values (excluding duplicate 'All') and ensuring all key roles appear
-    expected_roles = {'admin', 'teacher', 'student', 'manager'}
+    expected_roles = {'admin', 'teacher', 'student', 'manager', 'school_admin'}
 
     roles_queryset = User.objects.exclude(role__isnull=True).exclude(role__exact="").values_list('role', flat=True)
     roles_set = set(r.lower() for r in roles_queryset if r.lower() != "all")

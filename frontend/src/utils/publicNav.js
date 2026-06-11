@@ -5,6 +5,7 @@
 export function buildPublicNavItems(role, options = {}) {
   const { includePaymentInSignup = false, paymentChooseUrl = "" } = options;
   const isStudentOrTeacher = role === "student" || role === "teacher";
+  const isSchoolAdmin = role === "school_admin";
 
   const signUpChildren = [
     { key: "create-account", label: "Create Account", href: "/signup" },
@@ -25,7 +26,7 @@ export function buildPublicNavItems(role, options = {}) {
       label: "Home",
       href: role === "teacher" ? "/teacher/dashboard" : "/learn",
     },
-    ...(!isStudentOrTeacher
+    ...(!isStudentOrTeacher && !isSchoolAdmin
       ? [{ key: "why-join", label: "Why Join Learnify?", href: "/why-join" }]
       : []),
     ...(role === "student"
@@ -64,7 +65,7 @@ export function buildPublicNavItems(role, options = {}) {
         ]
       : []),
     { key: "honor-board", label: "Honor Board", href: "/honor-board" },
-    ...(!isStudentOrTeacher
+    ...(!isStudentOrTeacher && !isSchoolAdmin
       ? [{ key: "membership", label: "Membership", href: "/membership" }]
       : []),
     { key: "help-center", label: "Help Center", href: "/help-center" },

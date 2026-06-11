@@ -76,7 +76,7 @@ const Login = () => {
       console.log("üì¶ /me ‚Üí Role:", role, "Status:", status);
 
       // Block admin/manager (same as your logic)
-      if (role !== "student" && role !== "teacher") {
+      if (role !== "student" && role !== "teacher" && role !== "school_admin") {
         alert("Admins and Managers must log in from backend.");
         return;
       }

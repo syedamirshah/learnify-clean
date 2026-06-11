@@ -71,7 +71,7 @@ const HomePage = () => {
       localStorage.setItem("user_role", role);
       persistStudentGrade(userData);
 
-      if (role !== "student" && role !== "teacher") {
+      if (role !== "student" && role !== "teacher" && role !== "school_admin") {
         alert("Admins and Managers must log in from backend.");
         return;
       }

@@ -1659,6 +1659,10 @@ def get_current_user(request):
         "city": user.city,
         "province": user.province,
 
+        "school_id": user.school_id,
+        "school_name_display": user.school.name if user.school_id and user.school else (user.school_name or ""),
+        "school_account_status": user.school.account_status if user.school_id and user.school else None,
+
         "subscription_plan": user.subscription_plan,
         "subscription_expiry": user.subscription_expiry.strftime("%Y-%m-%d") if user.subscription_expiry else None,
         "account_status": user.account_status,

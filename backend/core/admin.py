@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, School
 from .forms import UserAdminCreationForm, UserAdminChangeForm
 from .admin_views import bulk_upload_students, complete_user_data_view
 from django.utils.html import format_html
@@ -21,6 +21,29 @@ from django.urls import path
 from core.forms import QuizAdminForm  # ✅ Custom form
 
 
+@admin.register(School)
+class SchoolAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'city',
+        'province',
+        'plan_tier',
+        'billing_cycle',
+        'account_status',
+        'subscription_expiry',
+        'onboarding_status',
+    )
+    list_filter = (
+        'plan_tier',
+        'billing_cycle',
+        'account_status',
+        'province',
+        'onboarding_status',
+    )
+    search_fields = ('name', 'city', 'contact_email', 'slug')
+    readonly_fields = ('created_at', 'updated_at')
+
+
 # User Admin
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
@@ -30,10 +53,10 @@ class UserAdmin(BaseUserAdmin):
 
     list_display = (
         'username', 'email', 'full_name', 'role', 'account_status',
-        'school_name', 'city', 'province', 'language_used_at_home'
+        'school', 'school_name', 'city', 'province', 'language_used_at_home'
     )
     list_filter = (
-        'role', 'account_status', 'province', 'grade', 'language_used_at_home'
+        'role', 'account_status', 'province', 'grade', 'school', 'language_used_at_home'
     )
     search_fields = (
         'username', 'email', 'full_name', 'school_name', 'city'
@@ -43,7 +66,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {'fields': ('username', 'password', 'email', 'full_name')}),
         ('Additional Info', {
             'fields': (
-                'role', 'gender', 'schooling_status', 'school_name', 'grade',
+                'role', 'gender', 'schooling_status', 'school', 'school_name', 'grade',
                 'city', 'province', 'language_used_at_home',
                 'subscription_plan', 'subscription_expiry',
                 'profile_picture', 'account_status',
@@ -59,7 +82,7 @@ class UserAdmin(BaseUserAdmin):
         }),
         ('Additional Info', {
             'fields': (
-                'role', 'gender', 'schooling_status', 'school_name', 'grade',
+                'role', 'gender', 'schooling_status', 'school', 'school_name', 'grade',
                 'city', 'province', 'language_used_at_home',
                 'subscription_plan', 'subscription_expiry',
                 'profile_picture', 'account_status',

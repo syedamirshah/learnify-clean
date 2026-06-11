@@ -4,14 +4,54 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from ckeditor_uploader.fields import RichTextUploadingField
 
 USER_ROLES = (
     ('admin', 'Admin'),
     ('manager', 'Manager'),
+    ('school_admin', 'School Admin'),
     ('teacher', 'Teacher'),
     ('student', 'Student'),
 )
+
+SCHOOL_PLAN_TIERS = (
+    ('small', 'Small'),
+    ('medium', 'Medium'),
+    ('enterprise', 'Enterprise'),
+)
+
+SCHOOL_BILLING_CYCLES = (
+    ('monthly', 'Monthly'),
+    ('yearly', 'Yearly'),
+)
+
+SCHOOL_ACCOUNT_STATUSES = (
+    ('pending_payment', 'Pending Payment'),
+    ('active', 'Active'),
+    ('expired', 'Expired'),
+    ('suspended', 'Suspended'),
+)
+
+SCHOOL_ONBOARDING_STATUSES = (
+    ('registered', 'Registered'),
+    ('paid', 'Paid'),
+    ('roster_uploaded', 'Roster Uploaded'),
+    ('active', 'Active'),
+)
+
+# Reference pricing for future school billing (not wired to Easypay in Phase 1A).
+SCHOOL_PLAN_MAX_STUDENTS = {
+    'small': 200,
+    'medium': 500,
+    'enterprise': None,
+}
+
+SCHOOL_PLAN_PRICING_PKR = {
+    'small': {'monthly': 2000, 'yearly': 18000},
+    'medium': {'monthly': 5000, 'yearly': 45000},
+    'enterprise': {'monthly': 10000, 'yearly': 90000},
+}
 
 GENDERS = (
     ('Male', 'Male'),
@@ -70,6 +110,64 @@ LANGUAGE_CHOICES = [
 ]
 
 
+class School(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
+    city = models.CharField(max_length=100)
+    province = models.CharField(max_length=50, choices=PROVINCES)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=30, blank=True, default="")
+
+    plan_tier = models.CharField(max_length=20, choices=SCHOOL_PLAN_TIERS, default='small')
+    billing_cycle = models.CharField(max_length=20, choices=SCHOOL_BILLING_CYCLES, default='yearly')
+    max_students = models.PositiveIntegerField(null=True, blank=True)
+
+    account_status = models.CharField(
+        max_length=20,
+        choices=SCHOOL_ACCOUNT_STATUSES,
+        default='pending_payment',
+    )
+    subscription_expiry = models.DateField(null=True, blank=True)
+
+    onboarding_status = models.CharField(
+        max_length=20,
+        choices=SCHOOL_ONBOARDING_STATUSES,
+        default='registered',
+    )
+
+    notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name', 'city']
+
+    def __str__(self):
+        return f"{self.name} ({self.city})"
+
+    def save(self, *args, **kwargs):
+        if self.max_students is None and self.plan_tier:
+            self.max_students = SCHOOL_PLAN_MAX_STUDENTS.get(self.plan_tier)
+        if not self.slug:
+            base = slugify(f"{self.name}-{self.city}") or "school"
+            slug = base[:210]
+            counter = 1
+            while School.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                suffix = f"-{counter}"
+                slug = f"{base[:210 - len(suffix)]}{suffix}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    @property
+    def is_subscription_active(self):
+        if self.account_status != 'active':
+            return False
+        if not self.subscription_expiry:
+            return False
+        return self.subscription_expiry >= timezone.now().date()
+
+
 class User(AbstractUser):
     role = models.CharField(max_length=20, choices=USER_ROLES)
     full_name = models.CharField(max_length=255, blank=True, null=True)
@@ -83,6 +181,13 @@ class User(AbstractUser):
         null=True,
         blank=True,
         related_name='users'
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
     )
     school_name = models.CharField(max_length=200, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
