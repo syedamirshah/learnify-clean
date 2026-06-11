@@ -53,60 +53,20 @@ def bulk_upload_students(request):
     if request.method == 'POST':
         form = UploadForm(request.POST, request.FILES)
         if form.is_valid():
+            from core.roster_upload import import_roster_from_file
+
             file = request.FILES['excel_file']
-            wb = openpyxl.load_workbook(file)
-            sheet = wb.active
+            result = import_roster_from_file(file)
 
-            uploaded_count = 0
-            skipped_count = 0
-
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                try:
-                    (
-                        username, full_name, language_used_at_home, email, password, role, gender,
-                        schooling_status, grade_name, school_name, city, province,
-                        subscription_plan
-                    ) = row[:13]
-
-                    if User.objects.filter(username=username).exists():
-                        skipped_count += 1
-                        continue
-
-                    # ✅ Convert grade name to Grade instance
-                    try:
-                        cleaned_grade_name = str(grade_name).strip().replace('"', '').replace("'", '')
-                        grade_instance = Grade.objects.get(name=grade_name)
-                    except Grade.DoesNotExist:
-                        messages.error(request, f"⛔ Error in row {row}: Grade '{grade_name}' does not exist in database.")
-                        continue
-
-                    user = User.objects.create(
-                        username=username,
-                        full_name=full_name,
-                        email=email,
-                        role=role,
-                        gender=gender,
-                        schooling_status=schooling_status,
-                        grade=grade_instance,
-                        school_name=school_name,
-                        city=city,
-                        province=province,
-                        subscription_plan=subscription_plan,
-                        language_used_at_home=language_used_at_home or '',
-                        account_status='inactive',
-                        is_active=False,
-                    )
-                    user.set_password(password)  # ✅ Hash password
-                    user.save()
-
-                    uploaded_count += 1
-
-                except Exception as e:
-                    messages.error(request, f"⚠️ Error in row {row}: {e}")
+            for item in result["errors"]:
+                messages.error(
+                    request,
+                    f"⚠️ Error in row {item.get('row')}: {item.get('error')}",
+                )
 
             messages.success(
                 request,
-                f"✅ Uploaded {uploaded_count} students. Skipped {skipped_count} existing usernames."
+                f"✅ Uploaded {result['uploaded']} students. Skipped {result['skipped']} existing usernames."
             )
             return redirect('/admin/core/user/complete_user_data/')
     else:

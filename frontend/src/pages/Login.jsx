@@ -90,8 +90,9 @@ const Login = () => {
       }
 
       // ✅ Go back to where user was (next) or home
+      const defaultPath = role === "school_admin" ? "/school/dashboard" : "/";
       const nextPath = getNextPath();
-      window.location.href = nextPath || "/";
+      window.location.href = nextPath || defaultPath;
     } catch (err) {
       if (err.response?.data?.detail) {
         alert("Login failed: " + err.response.data.detail);

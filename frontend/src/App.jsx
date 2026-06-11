@@ -6,6 +6,7 @@ import QuizAttempt from "./pages/student/QuizAttempt.jsx";
 import HonorBoard from './pages/public/HonorBoard';
 import LandingPage from './pages/public/LandingPage';
 import HomePage from './pages/public/HomePage';
+import SchoolOnboarding from './pages/public/SchoolOnboarding';
 import WhyJoin from './pages/public/WhyJoin';
 import SignupPage from '@/pages/public/SignupPage';
 import EditProfile from './pages/account/EditProfile';
@@ -22,6 +23,16 @@ import StudentTasks from "./pages/student/StudentTasks";
 import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import SchoolDashboard from "./pages/school/SchoolDashboard";
+import SchoolUsers from "./pages/school/SchoolUsers";
+import SchoolUploadRoster from "./pages/school/SchoolUploadRoster";
+import SchoolAnalytics from "./pages/school/SchoolAnalytics";
+import SchoolStudentSummary from "./pages/school/SchoolStudentSummary";
+import SchoolStudentQuizHistory from "./pages/school/SchoolStudentQuizHistory";
+import SchoolStudentLearningDiagnosis from "./pages/school/SchoolStudentLearningDiagnosis";
+import SchoolTeacherAnalytics from "./pages/school/SchoolTeacherAnalytics";
+import SchoolTeacherSummary from "./pages/school/SchoolTeacherSummary";
+import SchoolTaskMonitoring from "./pages/school/SchoolTaskMonitoring";
 import MyProfile from "./pages/public/MyProfile";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import OfflineOverlay from "./components/OfflineOverlay";
@@ -51,10 +62,21 @@ function App() {
           <Route path="/honor-roll" element={<HonorBoard />} />
           <Route path="/honor-board" element={<HonorBoard />} />
           <Route path="/" element={<HomePage />} />
+          <Route path="/school-onboarding" element={<SchoolOnboarding />} />
           <Route path="/learn" element={<LandingPage />} />
           <Route path="/why-join" element={<WhyJoin />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />
+          <Route path="/school/dashboard" element={<SchoolDashboard />} />
+          <Route path="/school/users" element={<SchoolUsers />} />
+          <Route path="/school/upload" element={<SchoolUploadRoster />} />
+          <Route path="/school/analytics" element={<SchoolAnalytics />} />
+          <Route path="/school/teachers" element={<SchoolTeacherAnalytics />} />
+          <Route path="/school/teacher/:username" element={<SchoolTeacherSummary />} />
+          <Route path="/school/tasks" element={<SchoolTaskMonitoring />} />
+          <Route path="/school/student/:username/quiz-history" element={<SchoolStudentQuizHistory />} />
+          <Route path="/school/student/:username/learning-diagnosis" element={<SchoolStudentLearningDiagnosis />} />
+          <Route path="/school/student/:username" element={<SchoolStudentSummary />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/assessment" element={<TeacherAssessment />} />
           <Route path="/teacher/student/:username/quiz-history" element={<StudentQuizHistory />} />

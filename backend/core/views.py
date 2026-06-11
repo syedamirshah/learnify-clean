@@ -62,7 +62,25 @@ from django.views.decorators.http import require_GET
 from core.emails import send_password_change_email, send_welcome_email
 from django.db.models import Q
 from django.utils.dateparse import parse_date
+from django.http import FileResponse, Http404
 from core.models import TeacherTask, TeacherTaskQuiz
+from core.roster_upload import (
+    get_roster_template_path,
+    import_roster_from_file,
+    school_has_roster,
+)
+from core.school_analytics import (
+    build_school_analytics_summary,
+    build_school_student_summary,
+    get_school_student,
+)
+from core.school_teacher_analytics import (
+    build_school_task_monitoring,
+    build_school_teacher_analytics,
+    build_school_teacher_summary,
+    get_school_teacher,
+)
+from core.student_monitoring import build_learning_diagnosis, build_student_quiz_history
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -165,7 +183,7 @@ def _compute_learning_trend(student):
         completed_at__isnull=False,
     ).select_related('quiz').order_by('-completed_at')
 
-    percentages = [_attempt_percentage(a) for a in attempts]
+    percentages = [_attempt_percentage(a, a.quiz) for a in attempts]
     if not percentages:
         return {
             'recent_average': 0,
@@ -1939,41 +1957,7 @@ def teacher_student_quiz_history_view(request, username):
     if not same_city or not same_school:
         return Response({'error': "You aren't authorized to view this student's data."}, status=403)
 
-    from django.db.models import Max
-
-    latest_attempt_times = StudentQuizAttempt.objects.filter(
-        student=student,
-        completed_at__isnull=False
-    ).values('quiz').annotate(latest=Max('completed_at')).values_list('latest', flat=True)
-
-    attempts = StudentQuizAttempt.objects.filter(
-        student=student,
-        completed_at__in=list(latest_attempt_times)
-    ).select_related('quiz', 'quiz__grade', 'quiz__subject', 'quiz__chapter').order_by('-completed_at')
-
-    results = []
-    for attempt in attempts:
-        quiz = attempt.quiz
-        total_questions = quiz.assignments.aggregate(total=models.Sum('num_questions'))['total'] or 0
-        total_marks = total_questions * quiz.marks_per_question
-        percentage = round((attempt.score / total_marks) * 100, 2) if total_marks else 0
-        letter = calculate_grade(percentage)
-
-        results.append({
-            'quiz_title': quiz.title,
-            'chapter': quiz.chapter.name if quiz.chapter else "",
-            'subject': quiz.subject.name if quiz.subject else "",
-            'grade': quiz.grade.name if quiz.grade else "",
-            'marks_obtained': attempt.score,
-            'total_questions': total_questions,
-            'marks_per_question': quiz.marks_per_question,
-            'percentage': percentage,
-            'grade_letter': letter,
-            'attempted_on': localtime(attempt.completed_at, timezone=pk_timezone).strftime('%d-%m-%Y %I:%M %p'),
-            'attempt_id': str(attempt.id),
-        })
-
-    return Response({'full_name': student.full_name, 'results': results})
+    return Response(build_student_quiz_history(student))
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasPaidSubscription])
@@ -2033,169 +2017,7 @@ def student_learning_diagnosis_view(request):
     if request.user.role != 'student':
         return Response({'error': 'Only students can access this view.'}, status=403)
 
-    student = request.user
-    from django.db.models import Max
-
-    latest_attempt_times = StudentQuizAttempt.objects.filter(
-        student=student,
-        completed_at__isnull=False,
-    ).values('quiz').annotate(latest=Max('completed_at')).values_list('latest', flat=True)
-
-    attempts = StudentQuizAttempt.objects.filter(
-        student=student,
-        completed_at__in=latest_attempt_times,
-    ).select_related('quiz', 'quiz__subject', 'quiz__chapter', 'quiz__grade')
-
-    quiz_rows = []
-    for attempt in attempts:
-        quiz = attempt.quiz
-        percentage = _attempt_percentage(attempt)
-        chapter = quiz.chapter
-        quiz_rows.append({
-            'quiz_id': quiz.id,
-            'quiz_title': quiz.title,
-            'chapter_id': chapter.id if chapter else None,
-            'chapter_name': chapter.name if chapter else 'General',
-            'subject_name': quiz.subject.name if quiz.subject else '',
-            'percentage': percentage,
-            'practice_path': f'/student/attempt-quiz/{quiz.id}',
-        })
-
-    if not quiz_rows:
-        v2 = _learning_diagnosis_v2_fields(student, 0, [], [], [], [])
-        return Response({
-            'full_name': student.full_name,
-            'has_data': False,
-            'learning_health_score': v2['learning_health_score'],
-            'health_status': v2['health_status'],
-            'attention_required': [],
-            'learning_trend': v2['learning_trend'],
-            'overall': {
-                'total_attempted_quizzes': 0,
-                'overall_average_percentage': 0,
-                'strong_chapters_count': 0,
-                'improving_chapters_count': 0,
-                'weak_chapters_count': 0,
-            },
-            'chapter_mastery': [],
-            'low_score_quizzes': [],
-            'recommended_practice': [],
-            'parent_friendly_summary': v2['parent_friendly_summary'],
-        })
-
-    chapter_buckets = {}
-    for row in quiz_rows:
-        key = row['chapter_id'] if row['chapter_id'] is not None else f"none:{row['chapter_name']}"
-        if key not in chapter_buckets:
-            chapter_buckets[key] = {
-                'chapter_id': row['chapter_id'],
-                'chapter_name': row['chapter_name'],
-                'subject_name': row['subject_name'],
-                'percentages': [],
-                'quiz_ids': set(),
-            }
-        chapter_buckets[key]['percentages'].append(row['percentage'])
-        chapter_buckets[key]['quiz_ids'].add(row['quiz_id'])
-
-    chapter_mastery = []
-    for bucket in chapter_buckets.values():
-        avg_pct = round(sum(bucket['percentages']) / len(bucket['percentages']), 2)
-        status = _chapter_mastery_status(avg_pct)
-        chapter_mastery.append({
-            'chapter_id': bucket['chapter_id'],
-            'chapter_name': bucket['chapter_name'],
-            'subject_name': bucket['subject_name'],
-            'quizzes_attempted': len(bucket['quiz_ids']),
-            'average_percentage': avg_pct,
-            'status': status,
-        })
-
-    chapter_mastery.sort(key=lambda c: (c['status'] != 'weak', c['average_percentage']))
-
-    low_score_quizzes = [
-        {k: v for k, v in row.items() if k != 'practice_path'}
-        for row in quiz_rows
-        if row['percentage'] < 50
-    ]
-    low_score_quizzes.sort(key=lambda q: q['percentage'])
-
-    strong_chapters = [c for c in chapter_mastery if c['status'] == 'strong']
-    improving_chapters = [c for c in chapter_mastery if c['status'] == 'improving']
-    weak_chapters = [c for c in chapter_mastery if c['status'] == 'weak']
-
-    recommended_practice = []
-    seen_quiz_ids = set()
-
-    for chapter in weak_chapters:
-        chapter_quizzes = [
-            r for r in quiz_rows
-            if (r['chapter_id'] == chapter['chapter_id']
-                and chapter['chapter_id'] is not None)
-            or (chapter['chapter_id'] is None and r['chapter_name'] == chapter['chapter_name'])
-        ]
-        chapter_quizzes.sort(key=lambda r: r['percentage'])
-        for row in chapter_quizzes:
-            if row['quiz_id'] in seen_quiz_ids:
-                continue
-            seen_quiz_ids.add(row['quiz_id'])
-            recommended_practice.append({
-                'quiz_id': row['quiz_id'],
-                'quiz_title': row['quiz_title'],
-                'chapter_name': row['chapter_name'],
-                'subject_name': row['subject_name'],
-                'percentage': row['percentage'],
-                'reason': 'weak_chapter',
-                'practice_path': row['practice_path'],
-            })
-
-    for row in low_score_quizzes:
-        if row['quiz_id'] in seen_quiz_ids:
-            continue
-        seen_quiz_ids.add(row['quiz_id'])
-        full_row = next(r for r in quiz_rows if r['quiz_id'] == row['quiz_id'])
-        recommended_practice.append({
-            'quiz_id': row['quiz_id'],
-            'quiz_title': row['quiz_title'],
-            'chapter_name': row['chapter_name'],
-            'subject_name': row['subject_name'],
-            'percentage': row['percentage'],
-            'reason': 'low_score',
-            'practice_path': full_row['practice_path'],
-        })
-
-    overall_avg = round(
-        sum(r['percentage'] for r in quiz_rows) / len(quiz_rows),
-        2,
-    )
-    v2 = _learning_diagnosis_v2_fields(
-        student, overall_avg, chapter_mastery, quiz_rows, strong_chapters, weak_chapters,
-    )
-
-    return Response({
-        'full_name': student.full_name,
-        'has_data': True,
-        'learning_health_score': v2['learning_health_score'],
-        'health_status': v2['health_status'],
-        'attention_required': v2['attention_required'],
-        'learning_trend': v2['learning_trend'],
-        'overall': {
-            'total_attempted_quizzes': len(quiz_rows),
-            'overall_average_percentage': overall_avg,
-            'strong_chapters_count': len(strong_chapters),
-            'improving_chapters_count': len(improving_chapters),
-            'weak_chapters_count': len(weak_chapters),
-        },
-        'chapter_mastery': chapter_mastery,
-        'strong_chapters': strong_chapters,
-        'improving_chapters': improving_chapters,
-        'weak_chapters': weak_chapters,
-        'low_score_quizzes': [
-            {**q, 'practice_path': f"/student/attempt-quiz/{q['quiz_id']}"}
-            for q in low_score_quizzes
-        ],
-        'recommended_practice': recommended_practice,
-        'parent_friendly_summary': v2['parent_friendly_summary'],
-    })
+    return Response(build_learning_diagnosis(request.user))
 
 
 @api_view(['GET'])
@@ -2483,6 +2305,278 @@ def _serialize_student_task_progress(student, task_quizzes, attempts_map, quiz_t
         "completed_count": completed_count,
         "total_quizzes": total_quizzes,
     }
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_dashboard_summary(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    students_count = User.objects.filter(school=school, role='student').count()
+    teachers_count = User.objects.filter(school=school, role='teacher').count()
+    total_users = students_count + teachers_count
+
+    max_students = school.max_students
+    used_students = students_count
+    remaining_students = (
+        None if max_students is None else max(0, max_students - used_students)
+    )
+
+    subscription_active = school.is_subscription_active
+    roster_uploaded = students_count >= 1 or teachers_count >= 1
+    ready = subscription_active and roster_uploaded
+
+    return Response({
+        'school': {
+            'id': school.id,
+            'name': school.name,
+            'city': school.city,
+            'province': school.province,
+            'plan_tier': school.plan_tier,
+            'billing_cycle': school.billing_cycle,
+            'account_status': school.account_status,
+            'subscription_expiry': (
+                school.subscription_expiry.strftime('%Y-%m-%d')
+                if school.subscription_expiry else None
+            ),
+        },
+        'counts': {
+            'students': students_count,
+            'teachers': teachers_count,
+            'total_users': total_users,
+        },
+        'capacity': {
+            'max_students': max_students,
+            'used_students': used_students,
+            'remaining_students': remaining_students,
+        },
+        'onboarding': {
+            'school_created': True,
+            'subscription_active': subscription_active,
+            'roster_uploaded': roster_uploaded,
+            'ready': ready,
+        },
+    }, status=200)
+
+
+def _serialize_school_roster_user(user):
+    return {
+        'id': user.id,
+        'username': user.username,
+        'full_name': user.full_name or '',
+        'email': user.email or '',
+        'grade': user.grade.name if user.grade else None,
+        'account_status': user.account_status,
+    }
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_users(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    search = (request.query_params.get('search') or '').strip()
+    teachers_qs = User.objects.filter(school=school, role='teacher').select_related('grade')
+    students_qs = User.objects.filter(school=school, role='student').select_related('grade')
+
+    if search:
+        search_filter = (
+            Q(full_name__icontains=search)
+            | Q(username__icontains=search)
+            | Q(email__icontains=search)
+        )
+        teachers_qs = teachers_qs.filter(search_filter)
+        students_qs = students_qs.filter(search_filter)
+
+    teachers = [_serialize_school_roster_user(u) for u in teachers_qs.order_by('full_name', 'username')]
+    students = [_serialize_school_roster_user(u) for u in students_qs.order_by('full_name', 'username')]
+
+    return Response({
+        'teachers': teachers,
+        'students': students,
+        'counts': {
+            'teachers': len(teachers),
+            'students': len(students),
+            'total_users': len(teachers) + len(students),
+        },
+    }, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_roster_template(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    if not user.school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    try:
+        template_path = get_roster_template_path()
+    except FileNotFoundError:
+        raise Http404('Roster template not found.')
+
+    return FileResponse(
+        open(template_path, 'rb'),
+        as_attachment=True,
+        filename='student_bulk_upload_template.xlsx',
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+@parser_classes([MultiPartParser, FormParser])
+def school_upload_roster(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    upload = request.FILES.get('file') or request.FILES.get('excel_file')
+    if not upload:
+        return Response({'error': 'Excel file is required.'}, status=400)
+
+    result = import_roster_from_file(
+        upload,
+        school=school,
+        allowed_roles={'student', 'teacher'},
+    )
+
+    return Response({
+        'uploaded': result['uploaded'],
+        'skipped': result['skipped'],
+        'errors': result['errors'],
+        'message': (
+            f"Imported {result['uploaded']} user(s). "
+            f"Skipped {result['skipped']} existing username(s)."
+        ),
+        'onboarding': {
+            'roster_uploaded': school_has_roster(school),
+            'ready': school.is_subscription_active and school_has_roster(school),
+        },
+    }, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_analytics_summary(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    return Response(build_school_analytics_summary(school), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_student_summary(request, username):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    student = get_school_student(school, username)
+    return Response(build_school_student_summary(student), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_student_quiz_history(request, username):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    student = get_school_student(school, username)
+    return Response(build_student_quiz_history(student), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_student_learning_diagnosis(request, username):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    student = get_school_student(school, username)
+    return Response(build_learning_diagnosis(student), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_teacher_analytics(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    return Response(build_school_teacher_analytics(school), status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_teacher_summary(request, username):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    teacher = get_school_teacher(school, username)
+    payload = build_school_teacher_summary(teacher, school)
+    if not payload:
+        return Response({'error': 'Teacher not found in this school.'}, status=404)
+    return Response(payload, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_task_monitoring(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    return Response(build_school_task_monitoring(school), status=200)
 
 
 @api_view(['GET'])

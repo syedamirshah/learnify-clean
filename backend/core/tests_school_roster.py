@@ -1,0 +1,193 @@
+import io
+from datetime import timedelta
+
+import openpyxl
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
+from django.utils import timezone
+from rest_framework.test import APIClient
+
+from core.models import Grade, School
+
+User = get_user_model()
+
+ROSTER_HEADERS = [
+    "username",
+    "full_name",
+    "language_used_at_home",
+    "email",
+    "password",
+    "role",
+    "gender",
+    "schooling_status",
+    "grade",
+    "school_name",
+    "city",
+    "province",
+    "subscription_plan",
+]
+
+
+def build_roster_file(rows):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.append(ROSTER_HEADERS)
+    for row in rows:
+        sheet.append(row)
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    return SimpleUploadedFile(
+        "roster.xlsx",
+        buffer.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+class SchoolRosterApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.grade = Grade.objects.create(name="Grade 2")
+        self.school = School.objects.create(
+            name="Beaconhouse Quetta",
+            city="Quetta",
+            province="Balochistan",
+            contact_email="principal@beaconhouse.test",
+            plan_tier="small",
+            max_students=200,
+            account_status="active",
+            subscription_expiry=timezone.now().date() + timedelta(days=30),
+            onboarding_status="paid",
+        )
+        self.other_school = School.objects.create(
+            name="Other School",
+            city="Lahore",
+            province="Punjab",
+            contact_email="other@school.test",
+            plan_tier="small",
+            account_status="active",
+            subscription_expiry=timezone.now().date() + timedelta(days=30),
+        )
+        self.school_admin = User.objects.create_user(
+            username="schooladmin_roster",
+            password="testpass123",
+            role="school_admin",
+            school=self.school,
+        )
+        self.teacher = User.objects.create_user(
+            username="teacher_roster",
+            password="testpass123",
+            role="teacher",
+            school=self.school,
+            full_name="Teacher One",
+        )
+        self.student = User.objects.create_user(
+            username="student_roster",
+            password="testpass123",
+            role="student",
+            school=self.school,
+            grade=self.grade,
+            full_name="Student One",
+        )
+        User.objects.create_user(
+            username="other_teacher",
+            password="testpass123",
+            role="teacher",
+            school=self.other_school,
+            full_name="Outside Teacher",
+        )
+
+    def test_school_admin_sees_only_own_school_users(self):
+        self.client.force_authenticate(user=self.school_admin)
+        response = self.client.get("/api/school/users/")
+        self.assertEqual(response.status_code, 200)
+
+        teacher_usernames = [item["username"] for item in response.data["teachers"]]
+        student_usernames = [item["username"] for item in response.data["students"]]
+
+        self.assertIn("teacher_roster", teacher_usernames)
+        self.assertIn("student_roster", student_usernames)
+        self.assertNotIn("other_teacher", teacher_usernames)
+
+    def test_upload_assigns_imported_users_to_school(self):
+        self.client.force_authenticate(user=self.school_admin)
+        upload = build_roster_file([
+            [
+                "imported_student",
+                "Imported Student",
+                "Urdu",
+                "imported@school.test",
+                "pass1234",
+                "student",
+                "male",
+                "Private school",
+                "Grade 2",
+                "Ignored School Name",
+                "Ignored City",
+                "Punjab",
+                "monthly",
+            ],
+            [
+                "imported_teacher",
+                "Imported Teacher",
+                "Urdu",
+                "teacher@school.test",
+                "pass1234",
+                "teacher",
+                "female",
+                "Private school",
+                "Grade 2",
+                "Ignored School Name",
+                "Ignored City",
+                "Punjab",
+                "monthly",
+            ],
+        ])
+
+        response = self.client.post("/api/school/upload-roster/", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["uploaded"], 2)
+
+        imported_student = User.objects.get(username="imported_student")
+        imported_teacher = User.objects.get(username="imported_teacher")
+        self.assertEqual(imported_student.school_id, self.school.id)
+        self.assertEqual(imported_teacher.school_id, self.school.id)
+        self.assertEqual(imported_student.school_name, self.school.name)
+        self.assertEqual(imported_student.city, self.school.city)
+        self.assertEqual(imported_student.province, self.school.province)
+
+    def test_teacher_student_counts_correct(self):
+        self.client.force_authenticate(user=self.school_admin)
+        response = self.client.get("/api/school/users/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["counts"]["teachers"], 1)
+        self.assertEqual(response.data["counts"]["students"], 1)
+        self.assertEqual(response.data["counts"]["total_users"], 2)
+
+    def test_non_school_admin_blocked(self):
+        self.client.force_authenticate(user=self.teacher)
+        self.assertEqual(self.client.get("/api/school/users/").status_code, 403)
+        self.assertEqual(self.client.get("/api/school/template/").status_code, 403)
+
+        upload = build_roster_file([
+            [
+                "blocked_student",
+                "Blocked Student",
+                "Urdu",
+                "blocked@school.test",
+                "pass1234",
+                "student",
+                "male",
+                "Private school",
+                "Grade 2",
+                "Ignored",
+                "Ignored",
+                "Punjab",
+                "monthly",
+            ],
+        ])
+        self.assertEqual(
+            self.client.post("/api/school/upload-roster/", {"file": upload}, format="multipart").status_code,
+            403,
+        )

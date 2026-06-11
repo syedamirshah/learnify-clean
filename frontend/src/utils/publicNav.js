@@ -4,6 +4,18 @@
  */
 export function buildPublicNavItems(role, options = {}) {
   const { includePaymentInSignup = false, paymentChooseUrl = "" } = options;
+
+  if (role === "school_admin") {
+    return [
+      { key: "home", label: "Home", href: "/school/dashboard" },
+      { key: "users", label: "Users", href: "/school/users" },
+      { key: "teachers", label: "Teachers", href: "/school/teachers" },
+      { key: "task-monitoring", label: "Task Monitoring", href: "/school/tasks" },
+      { key: "upload-roster", label: "Upload Roster", href: "/school/upload" },
+      { key: "help-center", label: "Help Center", href: "/help-center" },
+    ];
+  }
+
   const isStudentOrTeacher = role === "student" || role === "teacher";
   const isSchoolAdmin = role === "school_admin";
 

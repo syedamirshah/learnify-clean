@@ -58,6 +58,17 @@ from .views import (
 )
 
 from core.views import (
+    school_dashboard_summary,
+    school_analytics_summary,
+    school_student_summary,
+    school_student_quiz_history,
+    school_student_learning_diagnosis,
+    school_teacher_analytics,
+    school_teacher_summary,
+    school_task_monitoring,
+    school_users,
+    school_roster_template,
+    school_upload_roster,
     teacher_dashboard_summary,
     teacher_quizzes_by_grade,
     teacher_create_task,
@@ -170,6 +181,17 @@ urlpatterns = [
     # ---------- Default redirect ----------
     path('', lambda request: redirect('/admin/', permanent=False)),
 
+    path('api/school/dashboard-summary/', school_dashboard_summary, name='school-dashboard-summary'),
+    path('api/school/analytics-summary/', school_analytics_summary, name='school-analytics-summary'),
+    path('api/school/student/<str:username>/summary/', school_student_summary, name='school-student-summary'),
+    path('api/school/student/<str:username>/quiz-history/', school_student_quiz_history, name='school-student-quiz-history'),
+    path('api/school/student/<str:username>/learning-diagnosis/', school_student_learning_diagnosis, name='school-student-learning-diagnosis'),
+    path('api/school/teacher-analytics/', school_teacher_analytics, name='school-teacher-analytics'),
+    path('api/school/teacher/<str:username>/summary/', school_teacher_summary, name='school-teacher-summary'),
+    path('api/school/task-monitoring/', school_task_monitoring, name='school-task-monitoring'),
+    path('api/school/users/', school_users, name='school-users'),
+    path('api/school/template/', school_roster_template, name='school-roster-template'),
+    path('api/school/upload-roster/', school_upload_roster, name='school-upload-roster'),
     path('api/teacher/dashboard-summary/', teacher_dashboard_summary, name='teacher-dashboard-summary'),
     path('api/teacher/quizzes/', teacher_quizzes_by_grade, name='teacher-quizzes-by-grade'),
     path('api/teacher/tasks/create/', teacher_create_task, name='teacher-create-task'),
