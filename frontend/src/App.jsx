@@ -7,6 +7,7 @@ import HonorBoard from './pages/public/HonorBoard';
 import LandingPage from './pages/public/LandingPage';
 import HomePage from './pages/public/HomePage';
 import SchoolOnboarding from './pages/public/SchoolOnboarding';
+import SchoolSignup from './pages/public/SchoolSignup';
 import WhyJoin from './pages/public/WhyJoin';
 import SignupPage from '@/pages/public/SignupPage';
 import EditProfile from './pages/account/EditProfile';
@@ -42,6 +43,7 @@ import PrivacyPolicy from "./pages/public/PrivacyPolicy";
 import DeleteAccount from "./pages/public/DeleteAccount";
 import TopicIndexPage from "./pages/public/TopicIndexPage";
 import WeeklyPlanPage from "./pages/public/WeeklyPlanPage";
+import SchoolProtectedRoute from "./components/SchoolProtectedRoute";
 
 
 
@@ -63,20 +65,21 @@ function App() {
           <Route path="/honor-board" element={<HonorBoard />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/school-onboarding" element={<SchoolOnboarding />} />
+          <Route path="/school-signup" element={<SchoolSignup />} />
           <Route path="/learn" element={<LandingPage />} />
           <Route path="/why-join" element={<WhyJoin />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />
-          <Route path="/school/dashboard" element={<SchoolDashboard />} />
-          <Route path="/school/users" element={<SchoolUsers />} />
-          <Route path="/school/upload" element={<SchoolUploadRoster />} />
-          <Route path="/school/analytics" element={<SchoolAnalytics />} />
-          <Route path="/school/teachers" element={<SchoolTeacherAnalytics />} />
-          <Route path="/school/teacher/:username" element={<SchoolTeacherSummary />} />
-          <Route path="/school/tasks" element={<SchoolTaskMonitoring />} />
-          <Route path="/school/student/:username/quiz-history" element={<SchoolStudentQuizHistory />} />
-          <Route path="/school/student/:username/learning-diagnosis" element={<SchoolStudentLearningDiagnosis />} />
-          <Route path="/school/student/:username" element={<SchoolStudentSummary />} />
+          <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
+          <Route path="/school/users" element={<SchoolProtectedRoute><SchoolUsers /></SchoolProtectedRoute>} />
+          <Route path="/school/upload" element={<SchoolProtectedRoute><SchoolUploadRoster /></SchoolProtectedRoute>} />
+          <Route path="/school/analytics" element={<SchoolProtectedRoute><SchoolAnalytics /></SchoolProtectedRoute>} />
+          <Route path="/school/teachers" element={<SchoolProtectedRoute><SchoolTeacherAnalytics /></SchoolProtectedRoute>} />
+          <Route path="/school/teacher/:username" element={<SchoolProtectedRoute><SchoolTeacherSummary /></SchoolProtectedRoute>} />
+          <Route path="/school/tasks" element={<SchoolProtectedRoute><SchoolTaskMonitoring /></SchoolProtectedRoute>} />
+          <Route path="/school/student/:username/quiz-history" element={<SchoolProtectedRoute><SchoolStudentQuizHistory /></SchoolProtectedRoute>} />
+          <Route path="/school/student/:username/learning-diagnosis" element={<SchoolProtectedRoute><SchoolStudentLearningDiagnosis /></SchoolProtectedRoute>} />
+          <Route path="/school/student/:username" element={<SchoolProtectedRoute><SchoolStudentSummary /></SchoolProtectedRoute>} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/assessment" element={<TeacherAssessment />} />
           <Route path="/teacher/student/:username/quiz-history" element={<StudentQuizHistory />} />

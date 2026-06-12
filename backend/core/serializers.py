@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (
     Quiz, QuizQuestionAssignment, Topic, Week, TopicProgress, WeekProgress, StudentQuizAttempt
 )
-from .models import User
+from .models import User, School, PROVINCES, SCHOOL_PLAN_TIERS, SCHOOL_BILLING_CYCLES
+from django.db import transaction
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
@@ -294,3 +295,106 @@ class WeekLandingSerializer(serializers.ModelSerializer):
         if not user or not getattr(user, "is_authenticated", False):
             return None
         return len(self._prefetched_week_links(obj))
+
+
+class SchoolSignupSerializer(serializers.Serializer):
+    school_name = serializers.CharField(max_length=200)
+    city = serializers.CharField(max_length=100)
+    province = serializers.CharField(max_length=50)
+    contact_email = serializers.EmailField()
+    contact_phone = serializers.CharField(required=False, allow_blank=True, default="")
+    principal_full_name = serializers.CharField(max_length=255)
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+    plan_tier = serializers.ChoiceField(choices=[tier for tier, _ in SCHOOL_PLAN_TIERS])
+    billing_cycle = serializers.ChoiceField(choices=[cycle for cycle, _ in SCHOOL_BILLING_CYCLES])
+
+    def validate_username(self, value):
+        username = value.strip()
+        if not username:
+            raise serializers.ValidationError("Username is required.")
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return username
+
+    def validate_province(self, value):
+        valid_provinces = {choice[0] for choice in PROVINCES}
+        if value not in valid_provinces:
+            raise serializers.ValidationError("Invalid province.")
+        return value
+
+    def validate_plan_tier(self, value):
+        valid_tiers = {tier for tier, _ in SCHOOL_PLAN_TIERS}
+        if value not in valid_tiers:
+            raise serializers.ValidationError("Invalid plan tier.")
+        return value
+
+    def validate_billing_cycle(self, value):
+        valid_cycles = {cycle for cycle, _ in SCHOOL_BILLING_CYCLES}
+        if value not in valid_cycles:
+            raise serializers.ValidationError("Invalid billing cycle.")
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({
+                "confirm_password": ["Passwords do not match."],
+            })
+
+        school_name = attrs["school_name"].strip()
+        city = attrs["city"].strip()
+        if not school_name:
+            raise serializers.ValidationError({"school_name": ["School name is required."]})
+        if not city:
+            raise serializers.ValidationError({"city": ["City is required."]})
+
+        if School.objects.filter(name__iexact=school_name, city__iexact=city).exists():
+            raise serializers.ValidationError({
+                "school_name": ["A school with this name already exists in this city."],
+            })
+
+        attrs["school_name"] = school_name
+        attrs["city"] = city
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        from django.db import IntegrityError
+
+        password = validated_data.pop("password")
+        validated_data.pop("confirm_password")
+
+        try:
+            school = School.objects.create(
+                name=validated_data["school_name"],
+                city=validated_data["city"],
+                province=validated_data["province"],
+                contact_email=validated_data["contact_email"],
+                contact_phone=validated_data.get("contact_phone") or "",
+                plan_tier=validated_data["plan_tier"],
+                billing_cycle=validated_data["billing_cycle"],
+                account_status="pending_payment",
+                onboarding_status="registered",
+            )
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "school_name": ["A school with this name already exists in this city."],
+            })
+
+        user = User(
+            username=validated_data["username"],
+            full_name=validated_data["principal_full_name"],
+            email=validated_data["contact_email"],
+            role="school_admin",
+            school=school,
+            school_name=school.name,
+            city=school.city,
+            province=school.province,
+            account_status="inactive",
+            is_active=True,
+        )
+        user.set_password(password)
+        user.save()
+
+        return {"school": school, "user": user}

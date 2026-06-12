@@ -1,5 +1,8 @@
 /** Redirect unpaid/expired students and teachers to Easypay choose page. */
-export function needsPaymentRedirect(accountStatus) {
+export function needsPaymentRedirect(accountStatus, role) {
+  if (role === "school_admin") {
+    return false;
+  }
   return accountStatus === "expired" || accountStatus === "inactive";
 }
 
@@ -33,4 +36,13 @@ export function buildPaymentChooseUrl(apiBase, username) {
     return `${base}?username=${encodeURIComponent(resolved)}`;
   }
   return base;
+}
+
+export function buildSchoolPaymentChooseUrl(apiBase, schoolId, username) {
+  const base = `${(apiBase || "").replace(/\/?$/, "/")}payments/school/choose/`;
+  const params = new URLSearchParams({
+    school_id: String(schoolId),
+    username: (username || readStoredUsername()).trim(),
+  });
+  return `${base}?${params.toString()}`;
 }

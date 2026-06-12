@@ -9,6 +9,7 @@ export function buildPublicNavItems(role, options = {}) {
     return [
       { key: "home", label: "Home", href: "/school/dashboard" },
       { key: "users", label: "Users", href: "/school/users" },
+      { key: "analytics", label: "Analytics", href: "/school/analytics" },
       { key: "teachers", label: "Teachers", href: "/school/teachers" },
       { key: "task-monitoring", label: "Task Monitoring", href: "/school/tasks" },
       { key: "upload-roster", label: "Upload Roster", href: "/school/upload" },

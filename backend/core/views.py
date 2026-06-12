@@ -49,7 +49,7 @@ from django.contrib.auth import get_user_model
 from .serializers import UserRegistrationSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
-from .serializers import PublicSignupSerializer
+from .serializers import PublicSignupSerializer, SchoolSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 from .serializers import EditProfileSerializer, ChangePasswordSerializer
@@ -64,6 +64,7 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 from django.http import FileResponse, Http404
 from core.models import TeacherTask, TeacherTaskQuiz
+from core.teacher_scoping import teacher_can_access_student, teacher_students_queryset
 from core.roster_upload import (
     get_roster_template_path,
     import_roster_from_file,
@@ -1752,6 +1753,34 @@ def public_register_user(request):
         status=status.HTTP_400_BAD_REQUEST,
     )
 
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def school_signup(request):
+    serializer = SchoolSignupSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(
+            {"success": False, "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    result = serializer.save()
+    school = result["school"]
+    user = result["user"]
+
+    return Response(
+        {
+            "success": True,
+            "message": "School account created. Payment activation is coming next.",
+            "username": user.username,
+            "school_id": school.id,
+            "school_account_status": school.account_status,
+            "user_account_status": user.account_status,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def subscription_info(request):
@@ -1901,27 +1930,10 @@ def teacher_student_list(request):
     if user.role != 'teacher':
         return Response({'error': 'Unauthorized'}, status=403)
 
-    # Normalize teacher fields
-    teacher_city = (user.city or "").strip()
-    teacher_school = (user.school_name or "").strip()
-
-    qs = User.objects.filter(role='student')
-
-    # Only filter by fields that are actually present on the teacher
-    if teacher_city:
-        qs = qs.filter(city__iexact=teacher_city)
-    else:
-        # if teacher has no city, return empty list to be explicit
-        return Response([], status=200)
-
-    if teacher_school:
-        qs = qs.filter(school_name__iexact=teacher_school)
-
-    # Optional: only active accounts
-    # qs = qs.filter(is_active=True, account_status='active')
+    qs = teacher_students_queryset(user)
 
     student_data = []
-    for s in qs.exclude(city__isnull=True).exclude(city__exact=""):
+    for s in qs.select_related("grade"):
         student_data.append({
             'id': s.id,
             'full_name': s.full_name,
@@ -1948,13 +1960,7 @@ def teacher_student_quiz_history_view(request, username):
     except User.DoesNotExist:
         return Response({'error': 'Student not found.'}, status=404)
 
-    # Normalize + case-insensitive compare for authorization
-    same_city = ((student.city or "").strip().casefold()
-                 == (request.user.city or "").strip().casefold())
-    same_school = ((student.school_name or "").strip().casefold()
-                   == (request.user.school_name or "").strip().casefold())
-
-    if not same_city or not same_school:
+    if not teacher_can_access_student(request.user, student):
         return Response({'error': "You aren't authorized to view this student's data."}, status=403)
 
     return Response(build_student_quiz_history(student))
@@ -2196,18 +2202,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 # ================================
 
 def _teacher_scoped_students_queryset(teacher):
-    teacher_city = (teacher.city or "").strip()
-    teacher_school = (teacher.school_name or "").strip()
-    if not teacher_city:
-        return User.objects.none()
-    qs = User.objects.filter(role="student", city__iexact=teacher_city)
-    if teacher_school:
-        qs = qs.filter(school_name__iexact=teacher_school)
-    return qs.exclude(city__isnull=True).exclude(city__exact="")
+    return teacher_students_queryset(teacher)
 
 
 def _task_assigned_students(task, teacher):
-    scoped = _teacher_scoped_students_queryset(teacher).select_related("grade")
+    scoped = teacher_students_queryset(teacher).select_related("grade")
     if task.target_students.exists():
         student_ids = task.target_students.values_list("id", flat=True)
         return list(scoped.filter(id__in=student_ids).order_by("full_name", "username"))
@@ -2458,6 +2457,10 @@ def school_upload_roster(request):
         school=school,
         allowed_roles={'student', 'teacher'},
     )
+
+    if result.get('rejected'):
+        error_message = result['errors'][0].get('error', 'Roster upload rejected.')
+        return Response({'error': error_message, 'errors': result['errors']}, status=400)
 
     return Response({
         'uploaded': result['uploaded'],
@@ -2838,35 +2841,26 @@ def teacher_create_task(request):
     # Create task
     task = TeacherTask.objects.create(
         teacher=user,
+        school_id=user.school_id,
         message=message,
         due_date=due_date,
         target_grade_id=target_grade_id if target_grade_id else None,
         is_active=True
     )
 
-    # If selected students were provided: validate teacher scope (school + city)
+    # If selected students were provided: validate teacher scope
     if target_students:
         if not isinstance(target_students, list):
             task.delete()
             return Response({'error': 'target_students must be a list of usernames.'}, status=400)
 
-        teacher_city = (user.city or "").strip()
-        teacher_school = (user.school_name or "").strip()
-
-        qs = User.objects.filter(role='student', username__in=target_students)
-
-        # enforce city
-        if teacher_city:
-            qs = qs.filter(city__iexact=teacher_city)
-        else:
+        if user.school_id is None and not (user.city or "").strip():
             task.delete()
             return Response({'error': 'Teacher city is missing; cannot assign student-specific tasks.'}, status=400)
 
-        # enforce school (only if teacher has it)
-        if teacher_school:
-            qs = qs.filter(school_name__iexact=teacher_school)
-
-        allowed_students = list(qs)
+        allowed_students = list(
+            teacher_students_queryset(user).filter(username__in=target_students)
+        )
 
         if not allowed_students:
             task.delete()
@@ -2974,10 +2968,11 @@ def student_tasks_list(request):
 
     student_grade = user.grade  # can be None
 
-    # Base: active tasks
-    qs = TeacherTask.objects.filter(is_active=True)
+    if user.school_id:
+        qs = TeacherTask.objects.filter(is_active=True, school_id=user.school_id)
+    else:
+        qs = TeacherTask.objects.filter(is_active=True, school_id__isnull=True)
 
-    # Build safe filters
     filters = Q(target_students=user)
     if student_grade is not None:
         filters |= Q(target_grade=student_grade)

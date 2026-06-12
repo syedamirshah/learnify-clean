@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.text import slugify
 from ckeditor_uploader.fields import RichTextUploadingField
@@ -141,6 +142,13 @@ class School(models.Model):
 
     class Meta:
         ordering = ['name', 'city']
+        constraints = [
+            models.UniqueConstraint(
+                Lower('name'),
+                Lower('city'),
+                name='uniq_school_name_city_ci',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.city})"
@@ -522,6 +530,13 @@ class TeacherTask(models.Model):
         on_delete=models.CASCADE,
         limit_choices_to={'role': 'teacher'},
         related_name='created_tasks'
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='teacher_tasks',
     )
 
     message = models.TextField()

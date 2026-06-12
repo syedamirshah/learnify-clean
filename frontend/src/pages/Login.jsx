@@ -50,7 +50,7 @@ const Login = () => {
 
       console.log("üîê Token Login ‚Üí Role:", roleFromToken, "Status:", statusFromToken);
 
-      if (needsPaymentRedirect(statusFromToken)) {
+      if (needsPaymentRedirect(statusFromToken, roleFromToken)) {
         alert(`${paymentRedirectMessage(statusFromToken)} Redirecting to payment page...`);
         setTimeout(() => {
           window.location.href = buildPaymentChooseUrl(API, username);
@@ -81,7 +81,7 @@ const Login = () => {
         return;
       }
 
-      if (needsPaymentRedirect(status)) {
+      if (needsPaymentRedirect(status, role)) {
         alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
         setTimeout(() => {
           window.location.href = buildPaymentChooseUrl(API, username);

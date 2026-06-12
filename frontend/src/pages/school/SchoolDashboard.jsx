@@ -5,6 +5,7 @@ import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import SchoolAnalyticsSections from "../../components/school/SchoolAnalyticsSections";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import { buildSchoolPaymentChooseUrl } from "../../utils/paymentRedirect";
 
 function MetricCard({ label, value, hint }) {
   return (
@@ -108,6 +109,17 @@ export default function SchoolDashboard() {
   const capacity = data?.capacity || {};
   const onboarding = data?.onboarding || {};
 
+  const username =
+    (typeof window !== "undefined" && localStorage.getItem("username")) || "";
+  const schoolPaymentUrl =
+    school?.id && username
+      ? buildSchoolPaymentChooseUrl(import.meta.env.VITE_API_BASE_URL, school.id, username)
+      : "";
+  const needsSchoolPayment =
+    school.account_status === "pending_payment" ||
+    school.account_status === "expired" ||
+    !onboarding.subscription_active;
+
   const formatSeats = (value) =>
     value === null || value === undefined ? "Unlimited" : String(value);
 
@@ -194,6 +206,42 @@ export default function SchoolDashboard() {
               </section>
 
               <SchoolAnalyticsSections data={analytics} />
+
+              <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-black text-emerald-950">School Subscription</h2>
+                {needsSchoolPayment ? (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-950">
+                      {school.account_status === "expired"
+                        ? "Your school subscription has expired."
+                        : "Pending Payment — complete payment to activate your school license."}
+                    </p>
+                    {schoolPaymentUrl ? (
+                      <a
+                        href={schoolPaymentUrl}
+                        className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+                      >
+                        {school.account_status === "expired" ? "Renew Now" : "Complete Payment"}
+                      </a>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                    <p className="text-sm text-emerald-900">
+                      Subscription valid until{" "}
+                      <span className="font-bold">{school.subscription_expiry || "—"}</span>
+                    </p>
+                    {schoolPaymentUrl ? (
+                      <a
+                        href={schoolPaymentUrl}
+                        className="mt-4 inline-flex rounded-2xl border border-emerald-300 bg-white px-5 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"
+                      >
+                        Renew Subscription
+                      </a>
+                    ) : null}
+                  </div>
+                )}
+              </section>
 
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">

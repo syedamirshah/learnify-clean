@@ -6,6 +6,7 @@ app_name = "payments"
 urlpatterns = [
     # --- Public choose page (token or manual username) ---
     path("choose/", views.choose_plan, name="choose"),
+    path("school/choose/", views.school_choose, name="school_choose"),
 
     # --- Authenticated initiation (if you use it later) ---
     path("initiate/", views.initiate, name="initiate"),

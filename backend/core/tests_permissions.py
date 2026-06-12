@@ -146,12 +146,13 @@ class HasActiveSubscriptionTests(SimpleTestCase):
             )
         )
 
-    def test_school_admin_expired_school_blocked(self):
+    def test_school_admin_expired_school_still_allowed_for_dashboard(self):
+        """School admins may access school APIs to complete or renew payment."""
         school = self._school(
             account_status="expired",
             subscription_expiry=timezone.now().date() - timedelta(days=1),
         )
-        self.assertFalse(
+        self.assertTrue(
             has_active_subscription(
                 self._user(
                     role="school_admin",

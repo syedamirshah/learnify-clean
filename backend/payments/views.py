@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 from datetime import datetime
 from typing import Any
@@ -20,6 +21,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .models import Payment
+from .school_billing import (
+    activate_individual_subscription_from_payment,
+    activate_school_license_from_payment,
+    build_school_payment_metadata,
+    school_plan_amount,
+    validate_school_payment_access,
+)
 from .utils import aes_ecb_pkcs5_base64
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -39,6 +47,8 @@ EP_INDEX   = getattr(settings, "EASYPAY_INDEX_PATH",   "/easypay/Index.jsf")
 EP_CONFIRM = getattr(settings, "EASYPAY_CONFIRM_PATH", "/easypay/Confirm.jsf")
 EP_STORE_ID = getattr(settings, "EASYPAY_STORE_ID", "")
 EP_HASH_KEY = getattr(settings, "EASYPAY_HASH_KEY", "")  # should be exactly 16 chars
+
+logger = logging.getLogger(__name__)
 
 
 def _require_easypay_config() -> tuple[str, str, str, str]:
@@ -168,12 +178,14 @@ def easypay_start(request: HttpRequest, pk) -> HttpResponse:
 
     endpoint = base + index_path
 
-    # Save for debugging/trace
-    p.request_payload = {
+    # Save for debugging/trace (preserve business metadata e.g. school payment_type)
+    existing_meta = dict(p.request_payload or {})
+    existing_meta.update({
         "_endpoint": endpoint,
         "_canonical": canonical,
         "outbound": fields,
-    }
+    })
+    p.request_payload = existing_meta
     p.save(update_fields=["request_payload"])
 
     return render(request, "payments/post_form.html", {"endpoint": endpoint, "fields": fields})
@@ -333,38 +345,20 @@ def easypay_status_handler(request: HttpRequest) -> HttpResponse:
                     looks_success = True
 
             if looks_success:
-                # Mark success FIRST so repeat hits short-circuit next time.
-                p.mark_success(provider_txn_id=p.provider_txn_id)
-
-                # Activate/extend subscription (once)
                 try:
                     meta = p.request_payload or {}
-                    months = int(meta.get("selected_months") or getattr(p, "months", 1) or 1)
-                    plan = (meta.get("selected_plan") or getattr(p, "plan", "") or "").lower()
-
-                    user = p.user
-                    today = timezone.now().date()
-                    current_expiry = getattr(user, "subscription_expiry", None)
-                    start = current_expiry if (current_expiry and current_expiry > today) else today
-                    new_expiry = start + timedelta(days=30 * months)
-
-                    if hasattr(user, "subscription_plan") and plan:
-                        user.subscription_plan = plan
-                    if hasattr(user, "subscription_expiry"):
-                        user.subscription_expiry = new_expiry
-                    if hasattr(user, "account_status"):
-                        user.account_status = "active"
-                    user.is_active = True
-                    if hasattr(user, "renewal_requested"):
-                        user.renewal_requested = False
-                    if hasattr(user, "renewal_plan_requested"):
-                        user.renewal_plan_requested = None
-                    user.save()
+                    if meta.get("payment_type") == "school":
+                        activate_school_license_from_payment(p)
+                    else:
+                        activate_individual_subscription_from_payment(p)
+                    p.mark_success(provider_txn_id=p.provider_txn_id)
+                    outcome = "success"
                 except Exception:
-                    # Don't block the redirect even if user update fails
-                    p.save()
-
-                outcome = "success"
+                    logger.exception(
+                        "Subscription activation failed for payment %s", p.id
+                    )
+                    p.mark_failed()
+                    outcome = "failed"
 
             elif status_val in {"failed", "declined", "rejected"}:
                 p.mark_failed()
@@ -612,3 +606,122 @@ def choose_plan(request):
         # --- 5) Default GET render (initial load or any unhandled path) ---
     # This ensures the view always returns an HttpResponse object
     return render(request, "payments/choose.html", ctx)
+
+
+def school_choose(request: HttpRequest) -> HttpResponse:
+    """
+    School payment entry: validates school + school_admin, shows plan summary,
+    creates Payment with school metadata, then redirects to Easypay.
+    """
+    ctx: dict[str, Any] = {
+        "school": None,
+        "user_obj": None,
+        "amount": None,
+        "error": "",
+    }
+
+    school_id = (request.GET.get("school_id") or request.POST.get("school_id") or "").strip()
+    username = (request.GET.get("username") or request.POST.get("username") or "").strip()
+    token = (request.GET.get("token") or request.POST.get("token") or "").strip()
+    proceed = (request.GET.get("proceed") or request.POST.get("proceed") or "").strip() == "1"
+
+    if username and school_id and not token and not request.user.is_authenticated and not proceed:
+        try:
+            school, user_obj = validate_school_payment_access(school_id, username)
+            new_token = sign_uid(user_obj.username)
+            return redirect(
+                f"{request.path}?school_id={school.id}&username={user_obj.username}&token={new_token}"
+            )
+        except ValueError as exc:
+            ctx["error"] = str(exc)
+            return render(request, "payments/school_choose.html", ctx)
+
+    user_obj = None
+    school = None
+
+    if request.user.is_authenticated and getattr(request.user, "role", None) == "school_admin":
+        user_obj = request.user
+        school = getattr(user_obj, "school", None)
+        if school and school_id and str(school.id) != str(school_id):
+            ctx["error"] = "School ID does not match your account."
+            return render(request, "payments/school_choose.html", ctx)
+    elif token:
+        token_username = unsign_uid(token, max_age_seconds=86400)
+        if not token_username:
+            ctx["error"] = "Token invalid or expired."
+            return render(request, "payments/school_choose.html", ctx)
+        try:
+            school, user_obj = validate_school_payment_access(school_id, token_username)
+            if username and token_username.lower() != username.lower():
+                ctx["error"] = "Username does not match the signed session."
+                return render(request, "payments/school_choose.html", ctx)
+        except ValueError as exc:
+            ctx["error"] = str(exc)
+            return render(request, "payments/school_choose.html", ctx)
+
+    if proceed:
+        authorized = False
+        if (
+            request.user.is_authenticated
+            and getattr(request.user, "role", None) == "school_admin"
+            and getattr(request.user, "school", None)
+        ):
+            try:
+                if school_id and str(request.user.school_id) != str(school_id):
+                    ctx["error"] = "School ID does not match your account."
+                    return render(request, "payments/school_choose.html", ctx)
+                validate_school_payment_access(
+                    request.user.school_id,
+                    request.user.username,
+                )
+                school = request.user.school
+                user_obj = request.user
+                authorized = True
+            except ValueError as exc:
+                ctx["error"] = str(exc)
+                return render(request, "payments/school_choose.html", ctx)
+        elif token:
+            token_username = unsign_uid(token, max_age_seconds=86400)
+            if not token_username:
+                ctx["error"] = "Token invalid or expired."
+                return render(request, "payments/school_choose.html", ctx)
+            try:
+                school, user_obj = validate_school_payment_access(school_id, token_username)
+                if username and token_username.lower() != username.lower():
+                    ctx["error"] = "Username does not match the signed session."
+                    return render(request, "payments/school_choose.html", ctx)
+                authorized = True
+            except ValueError as exc:
+                ctx["error"] = str(exc)
+                return render(request, "payments/school_choose.html", ctx)
+
+        if not authorized:
+            ctx["error"] = "Token invalid or expired. Please reopen your school payment link."
+            return render(request, "payments/school_choose.html", ctx)
+
+        amount = school_plan_amount(school.plan_tier, school.billing_cycle)
+        billing_cycle = school.billing_cycle
+        months = 1 if billing_cycle == "monthly" else 12
+        meta = build_school_payment_metadata(school)
+
+        p = Payment.objects.create(
+            user=user_obj,
+            amount=amount,
+            plan=billing_cycle,
+            months=months,
+            request_payload=meta,
+        )
+
+        out_token = token or sign_uid(user_obj.username)
+        extra = f"?token={out_token}"
+        return redirect(reverse("payments:easypay_start", args=[p.id]) + extra)
+
+    if school and user_obj:
+        try:
+            ctx["school"] = school
+            ctx["user_obj"] = user_obj
+            ctx["amount"] = school_plan_amount(school.plan_tier, school.billing_cycle)
+        except ValueError as exc:
+            ctx["error"] = str(exc)
+
+    return render(request, "payments/school_choose.html", ctx)

@@ -48,6 +48,9 @@ def has_active_subscription(user):
     if role == "teacher":
         return True
 
+    if role == "school_admin":
+        return _get_user_school(user) is not None
+
     school = _get_user_school(user)
     if school_subscription_active(school):
         return True

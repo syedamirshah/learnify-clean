@@ -165,13 +165,12 @@ export default function SchoolOnboarding() {
             >
               Download Template
             </a>
-            <button
-              type="button"
-              disabled
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-sm opacity-80"
+            <Link
+              to="/school-signup"
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700"
             >
-              School Signup (Coming Soon)
-            </button>
+              School Signup
+            </Link>
           </div>
         </div>
       </header>
@@ -191,13 +190,12 @@ export default function SchoolOnboarding() {
                 achievement from a single dashboard.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 sm:w-auto"
+                <Link
+                  to="/school-signup"
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 sm:w-auto"
                 >
-                  School Signup (Coming Soon)
-                </button>
+                  School Signup
+                </Link>
                 <a
                   href={SCHOOL_TEMPLATE_URL}
                   download
@@ -366,13 +364,12 @@ export default function SchoolOnboarding() {
               onboarding file in advance.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
-                disabled
+              <Link
+                to="/school-signup"
                 className="inline-flex rounded-2xl bg-white px-6 py-3 text-sm font-extrabold text-emerald-800"
               >
-                School Signup (Coming Soon)
-              </button>
+                School Signup
+              </Link>
               <a
                 href={SCHOOL_TEMPLATE_URL}
                 download

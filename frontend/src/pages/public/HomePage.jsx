@@ -48,7 +48,7 @@ const HomePage = () => {
       localStorage.setItem("role", roleFromToken);
       localStorage.setItem("account_status", statusFromToken);
 
-      if (needsPaymentRedirect(statusFromToken)) {
+      if (needsPaymentRedirect(statusFromToken, roleFromToken)) {
         alert(`${paymentRedirectMessage(statusFromToken)} Redirecting to payment page...`);
         setTimeout(() => {
           window.location.href = buildPaymentChooseUrl(API, username);
@@ -76,7 +76,7 @@ const HomePage = () => {
         return;
       }
 
-      if (needsPaymentRedirect(status)) {
+      if (needsPaymentRedirect(status, role)) {
         alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
         setTimeout(() => {
           window.location.href = buildPaymentChooseUrl(API, username);

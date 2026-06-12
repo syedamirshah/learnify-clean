@@ -69,6 +69,7 @@ from core.views import (
     school_users,
     school_roster_template,
     school_upload_roster,
+    school_signup,
     teacher_dashboard_summary,
     teacher_quizzes_by_grade,
     teacher_create_task,
@@ -181,6 +182,7 @@ urlpatterns = [
     # ---------- Default redirect ----------
     path('', lambda request: redirect('/admin/', permanent=False)),
 
+    path('api/school/signup/', school_signup, name='school-signup'),
     path('api/school/dashboard-summary/', school_dashboard_summary, name='school-dashboard-summary'),
     path('api/school/analytics-summary/', school_analytics_summary, name='school-analytics-summary'),
     path('api/school/student/<str:username>/summary/', school_student_summary, name='school-student-summary'),

@@ -69,6 +69,42 @@ def iter_roster_rows(sheet):
         yield row_number, dict(zip(ROSTER_COLUMNS, values))
 
 
+def count_incoming_students(sheet, *, allowed_roles=None):
+    """Count new student rows in a roster upload (excludes existing usernames)."""
+    incoming = 0
+    for _row_number, row in iter_roster_rows(sheet):
+        username = str(row["username"] or "").strip()
+        if not username:
+            continue
+        role = str(row["role"] or "").strip().lower()
+        if allowed_roles and role not in allowed_roles:
+            continue
+        if role != "student":
+            continue
+        if User.objects.filter(username=username).exists():
+            continue
+        incoming += 1
+    return incoming
+
+
+def validate_school_seat_capacity(school, sheet, *, allowed_roles=None):
+    """
+    All-or-nothing seat check before roster import.
+    Returns an error message when the plan cap would be exceeded, else None.
+    """
+    if not school or school.max_students is None:
+        return None
+
+    current_students = User.objects.filter(school=school, role="student").count()
+    incoming_students = count_incoming_students(sheet, allowed_roles=allowed_roles)
+    if current_students + incoming_students > school.max_students:
+        return (
+            f"Student limit exceeded. Your school plan allows "
+            f"{school.max_students} students."
+        )
+    return None
+
+
 def import_roster_from_file(file_obj, *, school=None, allowed_roles=None):
     workbook = openpyxl.load_workbook(file_obj)
     return import_roster_from_workbook(workbook, school=school, allowed_roles=allowed_roles)
@@ -76,6 +112,17 @@ def import_roster_from_file(file_obj, *, school=None, allowed_roles=None):
 
 def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
     sheet = workbook.active
+
+    if school:
+        seat_error = validate_school_seat_capacity(school, sheet, allowed_roles=allowed_roles)
+        if seat_error:
+            return {
+                "uploaded": 0,
+                "skipped": 0,
+                "errors": [{"error": seat_error}],
+                "rejected": True,
+            }
+
     uploaded_count = 0
     skipped_count = 0
     errors = []

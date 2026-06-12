@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 
 from core.models import StudentQuizAttempt, TeacherTask, TeacherTaskQuiz, User
+from core.teacher_scoping import teacher_students_queryset
 
 
 def _teacher_helpers():
@@ -37,9 +38,7 @@ def get_teacher_monitoring_students(teacher, school):
     if teacher.school_id != school.id:
         return User.objects.none()
 
-    helpers = _teacher_helpers()
-    scoped = helpers["teacher_scoped_students_queryset"](teacher)
-    return scoped.filter(school=school, role="student").select_related("grade")
+    return teacher_students_queryset(teacher).select_related("grade")
 
 
 def _count_task_items(task, teacher):
@@ -283,7 +282,7 @@ def build_school_teacher_summary(teacher, school):
 def build_school_task_monitoring(school):
     teacher_ids = school_teachers_queryset(school).values_list("id", flat=True)
     tasks = (
-        TeacherTask.objects.filter(teacher_id__in=teacher_ids, is_active=True)
+        TeacherTask.objects.filter(teacher_id__in=teacher_ids, school=school, is_active=True)
         .select_related("teacher")
         .prefetch_related(
             Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),

@@ -121,6 +121,7 @@ class SchoolTeacherAnalyticsApiTests(TestCase):
 
         self.task = TeacherTask.objects.create(
             teacher=self.teacher,
+            school=self.school,
             message="Complete Quiz A",
             due_date=date.today() + timedelta(days=7),
             is_active=True,
@@ -130,6 +131,7 @@ class SchoolTeacherAnalyticsApiTests(TestCase):
 
         self.other_task = TeacherTask.objects.create(
             teacher=self.other_teacher,
+            school=self.other_school,
             message="Outside school task",
             due_date=date.today() + timedelta(days=7),
             is_active=True,
