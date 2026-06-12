@@ -1,3 +1,5 @@
+import { getDefaultRouteForRole } from "./roleRoutes";
+
 /**
  * Shared top nav items for AppLayout / PublicNav / MobileDrawer.
  * Guest vs student/teacher rules stay consistent across all pages.
@@ -37,7 +39,7 @@ export function buildPublicNavItems(role, options = {}) {
     {
       key: "home",
       label: "Home",
-      href: role === "teacher" ? "/teacher/dashboard" : "/learn",
+      href: getDefaultRouteForRole(role),
     },
     ...(!isStudentOrTeacher && !isSchoolAdmin
       ? [{ key: "why-join", label: "Why Join Learnify?", href: "/why-join" }]

@@ -9,28 +9,13 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../utils/paymentRedirect";
+import { resolvePostLoginPath } from "../utils/roleRoutes";
 
 const API = `${(import.meta.env.VITE_API_BASE_URL || "").replace(/\/?$/, "/")}`;
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  const getNextPath = () => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next");
-
-      // Safety: only allow internal redirects
-      if (!next || typeof next !== "string") return "/";
-      if (!next.startsWith("/")) return "/";
-      if (next.startsWith("//")) return "/";
-
-      return next;
-    } catch {
-      return "/";
-    }
-  };
 
   const handleLogin = async () => {
     try {
@@ -89,10 +74,7 @@ const Login = () => {
         return;
       }
 
-      // ✅ Go back to where user was (next) or home
-      const defaultPath = role === "school_admin" ? "/school/dashboard" : "/";
-      const nextPath = getNextPath();
-      window.location.href = nextPath || defaultPath;
+      window.location.href = resolvePostLoginPath(role, window.location.search);
     } catch (err) {
       if (err.response?.data?.detail) {
         alert("Login failed: " + err.response.data.detail);
@@ -103,7 +85,10 @@ const Login = () => {
     }
   };
 
-  const nextPath = getNextPath();
+  const nextPath = resolvePostLoginPath(
+    localStorage.getItem("user_role") || localStorage.getItem("role") || "",
+    window.location.search
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-4 py-10">

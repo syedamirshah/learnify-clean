@@ -8,6 +8,7 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
+import { resolvePostLoginPath } from "../../utils/roleRoutes";
 import textbookExercises from "@/assets/screenshots/textbook-exercises.png";
 import topicIndex from "@/assets/screenshots/topic-index.png";
 import weeklyPlan from "@/assets/screenshots/weekly-plan.png";
@@ -21,19 +22,6 @@ const SCHOOL_TEMPLATE_URL = "/student_bulk_upload_template.xlsx";
 const HomePage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  const getNextPath = () => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next");
-      if (!next || typeof next !== "string") return "/learn";
-      if (!next.startsWith("/")) return "/learn";
-      if (next.startsWith("//")) return "/learn";
-      return next;
-    } catch {
-      return "/learn";
-    }
-  };
 
   const handleLogin = async () => {
     try {
@@ -84,9 +72,7 @@ const HomePage = () => {
         return;
       }
 
-      const defaultPath = role === "school_admin" ? "/school/dashboard" : "/learn";
-      const nextPath = getNextPath();
-      window.location.href = nextPath || defaultPath;
+      window.location.href = resolvePostLoginPath(role, window.location.search);
     } catch (err) {
       if (err.response?.data?.detail) {
         alert("Login failed: " + err.response.data.detail);
