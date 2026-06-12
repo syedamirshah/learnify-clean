@@ -1,0 +1,136 @@
+{% extends "admin/core/base.html" %}
+{% block content %}
+<h2 style="margin-bottom: 10px;">Manage School Subscriptions</h2>
+<p style="margin-bottom: 20px; color: #444;">
+  School is the subscription authority. Manual actions update the school license and sync linked users.
+  <a href="{% url 'manage_subscriptions' %}" style="color: #2563eb; font-weight: 600;">← Back to User Subscriptions</a>
+</p>
+
+<form method="get" style="margin-bottom: 20px;" class="flex flex-wrap gap-4 items-center">
+  <label for="status" class="flex items-center gap-2">
+    Status:
+    <select name="status" class="border px-2 py-1 rounded">
+      <option value="">All</option>
+      <option value="pending_payment" {% if status == "pending_payment" %}selected{% endif %}>Pending Payment</option>
+      <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+      <option value="expired" {% if status == "expired" %}selected{% endif %}>Expired</option>
+      <option value="suspended" {% if status == "suspended" %}selected{% endif %}>Suspended</option>
+    </select>
+  </label>
+
+  <label for="paginate_by" class="flex items-center gap-2">
+    Show:
+    <select name="paginate_by" class="border px-2 py-1 rounded">
+      <option value="50" {% if paginate_by == "50" %}selected{% endif %}>50</option>
+      <option value="100" {% if paginate_by == "100" %}selected{% endif %}>100</option>
+      <option value="all" {% if paginate_by == "all" %}selected{% endif %}>All</option>
+    </select>
+  </label>
+
+  <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Apply</button>
+</form>
+
+<table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid #ccc;">
+  <thead>
+    <tr style="background-color: #f0f0f0; border: 1px solid #ccc;">
+      <th style="border: 1px solid #ccc; padding: 8px;">School</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">City</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Plan</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Billing</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Status</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Expiry</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">School Admin</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Students</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Teachers</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Activate</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Extend</th>
+      <th style="border: 1px solid #ccc; padding: 8px;">Disable</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for school in schools %}
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.name }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.city }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.get_plan_tier_display }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.get_billing_cycle_display }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.get_account_status_display }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if school.subscription_expiry %}{{ school.subscription_expiry }}{% else %}N/A{% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.school_admin_username|default:"—" }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.students_count }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">{{ school.teachers_count }}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if school.account_status != 'active' %}
+        <form method="post" action="{% url 'manage_school_subscriptions' %}">
+          {% csrf_token %}
+          <input type="hidden" name="school_id" value="{{ school.id }}">
+          <input type="hidden" name="action" value="activate">
+          <select name="duration">
+            <option value="month">1 Month</option>
+            <option value="year">1 Year</option>
+          </select>
+          <button type="submit">Activate</button>
+        </form>
+        {% else %}
+        —
+        {% endif %}
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        <form method="post" action="{% url 'manage_school_subscriptions' %}">
+          {% csrf_token %}
+          <input type="hidden" name="school_id" value="{{ school.id }}">
+          <input type="hidden" name="action" value="extend">
+          <select name="duration">
+            <option value="month">1 Month</option>
+            <option value="year">1 Year</option>
+          </select>
+          <button type="submit" style="color: green;">Extend</button>
+        </form>
+      </td>
+      <td style="border: 1px solid #ccc; padding: 8px;">
+        {% if school.account_status == 'active' %}
+        <form method="post" action="{% url 'manage_school_subscriptions' %}" onsubmit="return confirm('Suspend this school and disable linked users?');">
+          {% csrf_token %}
+          <input type="hidden" name="school_id" value="{{ school.id }}">
+          <input type="hidden" name="action" value="disable">
+          <button type="submit" style="color: darkred;">Disable</button>
+        </form>
+        {% else %}
+        —
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="12" style="border: 1px solid #ccc; padding: 12px; text-align: center;">No schools found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if schools.has_other_pages %}
+  <div style="margin-top: 30px; text-align: center;" class="flex flex-col items-center gap-2">
+    <div class="space-x-4">
+      {% if schools.has_previous %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ schools.previous_page_number }}"
+           class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">
+          ⬅️ Previous
+        </a>
+      {% endif %}
+
+      <span class="inline-block px-4 py-2 font-semibold text-gray-700">
+        Page {{ schools.number }} of {{ schools.paginator.num_pages }}
+      </span>
+
+      {% if schools.has_next %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ schools.next_page_number }}"
+           class="inline-block px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">
+          Next ➡️
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

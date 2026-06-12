@@ -8,6 +8,7 @@ from payments import views as pay_views
 # From admin_views only the admin-only views:
 from core.admin_views import (
     bulk_upload_students,
+    manage_school_subscriptions,
     manage_subscriptions,
 )
 
@@ -31,8 +32,13 @@ urlpatterns = [
     # Mount the app routes at root
     path('', include('core.urls')),
 
-    # --- Custom admin page must be ABOVE the admin.site.urls include ---
+    # --- Custom admin pages must be ABOVE the admin.site.urls include ---
     path('admin/payments/', pay_views.admin_payments_dashboard, name='payments_admin'),
+    path(
+        'admin/schools/subscriptions/',
+        manage_school_subscriptions,
+        name='manage_school_subscriptions',
+    ),
 
     # Admin
     path('admin/', admin.site.urls),

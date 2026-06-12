@@ -3,7 +3,12 @@ import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import UploadForm
-from .models import User
+from .models import School, User
+from .school_subscription_admin import (
+    manually_activate_school,
+    manually_disable_school,
+    manually_extend_school,
+)
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Case, When, IntegerField
@@ -30,7 +35,7 @@ from django.db.models.functions import Lower, Cast
 from django import forms
 from django.core.paginator import Paginator
 from core.utils import send_account_notification_email  # ‚úÖ Add this at the top
-from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When, F, Func
+from django.db.models import Count, OuterRef, Subquery, IntegerField, Value, Case, When, F, Func, Q
 from django.db import transaction
 from django.db import models
 from django.views.decorators.http import require_POST
@@ -172,6 +177,84 @@ def manage_subscriptions(request):
         'activation': activation,
         'paginate_by': paginate_by,
         'request': request  # needed for filter state
+    })
+
+
+@staff_member_required
+def manage_school_subscriptions(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        school_id = request.POST.get('school_id')
+        duration = request.POST.get('duration')
+
+        try:
+            school = School.objects.get(id=school_id)
+
+            if action == 'disable':
+                manually_disable_school(school)
+                messages.success(request, f"School '{school.name}' suspended and linked users disabled.")
+            elif action == 'activate':
+                manually_activate_school(school, duration)
+                messages.success(
+                    request,
+                    f"School '{school.name}' activated for 1 {'month' if duration == 'month' else 'year'}.",
+                )
+            elif action == 'extend':
+                manually_extend_school(school, duration)
+                messages.success(
+                    request,
+                    f"School '{school.name}' extended by 1 {'month' if duration == 'month' else 'year'}.",
+                )
+            else:
+                messages.error(request, "Invalid action.")
+
+        except School.DoesNotExist:
+            messages.error(request, "School not found.")
+        except ValueError as exc:
+            messages.error(request, str(exc))
+
+        return redirect('manage_school_subscriptions')
+
+    status = request.GET.get('status')
+    paginate_by = request.GET.get('paginate_by', '50')
+
+    admin_username_subquery = User.objects.filter(
+        school=OuterRef('pk'),
+        role='school_admin',
+    ).order_by('id').values('username')[:1]
+
+    schools = School.objects.annotate(
+        students_count=Count('users', filter=Q(users__role='student'), distinct=True),
+        teachers_count=Count('users', filter=Q(users__role='teacher'), distinct=True),
+        school_admin_username=Subquery(admin_username_subquery),
+    ).annotate(
+        status_order=Case(
+            When(account_status='pending_payment', then=0),
+            When(account_status='suspended', then=1),
+            When(account_status='expired', then=2),
+            When(account_status='active', then=3),
+            default=4,
+            output_field=IntegerField(),
+        )
+    ).order_by('status_order', 'name', 'city')
+
+    if status:
+        schools = schools.filter(account_status=status)
+
+    try:
+        per_page = len(schools) if paginate_by == 'all' else int(paginate_by)
+    except ValueError:
+        per_page = 50
+
+    paginator = Paginator(schools, per_page)
+    page_number = request.GET.get('page')
+    paginated_schools = paginator.get_page(page_number)
+
+    return render(request, 'admin/core/manage_school_subscriptions.html', {
+        'schools': paginated_schools,
+        'status': status,
+        'paginate_by': paginate_by,
+        'request': request,
     })
 
 

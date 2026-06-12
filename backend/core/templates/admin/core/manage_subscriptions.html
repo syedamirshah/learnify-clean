@@ -1,7 +1,11 @@
 
 {% extends "admin/core/base.html" %}
 {% block content %}
-<h2 style="margin-bottom: 20px;">Manage Subscriptions</h2>
+<h2 style="margin-bottom: 10px;">Manage Subscriptions</h2>
+<p style="margin-bottom: 20px; color: #444;">
+  Retail students and teachers only.
+  <a href="{% url 'manage_school_subscriptions' %}" style="color: #2563eb; font-weight: 600;">Manage School Subscriptions →</a>
+</p>
 
 <!-- FILTERS -->
 <form method="get" style="margin-bottom: 20px;" class="flex flex-wrap gap-4 items-center">
