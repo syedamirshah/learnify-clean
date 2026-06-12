@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "./apiConfig";
+
 /** Redirect unpaid/expired students and teachers to Easypay choose page. */
 export function needsPaymentRedirect(accountStatus, role) {
   if (role === "school_admin") {
@@ -29,8 +31,12 @@ function readStoredUsername() {
   }
 }
 
+export function getApiBaseUrl(apiBase) {
+  return `${(apiBase || API_BASE_URL).replace(/\/?$/, "/")}`;
+}
+
 export function buildPaymentChooseUrl(apiBase, username) {
-  const base = `${(apiBase || "").replace(/\/?$/, "/")}payments/choose/`;
+  const base = `${getApiBaseUrl(apiBase)}payments/choose/`;
   const resolved = (username || readStoredUsername()).trim();
   if (resolved) {
     return `${base}?username=${encodeURIComponent(resolved)}`;
@@ -39,7 +45,7 @@ export function buildPaymentChooseUrl(apiBase, username) {
 }
 
 export function buildSchoolPaymentChooseUrl(apiBase, schoolId, username) {
-  const base = `${(apiBase || "").replace(/\/?$/, "/")}payments/school/choose/`;
+  const base = `${getApiBaseUrl(apiBase)}payments/school/choose/`;
   const params = new URLSearchParams({
     school_id: String(schoolId),
     username: (username || readStoredUsername()).trim(),

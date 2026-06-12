@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../../utils/apiConfig";
 import { buildSchoolPaymentChooseUrl } from "../../utils/paymentRedirect";
 import axiosInstance from "../../utils/axiosInstance";
 import logo from "../../assets/logo.png";
@@ -82,6 +83,21 @@ export default function SchoolSignup() {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const paymentChooseUrl =
+    success?.success && success.school_id && success.username
+      ? buildSchoolPaymentChooseUrl(API_BASE_URL, success.school_id, success.username)
+      : "";
+
+  useEffect(() => {
+    if (!paymentChooseUrl) return undefined;
+
+    const timer = window.setTimeout(() => {
+      window.location.href = paymentChooseUrl;
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [paymentChooseUrl]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateClient()) return;
@@ -90,6 +106,10 @@ export default function SchoolSignup() {
     setSubmitError("");
     try {
       const res = await axiosInstance.post("school/signup/", form);
+      if (!res.data?.success || !res.data?.school_id || !res.data?.username) {
+        setSubmitError("Unexpected signup response. Please try again or contact support.");
+        return;
+      }
       setSuccess(res.data);
       setForm(initialForm);
     } catch (err) {
@@ -123,6 +143,9 @@ export default function SchoolSignup() {
           <p className="mt-4 text-base leading-7 text-gray-700">
             School account created. Next step: complete payment to activate your school.
           </p>
+          <p className="mt-2 text-sm text-emerald-800">
+            Redirecting to payment in a few seconds, or use the button below.
+          </p>
           <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
             <p>
               <span className="font-bold">Username:</span> {success.username}
@@ -133,11 +156,7 @@ export default function SchoolSignup() {
           </div>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <a
-              href={buildSchoolPaymentChooseUrl(
-                import.meta.env.VITE_API_BASE_URL,
-                success.school_id,
-                success.username
-              )}
+              href={paymentChooseUrl}
               className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
             >
               Continue to Payment
@@ -180,7 +199,7 @@ export default function SchoolSignup() {
         <div className="text-center">
           <h1 className="text-3xl font-black text-emerald-950 sm:text-4xl">Create Your School Account</h1>
           <p className="mt-3 text-sm text-gray-600 sm:text-base">
-            Register your school and principal account. Payment activation will be added in the next phase.
+            Register your school and principal account, then complete payment to activate.
           </p>
         </div>
 

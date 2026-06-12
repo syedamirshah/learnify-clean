@@ -1,8 +1,9 @@
 // src/utils/axiosInstance.js
 
 import axios from "axios";
+import { API_BASE_URL } from "./apiConfig";
 
-const BASE_URL = "https://api.learnifypakistan.com/api/"; // ✅ LIVE backend URL
+const BASE_URL = API_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -15,9 +16,36 @@ const axiosInstance = axios.create({
   xsrfHeaderName: "X-CSRFToken", // ✅ Django's CSRF header
 });
 
+const PUBLIC_API_PATHS = [
+  "school/signup/",
+  "register/",
+  "csrf/",
+  "token/",
+  "token/refresh/",
+];
+
+const PUBLIC_FRONTEND_PATHS = ["/school-signup", "/signup", "/school-onboarding"];
+
+function isPublicApiPath(url) {
+  const normalized = String(url || "").replace(/^\//, "");
+  return PUBLIC_API_PATHS.some(
+    (path) => normalized === path || normalized.startsWith(path)
+  );
+}
+
+function isPublicFrontendPath() {
+  try {
+    return PUBLIC_FRONTEND_PATHS.includes(window.location.pathname);
+  } catch {
+    return false;
+  }
+}
+
 // ✅ Helper: safe redirect (prevents infinite loop on /login)
 const redirectToLogin = () => {
   try {
+    if (isPublicFrontendPath()) return;
+
     const currentPath =
       window.location.pathname + window.location.search + window.location.hash;
 
@@ -48,6 +76,14 @@ axiosInstance.get("csrf/", { withCredentials: true }).catch((err) => {
 axiosInstance.interceptors.request.use((config) => {
   if (typeof config.url === "string" && config.url.startsWith("/")) {
     config.url = config.url.slice(1);
+  }
+
+  // Public signup/register must not send stale JWTs (server returns 401 before AllowAny).
+  if (isPublicApiPath(config.url)) {
+    if (config.headers) {
+      delete config.headers.Authorization;
+    }
+    return config;
   }
 
   // Attach access token from localStorage (JWT auth)
@@ -96,6 +132,10 @@ axiosInstance.interceptors.response.use(
     const url = String(originalRequest?.url || "");
     const isAuthEndpoint =
       url.includes("token/") || url.includes("token/refresh/") || url.includes("csrf/");
+
+    if (status === 401 && isPublicApiPath(url)) {
+      return Promise.reject(error);
+    }
 
     // Only handle 401 once per request
     if (status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
