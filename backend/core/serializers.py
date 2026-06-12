@@ -398,3 +398,63 @@ class SchoolSignupSerializer(serializers.Serializer):
         user.save()
 
         return {"school": school, "user": user}
+
+
+class SchoolSettingsUpdateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=200)
+    city = serializers.CharField(max_length=100)
+    province = serializers.CharField(max_length=50)
+    contact_email = serializers.EmailField()
+    contact_phone = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate_province(self, value):
+        valid_provinces = {choice[0] for choice in PROVINCES}
+        if value not in valid_provinces:
+            raise serializers.ValidationError("Invalid province.")
+        return value
+
+    def validate(self, attrs):
+        name = attrs.get("name", "").strip()
+        city = attrs.get("city", "").strip()
+        if not name:
+            raise serializers.ValidationError({"name": ["School name is required."]})
+        if not city:
+            raise serializers.ValidationError({"city": ["City is required."]})
+
+        school = self.context.get("school")
+        duplicate_qs = School.objects.filter(name__iexact=name, city__iexact=city)
+        if school is not None:
+            duplicate_qs = duplicate_qs.exclude(pk=school.pk)
+        if duplicate_qs.exists():
+            raise serializers.ValidationError({
+                "name": ["A school with this name already exists in this city."],
+            })
+
+        attrs["name"] = name
+        attrs["city"] = city
+        return attrs
+
+    @transaction.atomic
+    def save(self, school, principal):
+        from django.db import IntegrityError
+
+        school.name = self.validated_data["name"]
+        school.city = self.validated_data["city"]
+        school.province = self.validated_data["province"]
+        school.contact_email = self.validated_data["contact_email"]
+        school.contact_phone = self.validated_data.get("contact_phone") or ""
+
+        try:
+            school.save()
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "name": ["A school with this name already exists in this city."],
+            })
+
+        if principal.role == "school_admin" and principal.school_id == school.id:
+            principal.school_name = school.name
+            principal.city = school.city
+            principal.province = school.province
+            principal.save(update_fields=["school_name", "city", "province"])
+
+        return school

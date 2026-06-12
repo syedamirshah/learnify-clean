@@ -52,7 +52,7 @@ from rest_framework.decorators import parser_classes
 from .serializers import PublicSignupSerializer, SchoolSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
-from .serializers import EditProfileSerializer, ChangePasswordSerializer
+from .serializers import EditProfileSerializer, ChangePasswordSerializer, SchoolSettingsUpdateSerializer
 from .models import Grade, Topic, Week, TopicQuiz, WeekQuiz
 from django.utils.timezone import localtime
 import pytz
@@ -2344,6 +2344,7 @@ def school_dashboard_summary(request):
                 school.subscription_expiry.strftime('%Y-%m-%d')
                 if school.subscription_expiry else None
             ),
+            'logo_url': _school_logo_url(school),
         },
         'counts': {
             'students': students_count,
@@ -2361,6 +2362,131 @@ def school_dashboard_summary(request):
             'roster_uploaded': roster_uploaded,
             'ready': ready,
         },
+    }, status=200)
+
+
+def _school_logo_url(school):
+    if school and school.logo:
+        try:
+            return school.logo.url
+        except (ValueError, AttributeError):
+            return None
+    return None
+
+
+def _build_school_settings_payload(school, principal):
+    students_count = User.objects.filter(school=school, role='student').count()
+    max_students = school.max_students
+    remaining_students = (
+        None if max_students is None else max(0, max_students - students_count)
+    )
+
+    return {
+        'school': {
+            'id': school.id,
+            'name': school.name,
+            'city': school.city,
+            'province': school.province,
+            'contact_email': school.contact_email,
+            'contact_phone': school.contact_phone or '',
+            'plan_tier': school.plan_tier,
+            'billing_cycle': school.billing_cycle,
+            'account_status': school.account_status,
+            'subscription_expiry': (
+                school.subscription_expiry.strftime('%Y-%m-%d')
+                if school.subscription_expiry else None
+            ),
+            'logo_url': _school_logo_url(school),
+        },
+        'principal': {
+            'username': principal.username,
+            'full_name': principal.full_name or '',
+            'email': principal.email or '',
+        },
+        'capacity': {
+            'max_students': max_students,
+            'used_students': students_count,
+            'remaining_students': remaining_students,
+        },
+    }
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_settings(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    if request.method == 'GET':
+        return Response(_build_school_settings_payload(school, user), status=200)
+
+    serializer = SchoolSettingsUpdateSerializer(data=request.data, context={"school": school})
+    if not serializer.is_valid():
+        return Response(
+            {'success': False, 'errors': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    serializer.save(school, user)
+    school.refresh_from_db()
+    user.refresh_from_db()
+    return Response(_build_school_settings_payload(school, user), status=200)
+
+
+SCHOOL_LOGO_ALLOWED_CONTENT_TYPES = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+}
+SCHOOL_LOGO_MAX_BYTES = 2 * 1024 * 1024
+
+
+@api_view(['POST', 'DELETE'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+@parser_classes([MultiPartParser, FormParser])
+def school_settings_logo(request):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    if request.method == 'DELETE':
+        if school.logo:
+            school.logo.delete(save=False)
+        school.logo = None
+        school.save(update_fields=['logo', 'updated_at'])
+        return Response({'success': True, 'logo_url': None}, status=200)
+
+    upload = request.FILES.get('logo') or request.FILES.get('file')
+    if not upload:
+        return Response({'error': 'Logo file is required.'}, status=400)
+
+    content_type = (upload.content_type or '').lower()
+    if content_type not in SCHOOL_LOGO_ALLOWED_CONTENT_TYPES:
+        return Response({'error': 'Invalid file type. Upload a JPEG, PNG, WEBP, or GIF image.'}, status=400)
+
+    if upload.size > SCHOOL_LOGO_MAX_BYTES:
+        return Response({'error': 'Logo file must be 2MB or smaller.'}, status=400)
+
+    if school.logo:
+        school.logo.delete(save=False)
+
+    school.logo = upload
+    school.save(update_fields=['logo', 'updated_at'])
+    school.refresh_from_db()
+
+    return Response({
+        'success': True,
+        'logo_url': _school_logo_url(school),
     }, status=200)
 
 

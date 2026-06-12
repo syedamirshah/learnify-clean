@@ -2,18 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../utils/apiConfig";
 import { buildSchoolPaymentChooseUrl } from "../../utils/paymentRedirect";
+import { PROVINCES } from "../../constants/provinces";
 import axiosInstance from "../../utils/axiosInstance";
 import logo from "../../assets/logo.png";
-
-const PROVINCES = [
-  "Balochistan",
-  "Gilgit-Baltistan",
-  "Azad Kashmir",
-  "Khyber-Pakhtunkhwa",
-  "Punjab",
-  "Sindh",
-  "Federal Territory",
-];
 
 const PLANS = [
   { id: "small", label: "Small School", detail: "Up to 200 students" },

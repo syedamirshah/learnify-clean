@@ -15,6 +15,7 @@ export function buildPublicNavItems(role, options = {}) {
       { key: "teachers", label: "Teachers", href: "/school/teachers" },
       { key: "task-monitoring", label: "Task Monitoring", href: "/school/tasks" },
       { key: "upload-roster", label: "Upload Roster", href: "/school/upload" },
+      { key: "settings", label: "Settings", href: "/school/settings" },
       { key: "help-center", label: "Help Center", href: "/help-center" },
     ];
   }

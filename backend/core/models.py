@@ -137,6 +137,7 @@ class School(models.Model):
     )
 
     notes = models.TextField(blank=True, default="")
+    logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

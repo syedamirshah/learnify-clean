@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/logo.png";
 import AppLayout from "../layout/AppLayout";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import { useSchoolLogo } from "../../hooks/useSchoolLogo";
 
 export default function SchoolPageShell({ title, subtitle, children }) {
   const [role, setRole] = useState(localStorage.getItem("user_role"));
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const { logoSrc, logoAlt } = useSchoolLogo();
 
   useEffect(() => {
     setRole(localStorage.getItem("user_role"));
@@ -31,8 +32,8 @@ export default function SchoolPageShell({ title, subtitle, children }) {
   return (
     <AppLayout
       className="font-[Nunito]"
-      logoSrc={logo}
-      logoAlt="Learnify Pakistan Logo"
+      logoSrc={logoSrc}
+      logoAlt={logoAlt}
       brandTitle="Learnify Pakistan"
       brandMotto="Practicing Math Responsibly"
       isAuthenticated={Boolean(role)}

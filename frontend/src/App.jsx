@@ -34,6 +34,7 @@ import SchoolStudentLearningDiagnosis from "./pages/school/SchoolStudentLearning
 import SchoolTeacherAnalytics from "./pages/school/SchoolTeacherAnalytics";
 import SchoolTeacherSummary from "./pages/school/SchoolTeacherSummary";
 import SchoolTaskMonitoring from "./pages/school/SchoolTaskMonitoring";
+import SchoolSettings from "./pages/school/SchoolSettings";
 import MyProfile from "./pages/public/MyProfile";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import OfflineOverlay from "./components/OfflineOverlay";
@@ -77,6 +78,7 @@ function App() {
           <Route path="/school/teachers" element={<SchoolProtectedRoute><SchoolTeacherAnalytics /></SchoolProtectedRoute>} />
           <Route path="/school/teacher/:username" element={<SchoolProtectedRoute><SchoolTeacherSummary /></SchoolProtectedRoute>} />
           <Route path="/school/tasks" element={<SchoolProtectedRoute><SchoolTaskMonitoring /></SchoolProtectedRoute>} />
+          <Route path="/school/settings" element={<SchoolProtectedRoute><SchoolSettings /></SchoolProtectedRoute>} />
           <Route path="/school/student/:username/quiz-history" element={<SchoolProtectedRoute><SchoolStudentQuizHistory /></SchoolProtectedRoute>} />
           <Route path="/school/student/:username/learning-diagnosis" element={<SchoolProtectedRoute><SchoolStudentLearningDiagnosis /></SchoolProtectedRoute>} />
           <Route path="/school/student/:username" element={<SchoolProtectedRoute><SchoolStudentSummary /></SchoolProtectedRoute>} />

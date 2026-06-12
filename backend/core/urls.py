@@ -70,6 +70,8 @@ from core.views import (
     school_roster_template,
     school_upload_roster,
     school_signup,
+    school_settings,
+    school_settings_logo,
     teacher_dashboard_summary,
     teacher_quizzes_by_grade,
     teacher_create_task,
@@ -184,6 +186,8 @@ urlpatterns = [
 
     path('api/school/signup/', school_signup, name='school-signup'),
     path('api/school/dashboard-summary/', school_dashboard_summary, name='school-dashboard-summary'),
+    path('api/school/settings/', school_settings, name='school-settings'),
+    path('api/school/settings/logo/', school_settings_logo, name='school-settings-logo'),
     path('api/school/analytics-summary/', school_analytics_summary, name='school-analytics-summary'),
     path('api/school/student/<str:username>/summary/', school_student_summary, name='school-student-summary'),
     path('api/school/student/<str:username>/quiz-history/', school_student_quiz_history, name='school-student-quiz-history'),
