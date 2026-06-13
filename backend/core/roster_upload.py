@@ -105,6 +105,21 @@ def validate_school_seat_capacity(school, sheet, *, allowed_roles=None):
     return None
 
 
+def _roster_user_activation_fields(school):
+    """School roster imports inherit the school's subscription when it is active."""
+    if school and school.is_subscription_active:
+        return {
+            "account_status": "active",
+            "is_active": True,
+            "subscription_expiry": school.subscription_expiry,
+        }
+    return {
+        "account_status": "inactive",
+        "is_active": False,
+        "subscription_expiry": None,
+    }
+
+
 def import_roster_from_file(file_obj, *, school=None, allowed_roles=None):
     workbook = openpyxl.load_workbook(file_obj)
     return import_roster_from_workbook(workbook, school=school, allowed_roles=allowed_roles)
@@ -160,6 +175,8 @@ def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
                 city = row["city"]
                 province = row["province"]
 
+            activation = _roster_user_activation_fields(school)
+
             user = User.objects.create(
                 username=username,
                 full_name=row["full_name"],
@@ -174,8 +191,9 @@ def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
                 province=province,
                 subscription_plan=row["subscription_plan"],
                 language_used_at_home=row["language_used_at_home"] or "",
-                account_status="inactive",
-                is_active=False,
+                account_status=activation["account_status"],
+                is_active=activation["is_active"],
+                subscription_expiry=activation["subscription_expiry"],
             )
             user.set_password(row["password"])
             user.save()
