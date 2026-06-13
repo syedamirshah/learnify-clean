@@ -2,6 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
+import CTAButton from "../../components/public/CTAButton";
+import FeatureCard from "../../components/public/FeatureCard";
+import PublicSection from "../../components/public/PublicSection";
+import SectionHeader from "../../components/public/SectionHeader";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import { resetPwaAndReload } from "../../utils/pwaReset";
 
@@ -238,81 +242,65 @@ const HelpCenter = () => {
     >
       <div className="min-h-[calc(100vh-180px)] bg-white text-gray-800">
 
-      {/* Hero */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 pt-8 pb-8">
-        <div className="overflow-hidden rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 sm:p-6 md:p-10 shadow-sm">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-green-900">
-            Help Center
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm sm:text-base text-gray-700">
-            We’re here to help students, parents, and schools get the best learning
-            experience from Learnify Pakistan — exercises, results, membership, and
-            account settings.
-          </p>
+      <PublicSection className="!py-8 md:!py-10">
+        <div className="overflow-hidden rounded-3xl border border-green-100 bg-gradient-to-b from-green-50 to-white p-5 shadow-sm sm:p-6 md:p-10">
+          <SectionHeader
+            align="left"
+            eyebrow="Support"
+            title="Help Center"
+            description="We’re here to help students, parents, and schools get the best learning experience from Learnify Pakistan — exercises, results, membership, and account settings."
+          />
 
-          <div className="mt-5 flex flex-col sm:flex-row sm:flex-wrap gap-3">
-            <Link
-              to="/membership"
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white border border-green-200 hover:bg-gray-50 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-            >
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <CTAButton to="/membership" variant="secondary">
               Go to Membership
-            </Link>
-            <Link
-              to="/signup"
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-            >
-              Create Account
-            </Link>
-            <a
-              href={`mailto:${supportEmail}`}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-green-700 text-white hover:bg-green-800 transition font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-            >
+            </CTAButton>
+            <CTAButton to="/signup">Create Account</CTAButton>
+            <CTAButton href={`mailto:${supportEmail}`} variant="secondary">
               Email Support
-            </a>
+            </CTAButton>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Link to="/" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Link to="/" className="rounded-xl border border-green-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-green-200 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
               Home
             </Link>
-            <Link to="/membership" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+            <Link to="/membership" className="rounded-xl border border-green-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-green-200 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
               Membership
             </Link>
-            <Link to="/honor-board" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+            <Link to="/honor-board" className="rounded-xl border border-green-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-green-200 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
               Honor Board
             </Link>
-            <Link to="/signup" className="rounded-xl border border-green-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
+            <Link to="/signup" className="rounded-xl border border-green-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-green-200 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300">
               Sign up
             </Link>
           </div>
         </div>
-      </section>
+      </PublicSection>
 
-      {/* Categories */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-          Quick Help Topics
-        </h2>
-        <p className="text-gray-600 mt-1">
-          Hover on a topic to see quick guidance. For full details, use the FAQs below.
-        </p>
+      <PublicSection>
+        <SectionHeader
+          align="left"
+          eyebrow="Quick help"
+          title="Quick Help Topics"
+          description="Hover on a topic to see quick guidance. For full details, use the FAQs below."
+        />
 
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((cat, i) => (
-            <div key={i} className="min-w-0 rounded-2xl border border-green-200 bg-white p-5 shadow-sm hover:shadow transition">
-              <div className="text-lg font-bold text-green-900">{cat.title}</div>
-
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((cat, i) => {
+            const accents = ["green", "blue", "gold", "green", "blue"];
+            return (
+            <FeatureCard key={i} accent={accents[i % accents.length]} title={cat.title}>
+              <ul className="mt-3 space-y-2 text-sm text-gray-600">
                 {cat.items.map((t, idx) => (
                   <li key={idx} className="group relative pl-5">
-                    <span className="absolute left-0 top-2 w-2 h-2 rounded-full bg-green-600" />
-                    <span className="underline decoration-dotted underline-offset-4 cursor-help">
+                    <span className="absolute left-0 top-2 h-2 w-2 rounded-full bg-[#42b72a]" />
+                    <span className="cursor-help underline decoration-dotted underline-offset-4">
                       {t}
                     </span>
 
-                    {/* Hover tooltip */}
-                    <div className="pointer-events-none hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute z-20 left-0 top-full mt-2 w-[280px] rounded-xl border bg-white shadow-lg p-3 text-xs text-gray-700">
-                      <div className="font-bold text-gray-900 mb-1">{t}</div>
+                    <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-[280px] rounded-xl border border-green-100 bg-white p-3 text-xs text-gray-600 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 md:block">
+                      <div className="mb-1 font-bold text-gray-900">{t}</div>
                       <div className="leading-5">
                         {topicDetails[t] || "More details will be added here soon."}
                       </div>
@@ -327,37 +315,37 @@ const HelpCenter = () => {
               <div className="mt-4 text-xs text-gray-500">
                 Want more details? Check FAQs below.
               </div>
-            </div>
-          ))}
+            </FeatureCard>
+          );
+          })}
         </div>
-      </section>
+      </PublicSection>
 
-      {/* FAQs */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-          Frequently Asked Questions
-        </h2>
-        <p className="text-gray-600 mt-1">
-          Click a question to view the answer.
-        </p>
+      <PublicSection muted>
+        <SectionHeader
+          align="left"
+          eyebrow="FAQs"
+          title="Frequently Asked Questions"
+          description="Click a question to view the answer."
+        />
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-6 space-y-3">
           {faqs.map((f, idx) => {
             const isOpen = openIndex === idx;
             return (
-              <div key={idx} className="rounded-2xl border bg-white shadow-sm">
+              <div key={idx} className="rounded-2xl border border-green-100 bg-white shadow-sm">
                 <button
                   type="button"
                   onClick={() => toggleFAQ(idx)}
-                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   <span className="font-semibold text-gray-900">{f.q}</span>
-                  <span className="text-green-800 font-bold">
+                  <span className="font-bold text-[#42b72a]">
                     {isOpen ? "−" : "+"}
                   </span>
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 text-gray-700 text-sm leading-6">
+                  <div className="px-5 pb-5 text-sm leading-6 text-gray-600">
                     {f.a}
                   </div>
                 )}
@@ -365,52 +353,42 @@ const HelpCenter = () => {
             );
           })}
         </div>
-      </section>
+      </PublicSection>
 
-      {/* Contact Support */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-10">
-        <div className="rounded-2xl border bg-gray-50 p-6 md:p-8">
+      <PublicSection>
+        <div className="rounded-2xl border border-green-100 bg-green-50/50 p-6 md:p-8">
           <h3 className="text-xl font-bold text-gray-900">Still need help?</h3>
-          <p className="text-gray-700 mt-2 max-w-3xl">
+          <p className="mt-2 max-w-3xl text-gray-600">
             If your issue is not solved here, email our support team. Please include
             your <span className="font-semibold">username</span> and a short description
             (and screenshot if possible).
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <a
-              href={`mailto:${supportEmail}`}
-              className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-            >
-              {supportEmail}
-            </a>
-            <span className="text-sm text-gray-600">
+            <CTAButton href={`mailto:${supportEmail}`}>{supportEmail}</CTAButton>
+            <span className="text-sm text-gray-500">
               Response time: usually 24–48 hours on working days.
             </span>
           </div>
 
           {showResetButton && (
-            <div className="mt-6 rounded-xl border border-green-200 bg-white p-4">
+            <div className="mt-6 rounded-xl border border-green-100 bg-white p-4">
               <p className="text-sm font-semibold text-gray-900">Troubleshooting</p>
-              <p className="mt-1 text-xs text-gray-600">
+              <p className="mt-1 text-xs text-gray-500">
                 If the app feels stuck after updates, you can safely reset app cache.
               </p>
-              <button
-                type="button"
-                onClick={resetPwaAndReload}
-                className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-              >
+              <CTAButton type="button" onClick={resetPwaAndReload} className="mt-3">
                 Reset App Cache
-              </button>
+              </CTAButton>
             </div>
           )}
         </div>
 
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="mt-4 text-xs text-gray-500">
           Learnify Pakistan is an educational support platform. Exercise results and
           reports are designed to help learning and practice.
         </p>
-      </section>
+      </PublicSection>
       </div>
     </AppLayout>
   );
