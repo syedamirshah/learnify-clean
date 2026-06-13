@@ -87,7 +87,7 @@ export default function SchoolStudentSummary() {
           <section className="flex flex-wrap gap-3">
             <Link
               to={`/school/student/${username}/quiz-history`}
-              className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+              className="rounded-2xl bg-[#42b72a] px-5 py-3 text-sm font-bold text-white hover:bg-green-700"
             >
               Quiz History
             </Link>

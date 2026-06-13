@@ -47,7 +47,7 @@ export default function SchoolTeacherSummary() {
         <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</p>
       ) : (
         <div className="space-y-6">
-          <section className="rounded-3xl bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white shadow-lg">
+          <section className="rounded-3xl bg-gradient-to-r from-[#42b72a] to-green-700 p-6 text-white shadow-lg">
             <p className="text-sm font-bold uppercase tracking-wide text-emerald-100">Teacher</p>
             <h2 className="mt-1 text-3xl font-black">{teacher.full_name}</h2>
             <p className="mt-1 text-sm text-emerald-50">@{teacher.username}</p>
@@ -133,7 +133,7 @@ export default function SchoolTeacherSummary() {
             </Link>
             <Link
               to="/school/tasks"
-              className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+              className="rounded-2xl bg-[#42b72a] px-4 py-2 text-sm font-bold text-white hover:bg-green-700"
             >
               Task Monitoring
             </Link>

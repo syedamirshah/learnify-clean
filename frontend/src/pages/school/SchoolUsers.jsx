@@ -39,7 +39,7 @@ function UserTable({ title, users, emptyMessage, showStudentActions = false }) {
                     <td className="px-2 py-3 text-center">
                       <Link
                         to={`/school/student/${user.username}`}
-                        className="inline-flex rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+                        className="inline-flex rounded-xl bg-[#42b72a] px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700"
                       >
                         View Summary
                       </Link>

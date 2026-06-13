@@ -48,7 +48,7 @@ export default function SchoolPageShell({ title, subtitle, children }) {
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="rounded-md bg-[#42b72a] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700"
           >
             Logout
           </button>
@@ -56,7 +56,7 @@ export default function SchoolPageShell({ title, subtitle, children }) {
       }
     >
       <div className="min-h-[calc(100vh-180px)] bg-gradient-to-b from-emerald-50 via-white to-white text-gray-800">
-        <section className="border-b border-emerald-200 bg-gradient-to-r from-emerald-600 to-green-600 px-4 py-8 text-white sm:px-6 lg:px-8">
+        <section className="border-b border-emerald-200 bg-gradient-to-r from-[#42b72a] to-green-700 px-4 py-8 text-white sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-emerald-100">School Admin</p>
             <h1 className="mt-1 text-3xl font-black sm:text-4xl">{title}</h1>

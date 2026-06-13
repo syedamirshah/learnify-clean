@@ -8,7 +8,7 @@ function ProgressBar({ value }) {
   return (
     <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
       <div
-        className="h-full rounded-full bg-emerald-600 transition-all"
+        className="h-full rounded-full bg-[#42b72a] transition-all"
         style={{ width: `${safeValue}%` }}
       />
     </div>
@@ -107,7 +107,7 @@ export default function SchoolTaskMonitoring() {
                     {task.teacher_username ? (
                       <Link
                         to={`/school/teacher/${task.teacher_username}`}
-                        className="font-semibold text-emerald-700 hover:text-emerald-900"
+                        className="font-semibold text-green-700 hover:text-green-900"
                       >
                         View Teacher
                       </Link>

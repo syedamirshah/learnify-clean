@@ -29,7 +29,7 @@ export default function AuthPanel({
           <button
             type="button"
             onClick={onLogoutClick}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+            className="rounded-md bg-[#42b72a] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
           >
             Logout
           </button>

@@ -85,7 +85,7 @@ export default function SchoolUploadRoster() {
             type="button"
             onClick={handleDownloadTemplate}
             disabled={downloading}
-            className="mt-4 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 rounded-2xl bg-[#42b72a] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {downloading ? "Downloading..." : "Download Template"}
           </button>
@@ -99,12 +99,12 @@ export default function SchoolUploadRoster() {
               name="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
-              className="block w-full rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 px-4 py-6 text-sm file:mr-4 file:rounded-xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-700"
+              className="block w-full rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 px-4 py-6 text-sm file:mr-4 file:rounded-xl file:border-0 file:bg-[#42b72a] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-green-700"
             />
             <button
               type="submit"
               disabled={uploading || !selectedFile}
-              className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-2xl bg-[#42b72a] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {uploading ? "Uploading..." : "Upload Roster"}
             </button>
@@ -147,7 +147,7 @@ export default function SchoolUploadRoster() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 to="/school/users"
-                className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+                className="rounded-2xl bg-[#42b72a] px-4 py-2 text-sm font-bold text-white hover:bg-green-700"
               >
                 View Users
               </Link>

@@ -52,7 +52,7 @@ export default function SchoolStudentLearningDiagnosis() {
         </p>
       ) : (
         <div className="space-y-6">
-          <section className="rounded-3xl bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white shadow-lg">
+          <section className="rounded-3xl bg-gradient-to-r from-[#42b72a] to-green-700 p-6 text-white shadow-lg">
             <p className="text-sm font-bold uppercase tracking-wide text-emerald-100">
               Learning Health Score
             </p>

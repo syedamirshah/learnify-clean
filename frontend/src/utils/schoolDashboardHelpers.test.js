@@ -3,6 +3,7 @@ import {
   extractTopStudent,
   getActiveTasksSummary,
   getAttentionSummary,
+  getGradePreview,
   getOnboardingPercent,
   getOnboardingSteps,
   shouldShowOnboardingProgress,
@@ -94,5 +95,34 @@ describe("getActiveTasksSummary", () => {
     const result = getActiveTasksSummary(null);
     expect(result.count).toBe(0);
     expect(result.hint).toBe("No active tasks");
+  });
+});
+
+describe("getGradePreview", () => {
+  it("returns up to four lowest-performing grades", () => {
+    const preview = getGradePreview([
+      { grade: "Grade 10", students: 20, average_score: 72 },
+      { grade: "Grade 8", students: 18, average_score: 41 },
+      { grade: "Grade 9", students: 19, average_score: 55 },
+      { grade: "Grade 7", students: 15, average_score: 38 },
+      { grade: "Grade 6", students: 12, average_score: 61 },
+    ]);
+
+    expect(preview).toHaveLength(4);
+    expect(preview.map((row) => row.grade)).toEqual([
+      "Grade 7",
+      "Grade 8",
+      "Grade 9",
+      "Grade 6",
+    ]);
+  });
+
+  it("sorts grades without scores after scored grades", () => {
+    const preview = getGradePreview([
+      { grade: "Grade A", students: 5, average_score: null },
+      { grade: "Grade B", students: 6, average_score: 30 },
+    ]);
+
+    expect(preview.map((row) => row.grade)).toEqual(["Grade B", "Grade A"]);
   });
 });

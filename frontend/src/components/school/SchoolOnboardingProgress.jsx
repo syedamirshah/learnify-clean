@@ -10,7 +10,7 @@ function ChecklistItem({ done, label }) {
     <li className="flex items-center gap-2 text-sm">
       <span
         className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-          done ? "bg-emerald-600 text-white" : "bg-gray-200 text-gray-500"
+          done ? "bg-[#42b72a] text-white" : "bg-gray-200 text-gray-500"
         }`}
       >
         {done ? "✓" : "·"}
@@ -40,7 +40,7 @@ export default function SchoolOnboardingProgress({ onboarding, counts, school })
 
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-emerald-100">
         <div
-          className="h-full rounded-full bg-emerald-600 transition-all"
+          className="h-full rounded-full bg-[#42b72a] transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>

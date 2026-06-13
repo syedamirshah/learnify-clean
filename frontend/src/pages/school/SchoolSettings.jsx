@@ -299,7 +299,7 @@ export default function SchoolSettings() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-2xl bg-[#42b72a] px-6 py-3 text-sm font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save School Settings"}
             </button>
@@ -319,7 +319,7 @@ export default function SchoolSettings() {
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-[#42b72a] px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700">
                   {logoUploading ? "Uploading..." : logoUrl ? "Replace Logo" : "Upload Logo"}
                   <input
                     type="file"

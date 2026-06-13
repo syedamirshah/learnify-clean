@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import AppLayout from "../../components/layout/AppLayout";
-import SchoolAnalyticsSections from "../../components/school/SchoolAnalyticsSections";
 import SchoolDashboardHeader from "../../components/school/SchoolDashboardHeader";
+import SchoolGradePreview from "../../components/school/SchoolGradePreview";
 import SchoolInsightCards from "../../components/school/SchoolInsightCards";
 import SchoolOnboardingProgress from "../../components/school/SchoolOnboardingProgress";
 import { useSchoolLogo } from "../../hooks/useSchoolLogo";
@@ -88,10 +88,10 @@ export default function SchoolDashboard() {
     school?.id && username
       ? buildSchoolPaymentChooseUrl(import.meta.env.VITE_API_BASE_URL, school.id, username)
       : "";
-  const needsSchoolPayment =
+  const showSubscriptionAlert =
     school.account_status === "pending_payment" ||
     school.account_status === "expired" ||
-    !onboarding.subscription_active;
+    school.account_status === "suspended";
 
   const formatSeats = (value) =>
     value === null || value === undefined ? "Unlimited" : String(value);
@@ -115,7 +115,7 @@ export default function SchoolDashboard() {
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="rounded-md bg-[#42b72a] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-green-700"
           >
             Logout
           </button>
@@ -150,79 +150,37 @@ export default function SchoolDashboard() {
 
               <SchoolInsightCards analytics={analytics} taskMonitoring={taskMonitoring} />
 
-              <SchoolAnalyticsSections data={analytics} mode="dashboard" />
+              <SchoolGradePreview gradeSnapshot={analytics?.grade_snapshot} />
 
-              <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-black text-emerald-950">School Subscription</h2>
-                {needsSchoolPayment ? (
-                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm font-semibold text-amber-950">
-                      {school.account_status === "expired"
-                        ? "Your school subscription has expired."
-                        : "Pending Payment — complete payment to activate your school license."}
-                    </p>
-                    {schoolPaymentUrl ? (
-                      <a
-                        href={schoolPaymentUrl}
-                        className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
-                      >
-                        {school.account_status === "expired" ? "Renew Now" : "Complete Payment"}
-                      </a>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                    <p className="text-sm text-emerald-900">
-                      Subscription valid until{" "}
-                      <span className="font-bold">{school.subscription_expiry || "—"}</span>
-                    </p>
-                    {schoolPaymentUrl ? (
-                      <a
-                        href={schoolPaymentUrl}
-                        className="mt-4 inline-flex rounded-2xl border border-emerald-300 bg-white px-5 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"
-                      >
-                        Renew Subscription
-                      </a>
-                    ) : null}
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-black text-emerald-950">Quick Actions</h2>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Link
-                    to="/school/upload"
-                    className="flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
-                  >
-                    Upload Roster
-                  </Link>
-                  <Link
-                    to="/school/users"
-                    className="flex w-full items-center justify-center rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"
-                  >
-                    View Users
-                  </Link>
-                  <Link
-                    to="/school/tasks"
-                    className="flex w-full items-center justify-center rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"
-                  >
-                    Task Monitoring
-                  </Link>
-                  <Link
-                    to="/school/settings"
-                    className="flex w-full items-center justify-center rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"
-                  >
-                    School Settings
-                  </Link>
-                  <Link
-                    to="/help-center"
-                    className="flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
-                  >
-                    Support
-                  </Link>
-                </div>
-              </section>
+              {showSubscriptionAlert ? (
+                <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
+                  <h2 className="text-lg font-black text-emerald-950">School Subscription</h2>
+                  {school.account_status === "suspended" ? (
+                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                      <p className="text-sm font-semibold text-gray-800">
+                        Your school account has been suspended. Please contact Learnify support for
+                        assistance.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-semibold text-amber-950">
+                        {school.account_status === "expired"
+                          ? "Your school subscription has expired."
+                          : "Pending Payment — complete payment to activate your school license."}
+                      </p>
+                      {schoolPaymentUrl ? (
+                        <a
+                          href={schoolPaymentUrl}
+                          className="mt-4 inline-flex rounded-2xl bg-[#42b72a] px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+                        >
+                          {school.account_status === "expired" ? "Renew Now" : "Complete Payment"}
+                        </a>
+                      ) : null}
+                    </div>
+                  )}
+                </section>
+              ) : null}
             </>
           )}
         </main>

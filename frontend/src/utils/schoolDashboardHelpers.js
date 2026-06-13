@@ -82,3 +82,18 @@ export function getActiveTasksSummary(taskMonitoring) {
     hint: count === 0 ? "No active tasks" : "School-wide teacher tasks",
   };
 }
+
+export function getGradePreview(gradeSnapshot, limit = 4) {
+  if (!Array.isArray(gradeSnapshot) || gradeSnapshot.length === 0) return [];
+
+  const scoreSortKey = (score) =>
+    score === null || score === undefined ? Number.POSITIVE_INFINITY : score;
+
+  return [...gradeSnapshot]
+    .sort((a, b) => {
+      const scoreDiff = scoreSortKey(a.average_score) - scoreSortKey(b.average_score);
+      if (scoreDiff !== 0) return scoreDiff;
+      return String(a.grade || "").localeCompare(String(b.grade || ""));
+    })
+    .slice(0, limit);
+}
