@@ -1,0 +1,102 @@
+{% extends "admin/core/base.html" %}
+
+{% block title %}Question Report #{{ report.id }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Question Report #{{ report.id }}</h1>
+      <p class="mt-1 text-sm text-gray-600">Submitted {{ report.created_at|date:"Y-m-d H:i" }}</p>
+    </div>
+    <a href="{% url 'question-reports-list' %}" class="text-sm font-semibold text-green-700 hover:underline">
+      ← Back to inbox
+    </a>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+      <h2 class="text-lg font-semibold text-gray-900">Reporter & Quiz</h2>
+      <dl class="space-y-2 text-sm">
+        <div><dt class="font-medium text-gray-500">Reporter</dt><dd>{% if report.reported_by %}{{ report.reported_by.username }} ({{ report.reported_by.role }}){% else %}(deleted user){% endif %}</dd></div>
+        <div><dt class="font-medium text-gray-500">Quiz / Exercise</dt><dd>{% if report.quiz %}{{ report.quiz.title }}{% else %}(deleted exercise){% endif %}</dd></div>
+        <div><dt class="font-medium text-gray-500">Grade</dt><dd>{% if report.quiz and report.quiz.grade %}{{ report.quiz.grade.name }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="font-medium text-gray-500">Subject</dt><dd>{% if report.quiz and report.quiz.subject %}{{ report.quiz.subject.name }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="font-medium text-gray-500">Chapter</dt><dd>{% if report.quiz and report.quiz.chapter %}{{ report.quiz.chapter.name }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="font-medium text-gray-500">Question type</dt><dd class="uppercase">{{ report.question_type }}</dd></div>
+        <div><dt class="font-medium text-gray-500">Question ID</dt><dd class="font-mono text-xs">{{ report.question_id }}</dd></div>
+        {% if report.attempt %}
+          <div><dt class="font-medium text-gray-500">Attempt ID</dt><dd>{{ report.attempt.id }}</dd></div>
+        {% endif %}
+        <div><dt class="font-medium text-gray-500">Student message</dt><dd>{{ report.message|default:"—" }}</dd></div>
+        <div><dt class="font-medium text-gray-500">Status</dt><dd class="capitalize font-semibold">{{ report.status }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+      <h2 class="text-lg font-semibold text-gray-900">Question as reported</h2>
+      <p class="text-xs text-gray-500">Snapshot preserved at report time.</p>
+      {% if snapshot_html %}
+        <div class="prose prose-sm max-w-none text-gray-800">
+          {{ snapshot_html|safe }}
+        </div>
+      {% else %}
+        <p class="text-sm text-gray-500">No snapshot stored.</p>
+      {% endif %}
+
+      {% if question_detail %}
+        <div class="border-t border-gray-100 pt-4">
+          <h3 class="text-sm font-semibold text-gray-700">Current question bank record</h3>
+          <div class="prose prose-sm mt-2 max-w-none text-gray-800">
+            {{ question_detail.question_text|safe }}
+          </div>
+        {% if question_detail.options %}
+          <div class="mt-3">
+            <h3 class="text-sm font-semibold text-gray-700">Options</h3>
+            <ul class="mt-2 space-y-1 text-sm">
+              {% for label, value in question_detail.options.items %}
+                <li><span class="font-semibold">{{ label }}.</span> {{ value }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+        {% if question_detail.correct_answer %}
+          <div class="mt-3">
+            <h3 class="text-sm font-semibold text-gray-700">Correct answer</h3>
+            <pre class="mt-1 rounded-lg bg-gray-50 p-3 text-xs text-gray-800 whitespace-pre-wrap">{{ question_detail.correct_answer }}</pre>
+          </div>
+        {% endif %}
+        </div>
+      {% elif not snapshot_html %}
+        <p class="text-sm text-gray-500">Question record not found (may have been deleted).</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-gray-900">Update Status</h2>
+    <form method="post" class="mt-4 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700">Admin note</label>
+        <textarea
+          name="admin_note"
+          rows="3"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        >{{ report.admin_note }}</textarea>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="submit" name="action" value="reviewed" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+          Mark Reviewed
+        </button>
+        <button type="submit" name="action" value="fixed" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+          Mark Fixed
+        </button>
+        <button type="submit" name="action" value="dismiss" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+          Dismiss
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -41,6 +41,12 @@ from core.admin_views import (
 # --- Stats dashboard ---
 from core.admin_stats_views import stats_dashboard_view
 
+from core.question_report_views import (
+    question_report_detail,
+    question_reports_list,
+    report_question,
+)
+
 # --- Auth / profile / subscription endpoints (this app’s views) ---
 from .views import (
     get_current_user,
@@ -158,6 +164,11 @@ urlpatterns = [
     path('api/student/subject-performance/', student_subject_performance_view, name='student-subject-performance'),
     path('student/quiz-history/', student_quiz_history_view, name='student_quiz_history'),
     path('student/learning-diagnosis/', student_learning_diagnosis_view, name='student_learning_diagnosis'),
+
+    # ---------- Question reports ----------
+    path('api/questions/report/', report_question, name='report-question'),
+    path('admin/question-reports/', question_reports_list, name='question-reports-list'),
+    path('admin/question-reports/<int:report_id>/', question_report_detail, name='question-report-detail'),
 
     # ---------- Admin dashboard shortcuts ----------
     path('admin/dashboard/users/', user_dashboard, name='admin-user-dashboard'),

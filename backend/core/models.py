@@ -583,3 +583,63 @@ class TeacherTaskQuiz(models.Model):
 
     def __str__(self):
         return f"{self.task.id} → {self.quiz.title}"
+
+
+class QuestionReport(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_REVIEWED = "reviewed"
+    STATUS_FIXED = "fixed"
+    STATUS_DISMISSED = "dismissed"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_REVIEWED, "Reviewed"),
+        (STATUS_FIXED, "Fixed"),
+        (STATUS_DISMISSED, "Dismissed"),
+    ]
+
+    reported_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="question_reports",
+    )
+    quiz = models.ForeignKey(
+        "Quiz",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="question_reports",
+    )
+    question_id = models.UUIDField(
+        help_text="UUID of SCQ/MCQ/FIB question used in quiz attempts.",
+    )
+    question_type = models.CharField(max_length=10)
+    question_snapshot = models.TextField(
+        blank=True,
+        help_text="Question text as seen at report time (preserved if source is edited/deleted).",
+    )
+    attempt = models.ForeignKey(
+        "StudentQuizAttempt",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="question_reports",
+    )
+    message = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+    admin_note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        quiz_label = self.quiz.title if self.quiz else "deleted quiz"
+        return f"Report #{self.id} — {quiz_label} ({self.status})"

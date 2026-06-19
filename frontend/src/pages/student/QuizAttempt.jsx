@@ -69,6 +69,11 @@ const QuizAttempt = () => {
   const questionTopRef = useRef(null);
   const prevIndexRef = useRef(0);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportMessage, setReportMessage] = useState('');
+  const [reportNotice, setReportNotice] = useState('');
+  const canReportQuestion = Boolean(localStorage.getItem('access_token'));
+
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const totalQuestions = questions.length > 0 ? (quizMeta.total_expected_questions || questions.length) : 0;
 
@@ -160,6 +165,42 @@ const QuizAttempt = () => {
     }
 
     setShowRoughWork(true);
+  };
+
+  const openReportModal = () => {
+    setReportNotice('');
+    setReportMessage('');
+    setShowReportModal(true);
+  };
+
+  const submitQuestionReport = async () => {
+    if (!currentQuestion) return;
+    try {
+      const payload = {
+        quiz_id: Number(quizId),
+        question_id: currentQuestion.question_id,
+        question_type: currentQuestion.type,
+        question_snapshot: currentQuestion.question_text || '',
+        message: reportMessage.trim(),
+      };
+      if (attemptId) {
+        payload.attempt_id = attemptId;
+      }
+      const res = await axios.post('/questions/report/', payload);
+      setReportNotice(
+        res.data?.detail || 'Thank you. This question has been reported for review.'
+      );
+      setReportMessage('');
+      window.setTimeout(() => {
+        setShowReportModal(false);
+        setReportNotice('');
+      }, 1800);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setReportNotice(
+        detail || 'Could not submit report. Please try again.'
+      );
+    }
   };
 
   // Start dragging when pointer is down on header
@@ -955,6 +996,21 @@ useEffect(() => {
                 >
                   <span className="font-normal">Scratch Pad</span>
                 </button>
+
+                {canReportQuestion ? (
+                  <>
+                    <div className="mt-3" />
+                    <button
+                      type="button"
+                      onClick={openReportModal}
+                      aria-label="Report wrong question"
+                      title="Report wrong question"
+                      className="inline-flex w-[170px] items-center justify-center rounded border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                    >
+                      Report wrong question
+                    </button>
+                  </>
+                ) : null}
               </div>
             </aside>
           </div>
@@ -1184,6 +1240,55 @@ useEffect(() => {
               className="pointer-events-none absolute bottom-1 right-1 text-xs leading-none text-gray-300"
             >
               ◢
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Report Wrong Question"
+          onClick={() => setShowReportModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-gray-900">Report Wrong Question</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Tell us what seems wrong with this question.
+            </p>
+            <textarea
+              value={reportMessage}
+              onChange={(e) => setReportMessage(e.target.value)}
+              rows={4}
+              placeholder="Optional details (typo, wrong answer, unclear wording…)"
+              className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+            />
+            {reportNotice ? (
+              <p className="mt-3 text-sm text-gray-700" role="status">
+                {reportNotice}
+              </p>
+            ) : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitQuestionReport}
+                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              >
+                Submit Report
+              </button>
             </div>
           </div>
         </div>

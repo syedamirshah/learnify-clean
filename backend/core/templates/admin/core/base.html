@@ -23,6 +23,7 @@
         {% if not request.user.role == "manager" %}
           <a href="/admin/dashboard/question-bank/" class="nav-link">📦 Question Bank</a>
           <a href="/admin/dashboard/quizzes/" class="nav-link">📝 Quizzes</a>
+          <a href="{% url 'question-reports-list' %}" class="nav-link">🚩 Question Reports</a>
           <a href="/admin/backups/" class="nav-link">🗂 Backup & Restore</a>
         {% endif %}
 
