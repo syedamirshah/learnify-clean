@@ -17,12 +17,12 @@ export default function PublicHeader({
   className = "",
 }) {
   return (
-    <header className={`w-full border-b border-green-100 bg-white ${className}`}>
-      <div className="mx-auto flex w-full max-w-[1200px] min-w-0 items-center gap-3 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+    <header className={`w-full border-b border-gray-100 bg-white ${className}`}>
+      <div className="mx-auto flex w-full max-w-[1200px] min-w-0 items-center gap-2 px-3 py-2 sm:px-4 md:px-6">
         <button
           type="button"
           onClick={onMenuClick}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-green-100 text-gray-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 md:hidden"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 md:hidden"
           aria-label="Open menu"
           aria-expanded={isMenuOpen}
           aria-controls={menuControlsId}
@@ -32,26 +32,22 @@ export default function PublicHeader({
 
         <Link to={logoHref} className="inline-flex shrink-0 items-center">
           {logoSrc ? (
-            <img
-              src={logoSrc}
-              alt={logoAlt}
-              className="h-11 w-auto object-contain sm:h-12 md:h-14"
-            />
+            <img src={logoSrc} alt={logoAlt} className="h-12 w-auto sm:h-14 md:h-16" />
           ) : (
-            <span className="text-base font-extrabold text-gray-900">{brandTitle}</span>
+            <span className="text-base font-bold text-green-900">{brandTitle}</span>
           )}
         </Link>
 
-        <div className="min-w-0 flex-1 leading-none">
-          <div className="truncate text-base font-extrabold text-gray-900 sm:text-lg md:text-xl">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-base font-extrabold leading-tight text-green-900 sm:text-lg md:text-2xl">
             {brandTitle}
           </div>
-          <div className="mt-0.5 truncate text-[11px] font-semibold text-[#42b72a] sm:text-xs md:text-sm">
+          <div className="truncate text-xs font-semibold italic leading-tight text-green-800 sm:text-sm md:text-base">
             {brandMotto}
           </div>
         </div>
 
-        <div className="ml-auto hidden min-w-0 items-center gap-2 md:flex md:flex-1 md:justify-end">
+        <div className="ml-auto hidden min-w-0 items-center gap-3 md:flex md:flex-1 md:justify-end">
           {desktopHeaderAction}
           <div className="relative min-w-0">
             {desktopAuthContent}
@@ -61,7 +57,7 @@ export default function PublicHeader({
           </div>
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center md:hidden">{mobileActionContent}</div>
+        <div className="ml-auto md:hidden">{mobileActionContent}</div>
       </div>
     </header>
   );

@@ -4,9 +4,6 @@ import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
-import CTAButton from "../../components/public/CTAButton";
-import PublicSection from "../../components/public/PublicSection";
-import SectionHeader from "../../components/public/SectionHeader";
 import { buildPublicNavItems } from "../../utils/publicNav";
 
 const HonorBoard = () => {
@@ -97,10 +94,11 @@ const HonorBoard = () => {
 
   const palettes = useMemo(
     () => [
-      { cardBg: "bg-green-50", border: "border-green-100", headBg: "bg-green-50", accent: "text-green-900" },
-      { cardBg: "bg-blue-50", border: "border-blue-100", headBg: "bg-blue-50", accent: "text-blue-900" },
-      { cardBg: "bg-amber-50", border: "border-amber-100", headBg: "bg-amber-50", accent: "text-amber-900" },
-      { cardBg: "bg-green-50", border: "border-green-100", headBg: "bg-green-50", accent: "text-green-900" },
+      { cardBg: "bg-emerald-50", border: "border-emerald-200", headBg: "bg-emerald-100", accent: "text-emerald-800" },
+      { cardBg: "bg-lime-50", border: "border-lime-200", headBg: "bg-lime-100", accent: "text-lime-800" },
+      { cardBg: "bg-sky-50", border: "border-sky-200", headBg: "bg-sky-100", accent: "text-sky-800" },
+      { cardBg: "bg-amber-50", border: "border-amber-200", headBg: "bg-amber-100", accent: "text-amber-800" },
+      { cardBg: "bg-rose-50", border: "border-rose-200", headBg: "bg-rose-100", accent: "text-rose-800" },
     ],
     []
   );
@@ -196,7 +194,7 @@ const HonorBoard = () => {
     <div className="mb-14">
       <div className="flex items-center justify-center gap-2 mb-5">
         <span className="text-2xl">{icon}</span>
-        <h2 className="text-center text-xl font-extrabold text-gray-900 md:text-2xl">
+        <h2 className="text-xl md:text-2xl font-extrabold text-green-900 text-center">
           {title}
         </h2>
       </div>
@@ -365,25 +363,26 @@ const HonorBoard = () => {
         ) : null
       }
     >
-      <div className="min-h-[calc(100vh-180px)] bg-white">
-        <PublicSection className="!py-8 md:!py-10">
-          <div className="rounded-2xl border border-green-100 bg-green-50/50 px-5 py-6 text-center shadow-sm sm:px-6 sm:py-8">
-            <SectionHeader
-              eyebrow="Recognition"
-              title="🏆 Honor Board"
-              description="Celebrating our Shining Stars and National Heroes"
-            />
+      <div className="min-h-[calc(100vh-180px)] bg-[#f6fff6]">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10 py-6 md:py-8">
+          <div className="bg-white/70 border border-green-200 rounded-2xl shadow-sm px-5 sm:px-6 py-6 sm:py-8 text-center">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-green-900 flex justify-center gap-2">
+              🏆 Honor Board
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-green-800 font-semibold">
+              Celebrating our Shining Stars and National Heroes
+            </p>
           </div>
           {!loading && !error ? (
-            <div className="mt-5 rounded-2xl border border-green-100 bg-white p-4 shadow-sm">
+            <div className="mt-5 rounded-2xl border border-green-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedGrade("ALL")}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
                     selectedGrade === "ALL"
-                      ? "bg-[#42b72a] text-white"
-                      : "border border-green-100 bg-green-50 text-gray-900 hover:border-green-200 hover:bg-green-100"
+                      ? "bg-green-700 text-white"
+                      : "bg-green-50 text-green-900 border border-green-200 hover:bg-green-100"
                   }`}
                 >
                   All
@@ -395,8 +394,8 @@ const HonorBoard = () => {
                     onClick={() => setSelectedGrade(String(grade))}
                     className={`rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 ${
                       selectedGrade === String(grade)
-                        ? "bg-[#42b72a] text-white"
-                        : "border border-green-100 bg-green-50 text-gray-900 hover:border-green-200 hover:bg-green-100"
+                        ? "bg-green-700 text-white"
+                        : "bg-green-50 text-green-900 border border-green-200 hover:bg-green-100"
                     }`}
                   >
                     Grade {grade}
@@ -415,7 +414,7 @@ const HonorBoard = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by name, school, city, or province"
-                    className="w-full rounded-xl border border-green-100 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                    className="w-full rounded-xl border border-green-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                   />
                 </div>
                 <div className="w-full md:w-56">
@@ -426,7 +425,7 @@ const HonorBoard = () => {
                     id="honor-sort"
                     value={sortKey}
                     onChange={(e) => setSortKey(e.target.value)}
-                    className="w-full rounded-xl border border-green-100 px-3 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                    className="w-full rounded-xl border border-green-200 px-3 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                   >
                     <option value="rank">Sort: Rank</option>
                     <option value="total_marks">Sort: Total Marks</option>
@@ -449,36 +448,47 @@ const HonorBoard = () => {
               <div aria-live="polite" className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
                 <div className="font-semibold text-green-900">No honor board data available right now.</div>
                 <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                  <CTAButton to="/" variant="secondary">
+                  <Link
+                    to="/"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
                     Go to Home
-                  </CTAButton>
-                  <CTAButton to="/membership" variant="secondary">
+                  </Link>
+                  <Link
+                    to="/membership"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
                     View Membership
-                  </CTAButton>
+                  </Link>
                 </div>
               </div>
             ) : shiningStarsView.length === 0 && nationalHeroesView.length === 0 ? (
               <div aria-live="polite" className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
                 <div className="font-semibold text-green-900">No results match your filters/search.</div>
-                <CTAButton
+                <button
                   type="button"
-                  variant="secondary"
                   onClick={() => {
                     setSelectedGrade("ALL");
                     setSearchQuery("");
                     setSortKey("rank");
                   }}
-                  className="mt-3"
+                  className="mt-3 inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   Clear filters
-                </CTAButton>
+                </button>
                 <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                  <CTAButton to="/" variant="secondary">
+                  <Link
+                    to="/"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
                     Go to Home
-                  </CTAButton>
-                  <CTAButton to="/membership" variant="secondary">
+                  </Link>
+                  <Link
+                    to="/membership"
+                    className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 text-sm font-semibold text-green-900 shadow-sm transition hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  >
                     View Membership
-                  </CTAButton>
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -492,7 +502,7 @@ const HonorBoard = () => {
               </>
             )}
           </div>
-        </PublicSection>
+        </div>
       </div>
     </AppLayout>
   );

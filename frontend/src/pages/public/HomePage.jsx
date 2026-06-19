@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
-import CTAButton from "../../components/public/CTAButton";
-import SectionHeader from "../../components/public/SectionHeader";
-import StatCard from "../../components/public/StatCard";
-import TrustBadge from "../../components/public/TrustBadge";
-import PublicSection from "../../components/public/PublicSection";
 import axiosInstance from "../../utils/axiosInstance";
 import { persistStudentGrade } from "../../utils/auth";
 import {
@@ -88,23 +83,46 @@ const HomePage = () => {
     }
   };
 
+  const heroButtons = [
+    {
+      label: "Enter as Guest",
+      to: "/learn",
+      className:
+        "inline-flex items-center justify-center rounded-md bg-[#118C4F] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f7d47]",
+    },
+    {
+      label: "Login",
+      to: "#login-card",
+      className:
+        "inline-flex items-center justify-center rounded-md border border-[#118C4F] bg-white px-6 py-3 text-sm font-semibold text-[#118C4F] transition hover:bg-green-50",
+      isAnchor: true,
+    },
+    {
+      label: "Sign Up",
+      to: "/signup",
+      className:
+        "inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50",
+    },
+  ];
+
   const screenshotClass =
-    "w-full rounded-xl border border-green-100 bg-white shadow-sm transition duration-200 hover:shadow-md";
+    "w-full rounded-xl border border-green-200 bg-white shadow-md transition duration-200 hover:shadow-lg";
 
   return (
     <div
-      className="relative min-h-screen bg-white text-gray-900"
+      className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-sky-50 text-gray-900"
       style={{
         fontFamily: '"Plus Jakarta Sans", Inter, Nunito, system-ui, -apple-system, sans-serif',
       }}
     >
+      {/* decorative background (subtle, no new assets) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-green-100/60 blur-3xl" />
-        <div className="absolute top-32 -right-28 h-72 w-72 rounded-full bg-amber-50/80 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-blue-50/70 blur-3xl" />
+        <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="absolute top-32 -right-28 h-72 w-72 rounded-full bg-sky-200/45 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-lime-200/35 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-20 border-b border-green-100 bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-emerald-200/70 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col items-start gap-2 px-4 py-2 sm:py-3 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
         <div className="flex items-center gap-3 sm:gap-4">
             <img
@@ -114,84 +132,113 @@ const HomePage = () => {
             />
 
             <div className="flex flex-col justify-center leading-none">
-              <h1 className="text-[18px] font-extrabold tracking-tight text-gray-900 sm:text-[24px] md:text-[30px]">
+              <h1
+                className="text-[18px] font-extrabold tracking-tight text-[#2f5d3a] sm:text-[24px] md:text-[30px]"
+                style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
+              >
                 Learnify Pakistan
               </h1>
 
-              <p className="mt-1 text-[11px] font-semibold text-[#42b72a] sm:text-[14px] md:text-[18px]">
+              <p
+                className="mt-1 text-[11px] font-bold italic text-[#2f7a43] sm:text-[14px] md:text-[18px]"
+                style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
+              >
                 Practicing Math Responsibly
               </p>
             </div>
           </div>
 
           <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-3">
-            <CTAButton to="/school-onboarding" className="col-span-2 px-4 py-2 sm:col-span-1">
+            <Link
+              to="/school-onboarding"
+              className="col-span-2 rounded-xl bg-emerald-700 px-4 py-2 text-center text-sm font-extrabold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:col-span-1"
+            >
               School Onboarding
-            </CTAButton>
-            <CTAButton href="#login-card" variant="secondary" className="px-4 py-2">
+            </Link>
+            <a
+              href="#login-card"
+              className="rounded-xl border border-emerald-300 bg-white px-4 py-2 text-center text-sm font-bold text-emerald-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
               Login
-            </CTAButton>
-            <CTAButton to="/signup" variant="secondary" className="px-4 py-2">
+            </a>
+            <Link
+              to="/signup"
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-center text-sm font-bold text-gray-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
               Sign Up
-            </CTAButton>
-            <CTAButton to="/learn" className="col-span-2 px-4 py-2 sm:col-span-1">
+            </Link>
+            <Link
+              to="/learn"
+              className="col-span-2 rounded-xl bg-emerald-600 px-4 py-2 text-center text-sm font-extrabold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:col-span-1"
+            >
               Enter as Guest
-            </CTAButton>
+            </Link>
           </nav>
         </div>
       </header>
 
       <main>
-        <section className="border-b border-green-100 bg-transparent">
+        <section className="border-b border-emerald-100/70 bg-transparent">
           <div className="mx-auto w-full max-w-[1240px] px-4 pt-6 sm:pt-10">
-            <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-center">
-              <TrustBadge>Curriculum Aligned</TrustBadge>
-              <TrustBadge>Instant Feedback</TrustBadge>
-              <TrustBadge>Trusted by Schools</TrustBadge>
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-center text-xs font-semibold text-emerald-900">
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Curriculum-aligned</span>
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Instant feedback</span>
+              <span className="rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">Progress tracking</span>
             </div>
           </div>
 
           <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-stretch gap-6 px-4 pb-10 sm:gap-10 sm:pb-14 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="h-full rounded-3xl border border-green-100 bg-gradient-to-br from-green-50 via-white to-amber-50/40 p-5 shadow-sm sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#42b72a]">
+            <div className="h-full rounded-3xl border border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-5 shadow-lg shadow-emerald-200/40 ring-1 ring-emerald-100 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
                 For Schools
               </p>
 
-              <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight text-gray-900 sm:text-4xl">
+              <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight text-emerald-950 sm:text-4xl">
                 AI-powered learning analytics for your entire school.
               </h2>
 
-              <p className="mt-4 text-sm leading-7 text-gray-600 sm:text-base">
+              <p className="mt-4 text-sm leading-7 text-gray-700 sm:text-base">
                 Give principals and coordinators a single dashboard to monitor student progress,
                 support teachers, track tasks, and onboard your community with confidence.
               </p>
 
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <StatCard label="Monitor" value="School-wide performance" />
-                <StatCard label="Support" value="Teachers & classrooms" accent="blue" />
-                <StatCard label="Onboard" value="Bulk roster upload" accent="gold" />
+                <div className="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Monitor</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950">School-wide performance</p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Support</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950">Teachers & classrooms</p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Onboard</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950">Bulk roster upload</p>
+                </div>
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <CTAButton to="/school-onboarding" className="w-full sm:w-auto">
+                <Link
+                  to="/school-onboarding"
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:w-auto"
+                >
                   School Onboarding
-                </CTAButton>
-                <CTAButton
+                </Link>
+                <a
                   href={SCHOOL_TEMPLATE_URL}
                   download
-                  variant="secondary"
-                  className="w-full sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-300 bg-white px-6 py-3.5 text-sm font-extrabold text-emerald-800 shadow-sm transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:w-auto"
                 >
                   Download Template
-                </CTAButton>
+                </a>
               </div>
             </div>
 
             <div
               id="login-card"
-              className="h-full rounded-3xl border border-green-100 bg-white p-5 shadow-sm sm:p-7"
+              className="h-full rounded-3xl border border-emerald-300 bg-white/90 p-5 shadow-md shadow-emerald-200/30 backdrop-blur-sm sm:p-7"
             >
-              <h3 className="text-2xl font-extrabold tracking-tight text-gray-900">Login to Continue</h3>
+              <h3 className="text-2xl font-extrabold tracking-tight text-emerald-950">Login to Continue</h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
                 Existing student and teacher accounts can sign in and continue to the learning experience.
               </p>
@@ -207,7 +254,7 @@ const HomePage = () => {
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#42b72a] focus:ring-2 focus:ring-green-100"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -221,20 +268,24 @@ const HomePage = () => {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#42b72a] focus:ring-2 focus:ring-green-100"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
 
-              <CTAButton type="button" onClick={handleLogin} className="mt-5 w-full">
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white shadow-sm transition duration-200 hover:bg-emerald-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              >
                 Login
-              </CTAButton>
+              </button>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-                <Link to="/learn" className="font-medium text-[#42b72a] hover:underline">
+                <Link to="/learn" className="font-medium text-[#118C4F] hover:underline">
                   Continue as Guest
                 </Link>
-                <Link to="/signup" className="font-medium text-[#42b72a] hover:underline">
+                <Link to="/signup" className="font-medium text-[#118C4F] hover:underline">
                   Sign Up
                 </Link>
               </div>
@@ -242,84 +293,90 @@ const HomePage = () => {
           </div>
         </section>
 
-        <PublicSection>
-          <SectionHeader
-            eyebrow="Product highlights"
-            title="How Learnify Supports Learning"
-            description="Each feature of Learnify is designed to support structured learning, regular practice, and clear progress visibility."
-          />
+        <section className="mx-auto max-w-[1240px] px-4 py-14 sm:py-16">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-extrabold uppercase tracking-[0.12em] text-emerald-800 shadow-sm ring-1 ring-emerald-200">
+              Product highlights
+            </p>
+            <h3 className="mt-4 text-4xl font-extrabold tracking-tight text-emerald-950 sm:text-5xl">
+              How Learnify Supports Learning
+            </h3>
+            <p className="mt-4 text-base leading-8 text-gray-700 sm:text-lg">
+              Each feature of Learnify is designed to support structured learning, regular practice, and clear progress visibility.
+            </p>
+          </div>
 
           <div className="mt-12 space-y-16">
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-extrabold text-gray-900">Aligned with National Curriculum and Official Textbooks</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Aligned with National Curriculum and Official Textbooks</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify exercises follow the official textbook sequence chapter by chapter, so students build understanding in a structured progression.
                   This curriculum alignment makes the platform easy to integrate into school routines and classroom learning plans.
                 </p>
               </div>
-              <div className="rounded-3xl border border-green-100 bg-green-50/50 p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-3 shadow-sm">
                 <img src={textbookExercises} alt="Textbook exercises preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md lg:grid-cols-2 lg:p-8">
-              <div className="order-2 lg:order-1 rounded-3xl border border-green-100 bg-blue-50/50 p-3 shadow-sm">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
+              <div className="order-2 lg:order-1 rounded-3xl border border-emerald-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 shadow-sm">
                 <img src={resultsTable} alt="Progress results preview" className={screenshotClass} />
               </div>
               <div className="order-1 lg:order-2">
-                <h4 className="text-2xl font-extrabold text-gray-900">Track Progress Clearly</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Track Progress Clearly</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   The quiz history and results view makes performance easy to read through marks, percentages, and attempt history.
                   Students and teachers can identify weak areas quickly and monitor improvement over time with confidence.
                 </p>
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-extrabold text-gray-900">Unlimited, Affordable Practice</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Unlimited, Affordable Practice</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify supports both Learning Mode and Exam Mode with unlimited attempts, giving students space to practice repeatedly.
                   Since new questions are randomized each attempt, learners improve understanding instead of memorizing fixed answer patterns.
                 </p>
               </div>
-              <div className="rounded-3xl border border-green-100 bg-amber-50/50 p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-lime-50 via-white to-emerald-50 p-3 shadow-sm">
                 <img src={quizAttempt} alt="Quiz experience preview" className={screenshotClass} />
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div className="order-2 lg:order-1 space-y-4">
-                <div className="rounded-3xl border border-green-100 bg-green-50/50 p-3 shadow-sm transition duration-200 hover:shadow-md">
+                <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-3 shadow-sm transition duration-200 hover:shadow-md">
                   <img src={topicIndex} alt="Topic Practice preview" className={screenshotClass} />
                 </div>
-                <div className="rounded-3xl border border-green-100 bg-blue-50/50 p-3 shadow-sm transition duration-200 hover:shadow-md">
+                <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-sky-50 via-white to-lime-50 p-3 shadow-sm transition duration-200 hover:shadow-md">
                   <img src={weeklyPlan} alt="Weekly Plan preview" className={screenshotClass} />
                 </div>
               </div>
               <div className="order-1 lg:order-2">
-                <h4 className="text-2xl font-extrabold text-gray-900">Multiple Ways to Organize Learning</h4>
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <h4 className="text-2xl font-extrabold text-emerald-950">Multiple Ways to Organize Learning</h4>
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify offers three complementary learning paths: Textbook Exercises, Topic Index, and Weekly Plan.
                   Learners can follow textbook structure for guided progression or switch to topic-based and week-based practice for flexible revision.
                 </p>
               </div>
             </article>
 
-            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-green-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md lg:grid-cols-2 lg:p-8">
+            <article className="grid grid-cols-1 items-center gap-12 rounded-3xl border border-emerald-200 bg-white/80 p-6 shadow-md shadow-emerald-200/30 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:grid-cols-2 lg:p-8">
               <div>
-                <h4 className="text-2xl font-extrabold text-gray-900">
+                <h4 className="text-2xl font-extrabold text-emerald-950">
                   Support for Teachers
                 </h4>
 
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   Learnify helps teachers monitor student learning outcomes clearly and efficiently.
                   Teachers can view quiz performance, identify weak areas, and understand where
                   students need additional support.
                 </p>
 
-                <p className="mt-4 text-base leading-8 text-gray-600">
+                <p className="mt-4 text-base leading-8 text-gray-700">
                   The platform also allows teachers to assign structured quiz tasks to an entire
                   grade or to specific students. By automating practice tracking and performance
                   visibility, Learnify saves valuable time and allows teachers to focus more on
@@ -327,7 +384,7 @@ const HomePage = () => {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-green-100 bg-green-50/50 p-3 shadow-sm">
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-3 shadow-sm">
                 <img
                   src={teacherTasks}
                   alt="Teacher assigning and monitoring quiz tasks"
@@ -336,20 +393,20 @@ const HomePage = () => {
               </div>
             </article>
           </div>
-        </PublicSection>
+        </section>
       </main>
 
-      <footer className="border-t border-green-100 bg-green-50/40">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-7 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
-          <div className="font-extrabold text-gray-900">Learnify</div>
+      <footer className="border-t border-emerald-200/70 bg-gradient-to-br from-emerald-50/60 via-white to-sky-50/60">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-3 px-4 py-7 text-sm text-gray-700 md:flex-row md:items-center md:justify-between">
+          <div className="font-extrabold text-emerald-950">Learnify</div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link to="/membership" className="hover:text-[#42b72a] hover:underline">
+            <Link to="/membership" className="hover:text-[#118C4F] hover:underline">
               Membership
             </Link>
-            <Link to="/help-center" className="hover:text-[#42b72a] hover:underline">
+            <Link to="/help-center" className="hover:text-[#118C4F] hover:underline">
               Help Center
             </Link>
-            <Link to="/honor-board" className="hover:text-[#42b72a] hover:underline">
+            <Link to="/honor-board" className="hover:text-[#118C4F] hover:underline">
               Honor Board
             </Link>
           </div>

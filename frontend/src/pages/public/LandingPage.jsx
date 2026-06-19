@@ -7,8 +7,6 @@ import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 import AppLayout from "../../components/layout/AppLayout";
 import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import AuthPanel from "../../components/layout/AuthPanel";
-import CTAButton from "../../components/public/CTAButton";
-import TrustBadge from "../../components/public/TrustBadge";
 import { persistStudentGrade } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import {
@@ -465,44 +463,84 @@ const navLinkClass = () =>
   // 🎨 Chapter colors + matching light quiz card tones (inheritance when chapter selected)
 const chapterPalettes = [
   {
-    cardBg: "bg-[#42b72a]",
-    cardBorder: "border-green-700",
+    cardBg: "bg-sky-400",
+    cardBorder: "border-sky-600",
     titleText: "text-white",
-    panelBg: "bg-green-50",
-    panelBorder: "border-green-100",
-    accent: "text-green-900",
-    quizCardBg: "bg-green-50",
-    quizCardBorder: "border-green-100",
+    panelBg: "bg-sky-100",
+    panelBorder: "border-sky-200",
+    accent: "text-sky-900",
+    quizCardBg: "bg-sky-50",
+    quizCardBorder: "border-sky-200",
   },
   {
-    cardBg: "bg-blue-600",
-    cardBorder: "border-blue-700",
+    cardBg: "bg-emerald-400",
+    cardBorder: "border-emerald-600",
     titleText: "text-white",
-    panelBg: "bg-blue-50",
-    panelBorder: "border-blue-100",
-    accent: "text-blue-900",
-    quizCardBg: "bg-blue-50",
-    quizCardBorder: "border-blue-100",
+    panelBg: "bg-emerald-100",
+    panelBorder: "border-emerald-200",
+    accent: "text-emerald-900",
+    quizCardBg: "bg-emerald-50",
+    quizCardBorder: "border-emerald-200",
   },
   {
-    cardBg: "bg-amber-500",
+    cardBg: "bg-teal-400",
+    cardBorder: "border-teal-600",
+    titleText: "text-white",
+    panelBg: "bg-teal-100",
+    panelBorder: "border-teal-200",
+    accent: "text-teal-900",
+    quizCardBg: "bg-teal-50",
+    quizCardBorder: "border-teal-200",
+  },
+  {
+    cardBg: "bg-lime-400",
+    cardBorder: "border-lime-600",
+    titleText: "text-white",
+    panelBg: "bg-lime-100",
+    panelBorder: "border-lime-200",
+    accent: "text-lime-900",
+    quizCardBg: "bg-lime-50",
+    quizCardBorder: "border-lime-200",
+  },
+  {
+    cardBg: "bg-amber-400",
     cardBorder: "border-amber-600",
     titleText: "text-white",
-    panelBg: "bg-amber-50",
-    panelBorder: "border-amber-100",
+    panelBg: "bg-amber-100",
+    panelBorder: "border-amber-200",
     accent: "text-amber-900",
     quizCardBg: "bg-amber-50",
-    quizCardBorder: "border-amber-100",
+    quizCardBorder: "border-amber-200",
   },
   {
-    cardBg: "bg-green-600",
-    cardBorder: "border-green-700",
+    cardBg: "bg-rose-400",
+    cardBorder: "border-rose-600",
     titleText: "text-white",
-    panelBg: "bg-green-50",
-    panelBorder: "border-green-100",
-    accent: "text-green-900",
-    quizCardBg: "bg-green-50",
-    quizCardBorder: "border-green-100",
+    panelBg: "bg-rose-100",
+    panelBorder: "border-rose-200",
+    accent: "text-rose-900",
+    quizCardBg: "bg-pink-50",
+    quizCardBorder: "border-pink-200",
+  },
+  {
+    cardBg: "bg-indigo-400",
+    cardBorder: "border-indigo-600",
+    titleText: "text-white",
+    panelBg: "bg-indigo-100",
+    panelBorder: "border-indigo-200",
+    accent: "text-indigo-900",
+    quizCardBg: "bg-violet-50",
+    quizCardBorder: "border-violet-200",
+  },
+  {
+    cardBg: "bg-fuchsia-400",
+    cardBorder: "border-fuchsia-600",
+    titleText: "text-white",
+    panelBg: "bg-fuchsia-100",
+    panelBorder: "border-fuchsia-200",
+    accent: "text-fuchsia-900",
+    quizCardBg: "bg-fuchsia-50",
+    quizCardBorder: "border-fuchsia-200",
   },
 ];
 
@@ -636,8 +674,8 @@ const chapterPalettes = [
       )}
 
       {/* Hero Section (full width) */}
-      <section className="relative w-full overflow-hidden">
-        <div className="relative w-full h-[260px] sm:h-[320px] md:h-[480px] lg:h-[520px]">
+      <section className="w-full">
+        <div className="w-full h-[220px] sm:h-[280px] overflow-hidden bg-white md:h-[520px]">
           <img
             src={heroBanner}
             alt="Learnify Pakistan Hero Banner"
@@ -645,36 +683,8 @@ const chapterPalettes = [
             fetchPriority="high"
             width={1536}
             height={586}
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="w-full h-full object-contain md:object-cover object-center block"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/75 via-gray-900/45 to-transparent" />
-          <div className="absolute inset-0 flex items-center">
-            <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-300">
-                Learnify Pakistan
-              </p>
-              <h1 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">
-                Practicing Math Responsibly
-              </h1>
-              <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-100 sm:text-base md:text-lg">
-                Curriculum-aligned exercises, instant feedback, and progress tracking for students,
-                teachers, and schools across Pakistan.
-              </p>
-              {!role ? (
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <CTAButton to="/signup">Get Started</CTAButton>
-                  <CTAButton to="/membership" variant="secondary">
-                    View Membership
-                  </CTAButton>
-                </div>
-              ) : null}
-              <div className="mt-5 flex flex-wrap gap-2">
-                <TrustBadge className="bg-white/95">Curriculum Aligned</TrustBadge>
-                <TrustBadge className="bg-white/95">Instant Feedback</TrustBadge>
-                <TrustBadge className="bg-white/95">Trusted by Schools</TrustBadge>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -683,7 +693,7 @@ const chapterPalettes = [
         <div id="textbook-view" className="mx-auto mt-6 max-w-[1400px] px-3 md:px-4">
           {role === "student" && (
             <div className="mb-6 grid gap-4 md:grid-cols-3">
-              <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-[#42b72a] via-green-600 to-green-700 p-5 text-white shadow-lg md:p-6">
+              <section className="flex min-h-[220px] flex-col rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-500 p-5 text-white shadow-lg md:p-6">
                 <p className="text-sm font-bold">👋 Welcome Back</p>
                 <h2 className="mt-2 text-2xl font-black">Hi, {studentFirstName}!</h2>
                 {!historyLoading &&
@@ -715,8 +725,8 @@ const chapterPalettes = [
               </section>
 
               {studentDailyGoal && (
-                <section className="flex min-h-[220px] flex-col rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-lg md:p-6">
-                  <p className="text-sm font-bold text-blue-900">🎯 Today&apos;s Goal</p>
+                <section className="flex min-h-[220px] flex-col rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-5 shadow-lg md:p-6">
+                  <p className="text-sm font-bold text-sky-900">🎯 Today&apos;s Goal</p>
                   {studentDailyGoal.completed ? (
                     <p className="mt-4 text-xl font-black text-emerald-800">
                       🎉 {getTodayGoalMessage(studentDailyGoal)}
@@ -727,9 +737,9 @@ const chapterPalettes = [
                         {studentDailyGoal.progress} / {studentDailyGoal.target} exercises
                         completed
                       </p>
-                      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-blue-100">
+                      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-sky-100">
                         <div
-                          className="h-full rounded-full bg-[#42b72a] transition-all"
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
                           style={{
                             width: `${Math.min(
                               100,
@@ -753,8 +763,8 @@ const chapterPalettes = [
               )}
 
               {studentProgressTrend && (
-                <section className="flex min-h-[220px] flex-col rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-lg md:p-6">
-                  <p className="text-sm font-bold text-amber-900">📈 Progress Trend</p>
+                <section className="flex min-h-[220px] flex-col rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-5 shadow-lg md:p-6">
+                  <p className="text-sm font-bold text-violet-900">📈 Progress Trend</p>
                   {studentProgressTrend.hasData ? (
                     <div className="mt-4 space-y-2 text-sm text-gray-700">
                       <p>
@@ -765,7 +775,7 @@ const chapterPalettes = [
                         <span className="font-semibold">Previous:</span>{" "}
                         {studentProgressTrend.previousAverage}%
                       </p>
-                      <p className="text-lg font-black text-gray-900">
+                      <p className="text-lg font-black text-violet-950">
                         {studentProgressTrend.trend}{" "}
                         <span aria-hidden="true">{studentProgressTrend.arrow}</span>
                       </p>
@@ -1134,7 +1144,7 @@ const chapterPalettes = [
         })}
       </div>
       {/* Footer */}
-      <footer className="mt-16 border-t border-green-100 bg-green-50/40">
+      <footer className="mt-16 border-t bg-gray-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-2 text-sm text-gray-600">
           <div>
             © {new Date().getFullYear()} Learnify Pakistan
