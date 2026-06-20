@@ -1,4 +1,5 @@
 import React from "react";
+import UserMenu from "./UserMenu";
 
 export default function AuthPanel({
   isAuthenticated = false,
@@ -11,21 +12,12 @@ export default function AuthPanel({
   onRememberChange,
   onSignInClick,
   onLogoutClick,
-  onProfileClick,
   className = "",
 }) {
   if (isAuthenticated) {
     return (
       <div className={`flex w-full flex-wrap items-center justify-end gap-2 ${className}`}>
-        {userFullName ? (
-          <button
-            type="button"
-            onClick={onProfileClick}
-            className="max-w-full truncate rounded-md px-2 py-1 text-sm font-semibold text-gray-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
-          >
-            Welcome, {userFullName}
-          </button>
-        ) : null}
+        <UserMenu userFullName={userFullName} />
           <button
             type="button"
             onClick={onLogoutClick}
