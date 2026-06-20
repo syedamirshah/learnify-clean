@@ -21,6 +21,38 @@ const getStudentsLoadErrorMessage = (err) => {
 
 const norm = (s) => (s ?? '').toString().trim();
 
+const formatPercent = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '—';
+  return `${Math.round(num)}%`;
+};
+
+const studentAvgChipClass = (value) => {
+  const num = Number(value);
+  const base =
+    'inline-flex min-w-[2.75rem] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold sm:min-w-[3rem] sm:text-sm';
+  if (!Number.isFinite(num)) return `${base} bg-gray-100 text-gray-500`;
+  if (num >= 80) return `${base} bg-green-100 text-green-800`;
+  if (num >= 50) return `${base} bg-amber-100 text-amber-800`;
+  return `${base} bg-red-100 text-red-800`;
+};
+
+const vsClassChipClass = (value) => {
+  const num = Number(value);
+  const base =
+    'inline-flex min-w-[2.75rem] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold sm:min-w-[3rem] sm:text-sm';
+  if (!Number.isFinite(num)) return `${base} bg-gray-100 text-gray-500`;
+  return `${base} bg-green-50 text-green-800`;
+};
+
+const getGradeClassAverage = (gradeStudents) => {
+  for (const student of gradeStudents) {
+    const num = Number(student.class_average);
+    if (Number.isFinite(num)) return num;
+  }
+  return null;
+};
+
 const getFirstName = (fullName) => {
   const cleaned = norm(fullName);
   if (!cleaned) return '';
@@ -84,19 +116,17 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
 
     return list.filter((student) => {
       const fullName = norm(student.full_name).toLowerCase();
-      const school = norm(student.school_name).toLowerCase();
-      const city = norm(student.city).toLowerCase();
-      const province = norm(student.province).toLowerCase();
       const username = norm(student.username).toLowerCase();
-      return (
-        fullName.includes(query) ||
-        school.includes(query) ||
-        city.includes(query) ||
-        province.includes(query) ||
-        username.includes(query)
-      );
+      return fullName.includes(query) || username.includes(query);
     });
   }, [groupedByGrade, selectedGrade, query]);
+
+  const selectedGradeAllStudents = groupedByGrade.groups[selectedGrade] || [];
+
+  const selectedGradeClassAverage = useMemo(
+    () => getGradeClassAverage(selectedGradeAllStudents),
+    [selectedGradeAllStudents],
+  );
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -190,7 +220,7 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by name, username, school, city, province"
+          placeholder="Search by name or username"
           className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#42b72a] focus:outline-none focus:ring-2 focus:ring-[#42b72a]"
         />
       </div>
@@ -217,7 +247,14 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
       {selectedGrade && (
         <section className="overflow-hidden rounded-xl border border-green-100">
           <div className="border-b border-green-100 bg-green-50 px-4 py-3 sm:px-5">
-            <h2 className="text-lg font-bold text-green-900">{sectionHeading}</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-lg font-bold text-green-900">{sectionHeading}</h2>
+              {selectedGradeAllStudents.length > 0 ? (
+                <span className="inline-flex items-center rounded-full border border-green-200 bg-white px-3 py-1 text-sm font-semibold text-green-800 shadow-sm">
+                  {selectedGrade} Average: {formatPercent(selectedGradeClassAverage)}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           {selectedGradeStudents.length === 0 ? (
@@ -250,31 +287,27 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
                       </div>
                     </div>
 
-                    <div className="space-y-2 text-sm">
+                    <div className="mb-3 space-y-2 border-b border-gray-100 pb-3 text-sm">
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-gray-500">Username</span>
                         <span className="text-right font-semibold text-gray-800">
                           {student.username}
                         </span>
                       </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-gray-500">School</span>
-                        <span className="break-words text-right font-semibold text-gray-800">
-                          {student.school_name}
-                        </span>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-gray-500">City</span>
-                        <span className="text-right font-semibold text-gray-800">{student.city}</span>
-                      </div>
-                      {student.province ? (
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="text-gray-500">Province</span>
-                          <span className="text-right font-semibold text-gray-800">
-                            {student.province}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500">Student Avg</span>
+                          <span className={studentAvgChipClass(student.student_average)}>
+                            {formatPercent(student.student_average)}
                           </span>
                         </div>
-                      ) : null}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500">vs Class</span>
+                          <span className={vsClassChipClass(student.percentile)}>
+                            {formatPercent(student.percentile)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-4">
@@ -304,13 +337,10 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
                         Username
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
-                        School
+                        Student Avg
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
-                        City
-                      </th>
-                      <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
-                        Province
+                        vs Class
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
                         Quiz History
@@ -333,13 +363,14 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
                           {student.username}
                         </td>
                         <td className="border-b border-green-100 px-4 py-3 text-center">
-                          {student.school_name}
+                          <span className={studentAvgChipClass(student.student_average)}>
+                            {formatPercent(student.student_average)}
+                          </span>
                         </td>
                         <td className="border-b border-green-100 px-4 py-3 text-center">
-                          {student.city}
-                        </td>
-                        <td className="border-b border-green-100 px-4 py-3 text-center">
-                          {student.province || '—'}
+                          <span className={vsClassChipClass(student.percentile)}>
+                            {formatPercent(student.percentile)}
+                          </span>
                         </td>
                         <td className="border-b border-green-100 px-4 py-3 text-center">
                           <Link

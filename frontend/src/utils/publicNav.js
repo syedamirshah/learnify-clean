@@ -69,11 +69,6 @@ export function buildPublicNavItems(role, options = {}) {
     ...(role === "teacher"
       ? [
           { key: "quizzes", label: "Quizzes", href: "/learn" },
-          {
-            key: "my-students",
-            label: "My Students",
-            href: "/teacher/assessment",
-          },
           { key: "teacher-tasks", label: "My Tasks", href: "/teacher/tasks" },
           {
             key: "assign-task",

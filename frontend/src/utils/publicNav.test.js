@@ -17,6 +17,7 @@ describe("buildPublicNavItems", () => {
     expect(findNavItem(items, "home")?.href).toBe("/teacher/dashboard");
     expect(findNavItem(items, "quizzes")?.label).toBe("Quizzes");
     expect(findNavItem(items, "quizzes")?.href).toBe("/learn");
+    expect(findNavItem(items, "my-students")).toBeUndefined();
   });
 
   it("includes school_admin home dashboard and quizzes link to learn", () => {

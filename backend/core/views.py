@@ -1348,114 +1348,9 @@ def student_subject_performance(request):
     if user.role != 'student':
         return Response({'error': 'Only students can access this view.'}, status=403)
 
-    from collections import defaultdict
-    subject_data = defaultdict(lambda: {
-        'student_total': 0, 'student_correct': 0,
-        'class_total': 0, 'class_correct': 0
-    })
+    from core.student_performance import build_subject_performance_rows
 
-    # 1. Student answers grouped by subject
-    all_answers = StudentAnswer.objects.filter(
-        attempt__student=user,
-        attempt__completed_at__isnull=False
-    )
-
-    for ans in all_answers:
-        try:
-            quiz = ans.attempt.quiz
-            subject = quiz.subject.name if quiz.subject else "Unknown"
-        except:
-            continue
-
-        is_correct = False
-        try:
-            if ans.question_type == 'scq':
-                q = SCQQuestion.objects.get(question_id=str(ans.question_id))
-                is_correct = ans.answer_data.get('selected') == q.correct_answer
-            elif ans.question_type == 'mcq':
-                q = MCQQuestion.objects.get(question_id=str(ans.question_id))
-                correct_set = sorted([x.strip() for x in q.correct_answers.split(',')])
-                selected_set = sorted(ans.answer_data.get('selected', []))
-                is_correct = selected_set == correct_set
-            elif ans.question_type == 'fib':
-                q = FIBQuestion.objects.get(question_id=str(ans.question_id))
-                is_correct = ans.answer_data == q.correct_answers
-        except Exception:
-            continue
-
-        subject_data[subject]['student_total'] += 1
-        if is_correct:
-            subject_data[subject]['student_correct'] += 1
-
-    # 2. Class average per subject
-    for subject in subject_data.keys():
-        subject_obj = Subject.objects.filter(name=subject).first()
-        if not subject_obj:
-            continue
-
-        class_attempts = StudentQuizAttempt.objects.filter(
-            quiz__subject=subject_obj,
-            quiz__grade__name=user.grade,
-            completed_at__isnull=False
-        )
-
-        class_answers = StudentAnswer.objects.filter(attempt__in=class_attempts)
-
-        for ans in class_answers:
-            is_correct = False
-            try:
-                if ans.question_type == 'scq':
-                    q = SCQQuestion.objects.get(question_id=str(ans.question_id))
-                    is_correct = ans.answer_data.get('selected') == q.correct_answer
-                elif ans.question_type == 'mcq':
-                    q = MCQQuestion.objects.get(question_id=str(ans.question_id))
-                    correct_set = sorted([x.strip() for x in q.correct_answers.split(',')])
-                    selected_set = sorted(ans.answer_data.get('selected', []))
-                    is_correct = selected_set == correct_set
-                elif ans.question_type == 'fib':
-                    q = FIBQuestion.objects.get(question_id=str(ans.question_id))
-                    is_correct = ans.answer_data == q.correct_answers
-            except:
-                continue
-
-            subject_data[subject]['class_total'] += 1
-            if is_correct:
-                subject_data[subject]['class_correct'] += 1
-
-    # 3. Final Result Table
-    rows = []
-    total_student_avg = 0
-    total_class_avg = 0
-    total_percentile = 0
-    count = 0
-
-    for subject, data in subject_data.items():
-        student_avg = (data['student_correct'] / data['student_total'] * 100) if data['student_total'] else 0
-        class_avg = (data['class_correct'] / data['class_total'] * 100) if data['class_total'] else 0
-        percentile = (student_avg / class_avg * 100) if class_avg else 0
-
-        total_student_avg += student_avg
-        total_class_avg += class_avg
-        total_percentile += percentile
-        count += 1
-
-        rows.append({
-            'subject': subject,
-            'student_avg': round(student_avg, 2),
-            'class_avg': round(class_avg, 2),
-            'percentile': round(percentile, 2)
-        })
-
-    # 4. Overall summary row
-    if count:
-        rows.append({
-            'subject': 'Overall Performance',
-            'student_avg': round(total_student_avg / count, 2),
-            'class_avg': round(total_class_avg / count, 2),
-            'percentile': round(total_percentile / count, 2)
-        })
-
-    return Response(rows)
+    return Response(build_subject_performance_rows(user))
 
 
 def get_top_performers(days):
@@ -1930,10 +1825,13 @@ def teacher_student_list(request):
     if user.role != 'teacher':
         return Response({'error': 'Unauthorized'}, status=403)
 
+    from core.student_performance import overall_performance_metrics
+
     qs = teacher_students_queryset(user)
 
     student_data = []
     for s in qs.select_related("grade"):
+        student_avg, class_avg, percentile = overall_performance_metrics(s)
         student_data.append({
             'id': s.id,
             'full_name': s.full_name,
@@ -1944,6 +1842,9 @@ def teacher_student_list(request):
             'city': s.city,
             'province': s.province,
             'username': s.username,
+            'student_average': student_avg,
+            'class_average': class_avg,
+            'percentile': percentile,
         })
 
     return Response(student_data)
