@@ -23,6 +23,34 @@ const formatSeconds = (total) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
+const extractApiErrorMessage = (err, fallback = 'Could not submit report. Please try again.') => {
+  if (!err?.response) {
+    return err?.message || fallback;
+  }
+  const { data, status } = err.response;
+  if (typeof data === 'string') {
+    if (data.includes('<!DOCTYPE') || data.includes('<html')) {
+      if (status === 404) {
+        return 'Report service not found. Please contact support if this continues.';
+      }
+      return `Server error (${status || 'unknown'}). Please try again later.`;
+    }
+    return data.slice(0, 300);
+  }
+  if (Array.isArray(data?.detail)) {
+    return data.detail
+      .map((item) => (typeof item === 'string' ? item : item?.msg || JSON.stringify(item)))
+      .join(' ');
+  }
+  if (Array.isArray(data?.message)) {
+    return data.message.join(' ');
+  }
+  return data?.message || data?.detail || data?.error || fallback;
+};
+
+const extractApiSuccessMessage = (data, fallback) =>
+  data?.message || data?.detail || fallback;
+
 const shouldHideOption = (opt) => {
   if (opt == null) return true;                // hides null/undefined
   const s = String(opt).trim();
@@ -72,9 +100,20 @@ const QuizAttempt = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportMessage, setReportMessage] = useState('');
   const [reportNotice, setReportNotice] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportedQuestionKeys, setReportedQuestionKeys] = useState(() => new Set());
   const canReportQuestion = Boolean(localStorage.getItem('access_token'));
 
+  const getReportKey = (question) => {
+    if (!question) return '';
+    const attemptKey = attemptId ?? 'preview';
+    return `${quizId}:${question.question_id}:${attemptKey}`;
+  };
+
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
+  const isCurrentQuestionReported = currentQuestion
+    ? reportedQuestionKeys.has(getReportKey(currentQuestion))
+    : false;
   const totalQuestions = questions.length > 0 ? (quizMeta.total_expected_questions || questions.length) : 0;
 
   // Helper: any answer given? (used to disable switching modes mid-attempt)
@@ -118,6 +157,7 @@ const QuizAttempt = () => {
         setAnswers({});
         setLockedQuestions({});   // reset locks
         setQuestionResults({});   // ✅ reset correctness map
+        setReportedQuestionKeys(new Set());
         setTimedStatus('idle');
         setTimedSeconds(420);   // default 7 min (you can change)
         setTimeLeft(null);
@@ -167,14 +207,27 @@ const QuizAttempt = () => {
     setShowRoughWork(true);
   };
 
+  const markQuestionReported = (question) => {
+    const key = getReportKey(question);
+    if (!key) return;
+    setReportedQuestionKeys((prev) => {
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  };
+
   const openReportModal = () => {
+    if (isCurrentQuestionReported) return;
     setReportNotice('');
     setReportMessage('');
     setShowReportModal(true);
   };
 
   const submitQuestionReport = async () => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || reportSubmitting || isCurrentQuestionReported) return;
+    setReportSubmitting(true);
+    setReportNotice('');
     try {
       const payload = {
         quiz_id: Number(quizId),
@@ -186,20 +239,33 @@ const QuizAttempt = () => {
       if (attemptId) {
         payload.attempt_id = attemptId;
       }
-      const res = await axios.post('/questions/report/', payload);
-      setReportNotice(
-        res.data?.detail || 'Thank you. This question has been reported for review.'
+      const res = await axios.post('questions/report/', payload);
+      const successMessage = extractApiSuccessMessage(
+        res.data,
+        'Thank you. This question has been reported for review.'
       );
+      markQuestionReported(currentQuestion);
+      setReportNotice(successMessage);
       setReportMessage('');
       window.setTimeout(() => {
         setShowReportModal(false);
         setReportNotice('');
-      }, 1800);
+      }, 800);
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      setReportNotice(
-        detail || 'Could not submit report. Please try again.'
-      );
+      const status = err.response?.status;
+      const errorMessage = extractApiErrorMessage(err);
+      if (status === 409) {
+        markQuestionReported(currentQuestion);
+        setReportNotice(errorMessage);
+        window.setTimeout(() => {
+          setShowReportModal(false);
+          setReportNotice('');
+        }, 1200);
+      } else {
+        setReportNotice(errorMessage);
+      }
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -1003,11 +1069,24 @@ useEffect(() => {
                     <button
                       type="button"
                       onClick={openReportModal}
-                      aria-label="Report wrong question"
-                      title="Report wrong question"
-                      className="inline-flex w-[170px] items-center justify-center rounded border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                      disabled={isCurrentQuestionReported || reportSubmitting}
+                      aria-label={
+                        isCurrentQuestionReported
+                          ? 'Question already reported'
+                          : 'Report wrong question'
+                      }
+                      title={
+                        isCurrentQuestionReported
+                          ? 'You already reported this question'
+                          : 'Report wrong question'
+                      }
+                      className={`inline-flex w-[170px] items-center justify-center rounded border px-2 py-2 text-xs font-medium shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${
+                        isCurrentQuestionReported
+                          ? 'cursor-default border-green-200 bg-green-50 text-green-800'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      } disabled:opacity-80`}
                     >
-                      Report wrong question
+                      {isCurrentQuestionReported ? 'Reported' : 'Report wrong question'}
                     </button>
                   </>
                 ) : null}
@@ -1270,7 +1349,10 @@ useEffect(() => {
               className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
             />
             {reportNotice ? (
-              <p className="mt-3 text-sm text-gray-700" role="status">
+              <p
+                className={`mt-3 text-sm ${reportNotice.toLowerCase().includes('thank you') ? 'text-green-700' : 'text-gray-700'}`}
+                role="status"
+              >
                 {reportNotice}
               </p>
             ) : null}
@@ -1279,15 +1361,17 @@ useEffect(() => {
                 type="button"
                 onClick={() => setShowReportModal(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                disabled={reportSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={submitQuestionReport}
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                disabled={reportSubmitting || isCurrentQuestionReported}
+                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
               >
-                Submit Report
+                {reportSubmitting ? 'Submitting…' : 'Submit Report'}
               </button>
             </div>
           </div>

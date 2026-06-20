@@ -24,6 +24,14 @@ from core.models import (
 REPORT_ALLOWED_ROLES = frozenset({"student", "teacher", "admin", "manager"})
 
 
+def _report_response(message, status_code, *, success=None, **extra):
+    body = {"message": message, "detail": message}
+    if success is not None:
+        body["success"] = success
+    body.update(extra)
+    return Response(body, status=status_code)
+
+
 def _can_report(user):
     if not user or not user.is_authenticated:
         return False
@@ -113,9 +121,10 @@ def _duplicate_exists(user, quiz, question_uuid, attempt):
 def report_question(request):
     user = request.user
     if not _can_report(user):
-        return Response(
-            {"detail": "You are not allowed to report questions."},
-            status=status.HTTP_403_FORBIDDEN,
+        return _report_response(
+            "You are not allowed to report questions.",
+            status.HTTP_403_FORBIDDEN,
+            success=False,
         )
 
     quiz_id = request.data.get("quiz_id")
@@ -124,20 +133,21 @@ def report_question(request):
     message = (request.data.get("message") or "").strip()
 
     if not quiz_id or not question_id:
-        return Response(
-            {"detail": "quiz_id and question_id are required."},
-            status=status.HTTP_400_BAD_REQUEST,
+        return _report_response(
+            "quiz_id and question_id are required.",
+            status.HTTP_400_BAD_REQUEST,
+            success=False,
         )
 
     try:
         quiz = Quiz.objects.get(id=quiz_id)
     except Quiz.DoesNotExist:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return _report_response("Quiz not found.", status.HTTP_404_NOT_FOUND, success=False)
 
     try:
         question_uuid = uuid.UUID(str(question_id))
     except (ValueError, TypeError, AttributeError):
-        return Response({"detail": "Invalid question_id."}, status=status.HTTP_400_BAD_REQUEST)
+        return _report_response("Invalid question_id.", status.HTTP_400_BAD_REQUEST, success=False)
 
     question_type = (request.data.get("question_type") or "").lower()
     question_obj, resolved_type = _resolve_question(question_uuid, question_type)
@@ -148,14 +158,15 @@ def report_question(request):
                 if question_obj:
                     break
         if not question_obj:
-            return Response({"detail": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
+            return _report_response("Question not found.", status.HTTP_404_NOT_FOUND, success=False)
     elif question_type and resolved_type != question_type:
-        return Response({"detail": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
+        return _report_response("Question not found.", status.HTTP_404_NOT_FOUND, success=False)
 
     if not _question_in_quiz(quiz, question_uuid, resolved_type):
-        return Response(
-            {"detail": "Question does not belong to this quiz."},
-            status=status.HTTP_400_BAD_REQUEST,
+        return _report_response(
+            "Question does not belong to this quiz.",
+            status.HTTP_400_BAD_REQUEST,
+            success=False,
         )
 
     attempt = None
@@ -163,22 +174,25 @@ def report_question(request):
         try:
             attempt = StudentQuizAttempt.objects.get(id=attempt_id)
         except StudentQuizAttempt.DoesNotExist:
-            return Response({"detail": "Attempt not found."}, status=status.HTTP_404_NOT_FOUND)
+            return _report_response("Attempt not found.", status.HTTP_404_NOT_FOUND, success=False)
         if attempt.student_id != user.id:
-            return Response(
-                {"detail": "Attempt does not belong to you."},
-                status=status.HTTP_403_FORBIDDEN,
+            return _report_response(
+                "Attempt does not belong to you.",
+                status.HTTP_403_FORBIDDEN,
+                success=False,
             )
         if attempt.quiz_id != quiz.id:
-            return Response(
-                {"detail": "Attempt does not match this quiz."},
-                status=status.HTTP_400_BAD_REQUEST,
+            return _report_response(
+                "Attempt does not match this quiz.",
+                status.HTTP_400_BAD_REQUEST,
+                success=False,
             )
 
     if _duplicate_exists(user, quiz, question_uuid, attempt):
-        return Response(
-            {"detail": "You have already reported this question."},
-            status=status.HTTP_409_CONFLICT,
+        return _report_response(
+            "You have already reported this question.",
+            status.HTTP_409_CONFLICT,
+            success=False,
         )
 
     client_snapshot = (request.data.get("question_snapshot") or "").strip()
@@ -194,12 +208,11 @@ def report_question(request):
         message=message,
     )
 
-    return Response(
-        {
-            "detail": "Thank you. This question has been reported for review.",
-            "report_id": report.id,
-        },
-        status=status.HTTP_201_CREATED,
+    return _report_response(
+        "Thank you. This question has been reported for review.",
+        status.HTTP_201_CREATED,
+        success=True,
+        report_id=report.id,
     )
 
 

@@ -81,6 +81,8 @@ class QuestionReportApiTests(TestCase):
         self.client.force_authenticate(user=self.student)
         response = self.client.post("/api/questions/report/", self.payload, format="json")
         self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.data.get("success"))
+        self.assertIn("reported for review", response.data.get("message", "").lower())
         self.assertEqual(QuestionReport.objects.count(), 1)
         report = QuestionReport.objects.get()
         self.assertEqual(report.reported_by, self.student)
@@ -105,7 +107,8 @@ class QuestionReportApiTests(TestCase):
         self.assertEqual(first.status_code, 201)
         second = self.client.post("/api/questions/report/", self.payload, format="json")
         self.assertEqual(second.status_code, 409)
-        self.assertIn("already reported", second.data["detail"].lower())
+        self.assertFalse(second.data.get("success"))
+        self.assertIn("already reported", second.data.get("message", "").lower())
 
     def test_attempt_must_belong_to_reporter(self):
         self.client.force_authenticate(user=self.other_student)

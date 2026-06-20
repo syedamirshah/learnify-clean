@@ -166,7 +166,7 @@ urlpatterns = [
     path('student/learning-diagnosis/', student_learning_diagnosis_view, name='student_learning_diagnosis'),
 
     # ---------- Question reports ----------
-    path('api/questions/report/', report_question, name='report-question'),
+    path('questions/report/', report_question, name='report-question'),
     path('admin/question-reports/', question_reports_list, name='question-reports-list'),
     path('admin/question-reports/<int:report_id>/', question_report_detail, name='question-report-detail'),
 
