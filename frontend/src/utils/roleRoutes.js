@@ -39,9 +39,3 @@ export function resolvePostLoginPath(role, search) {
 
   return next || getDefaultRouteForRole(role);
 }
-
-/** Non-students should not stay on the student learning hub (/learn). */
-export function shouldRedirectFromLearn(role) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "school_admin" || normalized === "teacher";
-}

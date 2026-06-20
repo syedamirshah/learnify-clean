@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   getDefaultRouteForRole,
   resolvePostLoginPath,
-  shouldRedirectFromLearn,
 } from "./roleRoutes";
 
 describe("getDefaultRouteForRole", () => {
@@ -33,13 +32,5 @@ describe("resolvePostLoginPath", () => {
 
   it("honors safe next path", () => {
     expect(resolvePostLoginPath("teacher", "?next=/teacher/tasks")).toBe("/teacher/tasks");
-  });
-});
-
-describe("shouldRedirectFromLearn", () => {
-  it("flags school_admin and teacher", () => {
-    expect(shouldRedirectFromLearn("school_admin")).toBe(true);
-    expect(shouldRedirectFromLearn("teacher")).toBe(true);
-    expect(shouldRedirectFromLearn("student")).toBe(false);
   });
 });

@@ -14,11 +14,7 @@ import {
   needsPaymentRedirect,
   paymentRedirectMessage,
 } from "../../utils/paymentRedirect";
-import {
-  getDefaultRouteForRole,
-  resolvePostLoginPath,
-  shouldRedirectFromLearn,
-} from "../../utils/roleRoutes";
+import { resolvePostLoginPath } from "../../utils/roleRoutes";
 // EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
 import {
   formatChapterSummaryMeta,
@@ -122,15 +118,6 @@ const navLinkClass = () =>
     }
   }, [location.search]);
 
-  // Redirect teachers and school admins away from the student learning hub
-  useEffect(() => {
-    const storedRole = localStorage.getItem("user_role") || localStorage.getItem("role");
-    const token = localStorage.getItem("access_token");
-    if (token && shouldRedirectFromLearn(storedRole)) {
-      navigate(getDefaultRouteForRole(storedRole), { replace: true });
-    }
-  }, [navigate]);
-
   // Expired user redirect (only if actually logged in)
     useEffect(() => {
       const status = localStorage.getItem("account_status");
@@ -205,7 +192,7 @@ const navLinkClass = () =>
     // ✅ DEFAULT EXPAND RULES (NEW)
     // Guests + Teachers -> all grades open
     // Students -> only their grade open (others collapsed)
-    if (!role || role === "teacher") {
+    if (!role || role === "teacher" || role === "school_admin") {
       setOpenGrades(new Set(quizData.map((g) => g.grade)));
     } else if (role === "student") {
       const raw = localStorage.getItem("user_grade");

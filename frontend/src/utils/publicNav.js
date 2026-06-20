@@ -10,6 +10,7 @@ export function buildPublicNavItems(role, options = {}) {
   if (role === "school_admin") {
     return [
       { key: "home", label: "Home", href: "/school/dashboard" },
+      { key: "quizzes", label: "Quizzes", href: "/learn" },
       { key: "users", label: "Users", href: "/school/users" },
       { key: "analytics", label: "Analytics", href: "/school/analytics" },
       { key: "teachers", label: "Teachers", href: "/school/teachers" },
@@ -67,6 +68,7 @@ export function buildPublicNavItems(role, options = {}) {
       : []),
     ...(role === "teacher"
       ? [
+          { key: "quizzes", label: "Quizzes", href: "/learn" },
           {
             key: "my-students",
             label: "My Students",
