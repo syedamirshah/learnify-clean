@@ -2,6 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { pickDefaultGrade, sortGrades } from '../../utils/teacherAssessmentHelpers';
+import {
+  STUDENT_SORT_KEYS,
+  ariaSortValue,
+  sortIndicator,
+  sortStudents,
+  toggleStudentSort,
+} from '../../utils/studentTableSort';
 
 const BRAND_GREEN = '#42b72a';
 
@@ -79,6 +86,8 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
   const [loadError, setLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
+  const [sortState, setSortState] = useState({ sortKey: null, sortDirection: 'asc' });
+  const { sortKey, sortDirection } = sortState;
 
   const groupedByGrade = useMemo(() => {
     const groups = {};
@@ -111,15 +120,25 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
   const query = searchQuery.trim().toLowerCase();
 
   const selectedGradeStudents = useMemo(() => {
-    const list = groupedByGrade.groups[selectedGrade] || [];
-    if (!query) return list;
+    let list = groupedByGrade.groups[selectedGrade] || [];
+    if (query) {
+      list = list.filter((student) => {
+        const fullName = norm(student.full_name).toLowerCase();
+        const username = norm(student.username).toLowerCase();
+        return fullName.includes(query) || username.includes(query);
+      });
+    }
+    if (sortKey) {
+      return sortStudents(list, sortKey, sortDirection);
+    }
+    return list;
+  }, [groupedByGrade, selectedGrade, query, sortKey, sortDirection]);
 
-    return list.filter((student) => {
-      const fullName = norm(student.full_name).toLowerCase();
-      const username = norm(student.username).toLowerCase();
-      return fullName.includes(query) || username.includes(query);
-    });
-  }, [groupedByGrade, selectedGrade, query]);
+  const handleSortClick = (columnKey) => {
+    setSortState((current) =>
+      toggleStudentSort(current.sortKey, current.sortDirection, columnKey),
+    );
+  };
 
   const selectedGradeAllStudents = groupedByGrade.groups[selectedGrade] || [];
 
@@ -331,13 +350,33 @@ export default function TeacherStudentsBrowser({ searchInputId = 'student-search
                         #
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-left">
-                        Student Name
+                        <button
+                          type="button"
+                          onClick={() => handleSortClick(STUDENT_SORT_KEYS.NAME)}
+                          className="inline-flex items-center font-semibold text-green-900 hover:text-green-700"
+                          aria-sort={ariaSortValue(STUDENT_SORT_KEYS.NAME, sortKey, sortDirection)}
+                        >
+                          Student Name
+                          {sortIndicator(STUDENT_SORT_KEYS.NAME, sortKey, sortDirection)}
+                        </button>
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-left">
                         Username
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
-                        Student Avg
+                        <button
+                          type="button"
+                          onClick={() => handleSortClick(STUDENT_SORT_KEYS.STUDENT_AVG)}
+                          className="inline-flex items-center font-semibold text-green-900 hover:text-green-700"
+                          aria-sort={ariaSortValue(
+                            STUDENT_SORT_KEYS.STUDENT_AVG,
+                            sortKey,
+                            sortDirection,
+                          )}
+                        >
+                          Student Avg
+                          {sortIndicator(STUDENT_SORT_KEYS.STUDENT_AVG, sortKey, sortDirection)}
+                        </button>
                       </th>
                       <th scope="col" className="border-b border-green-100 px-4 py-3 text-center">
                         vs Class

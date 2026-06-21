@@ -2,6 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import { sortGrades } from "../../utils/teacherAssessmentHelpers";
+import {
+  STUDENT_SORT_KEYS,
+  ariaSortValue,
+  sortIndicator,
+  sortStudents,
+  toggleStudentSort,
+} from "../../utils/studentTableSort";
 
 const ALL_GRADES = "All";
 
@@ -91,13 +98,29 @@ function StudentsTable({
   onSelectGrade,
   gradeOptions,
 }) {
+  const [sortState, setSortState] = useState({ sortKey: null, sortDirection: "asc" });
+  const { sortKey, sortDirection } = sortState;
+
   const displayStudents = useMemo(() => {
-    if (selectedGrade === ALL_GRADES) return searchFilteredStudents;
-    return searchFilteredStudents.filter((user) => {
-      const grade = norm(user.grade) || "Unassigned Grade";
-      return grade === selectedGrade;
-    });
-  }, [searchFilteredStudents, selectedGrade]);
+    let list =
+      selectedGrade === ALL_GRADES
+        ? searchFilteredStudents
+        : searchFilteredStudents.filter((user) => {
+            const grade = norm(user.grade) || "Unassigned Grade";
+            return grade === selectedGrade;
+          });
+
+    if (sortKey) {
+      list = sortStudents(list, sortKey, sortDirection);
+    }
+    return list;
+  }, [searchFilteredStudents, selectedGrade, sortKey, sortDirection]);
+
+  const handleSortClick = (columnKey) => {
+    setSortState((current) =>
+      toggleStudentSort(current.sortKey, current.sortDirection, columnKey),
+    );
+  };
 
   const emptyMessage = useMemo(() => {
     if (students.length === 0) return "No students found for your school.";
@@ -154,11 +177,34 @@ function StudentsTable({
               <table className="min-w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-emerald-100 text-xs uppercase tracking-wide text-gray-500">
-                    <th className="px-2 py-2">Name</th>
+                    <th className="px-2 py-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick(STUDENT_SORT_KEYS.NAME)}
+                        className="inline-flex items-center uppercase tracking-wide hover:text-emerald-800"
+                        aria-sort={ariaSortValue(STUDENT_SORT_KEYS.NAME, sortKey, sortDirection)}
+                      >
+                        Name{sortIndicator(STUDENT_SORT_KEYS.NAME, sortKey, sortDirection)}
+                      </button>
+                    </th>
                     <th className="px-2 py-2">Username</th>
                     <th className="px-2 py-2">Email</th>
                     <th className="px-2 py-2">Grade</th>
-                    <th className="px-2 py-2">Student Avg</th>
+                    <th className="px-2 py-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick(STUDENT_SORT_KEYS.STUDENT_AVG)}
+                        className="inline-flex items-center uppercase tracking-wide hover:text-emerald-800"
+                        aria-sort={ariaSortValue(
+                          STUDENT_SORT_KEYS.STUDENT_AVG,
+                          sortKey,
+                          sortDirection,
+                        )}
+                      >
+                        Student Avg
+                        {sortIndicator(STUDENT_SORT_KEYS.STUDENT_AVG, sortKey, sortDirection)}
+                      </button>
+                    </th>
                     <th className="px-2 py-2">Status</th>
                     <th className="px-2 py-2 text-center">Action</th>
                   </tr>
