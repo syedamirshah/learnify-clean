@@ -31,6 +31,21 @@ def school_teachers_queryset(school):
     return User.objects.filter(school=school, role="teacher")
 
 
+def school_teacher_tasks_queryset(teacher=None, school=None):
+    """
+    Tasks visible to Principal monitoring.
+
+    School-wide: teachers linked to the school (`teacher__school=school`).
+    Per-teacher: caller must already validate `teacher.school_id == school.id`,
+    then pass `teacher=teacher`.
+    """
+    if teacher is not None:
+        return TeacherTask.objects.filter(teacher=teacher)
+    if school is not None:
+        return TeacherTask.objects.filter(teacher__school=school)
+    return TeacherTask.objects.none()
+
+
 def get_school_teacher(school, username):
     return get_object_or_404(
         User,
@@ -144,10 +159,12 @@ def build_teacher_monitoring_snapshot(teacher, school):
         for student in students
     }
 
-    tasks_created_count = TeacherTask.objects.filter(teacher=teacher, school=school).count()
+    tasks_created_count = school_teacher_tasks_queryset(teacher=teacher).count()
 
     active_tasks = list(
-        TeacherTask.objects.filter(teacher=teacher, is_active=True, school=school).prefetch_related(
+        school_teacher_tasks_queryset(teacher=teacher)
+        .filter(is_active=True)
+        .prefetch_related(
             Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
             "target_students",
             "target_grade",
@@ -303,9 +320,12 @@ def build_school_teacher_summary(teacher, school):
 
 
 def build_school_teacher_task_rows(teacher, school):
+    if teacher.school_id != school.id:
+        return []
+
     helpers = _teacher_helpers()
     tasks = (
-        TeacherTask.objects.filter(teacher=teacher, school=school)
+        school_teacher_tasks_queryset(teacher=teacher)
         .prefetch_related(
             Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
             "target_students",
@@ -375,9 +395,9 @@ def build_school_teacher_detail(teacher, school):
 
 
 def build_school_task_monitoring(school):
-    teacher_ids = school_teachers_queryset(school).values_list("id", flat=True)
     tasks = (
-        TeacherTask.objects.filter(teacher_id__in=teacher_ids, school=school, is_active=True)
+        school_teacher_tasks_queryset(school=school)
+        .filter(is_active=True)
         .select_related("teacher")
         .prefetch_related(
             Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
