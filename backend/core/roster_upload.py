@@ -120,12 +120,35 @@ def _roster_user_activation_fields(school):
     }
 
 
-def import_roster_from_file(file_obj, *, school=None, allowed_roles=None):
+def _maybe_send_roster_welcome_email(user, plain_password, *, send_welcome_emails, email_stats):
+    if not send_welcome_emails:
+        return
+
+    email = str(getattr(user, "email", "") or "").strip()
+    if not email:
+        email_stats["emails_skipped"] += 1
+        return
+
+    try:
+        from core.emails import send_welcome_email
+
+        send_welcome_email(user, password=str(plain_password or ""))
+        email_stats["emails_sent"] += 1
+    except Exception:
+        email_stats["emails_skipped"] += 1
+
+
+def import_roster_from_file(file_obj, *, school=None, allowed_roles=None, send_welcome_emails=False):
     workbook = openpyxl.load_workbook(file_obj)
-    return import_roster_from_workbook(workbook, school=school, allowed_roles=allowed_roles)
+    return import_roster_from_workbook(
+        workbook,
+        school=school,
+        allowed_roles=allowed_roles,
+        send_welcome_emails=send_welcome_emails,
+    )
 
 
-def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
+def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None, send_welcome_emails=False):
     sheet = workbook.active
 
     if school:
@@ -141,6 +164,7 @@ def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
     uploaded_count = 0
     skipped_count = 0
     errors = []
+    email_stats = {"emails_sent": 0, "emails_skipped": 0}
 
     for row_number, row in iter_roster_rows(sheet):
         try:
@@ -195,20 +219,31 @@ def import_roster_from_workbook(workbook, *, school=None, allowed_roles=None):
                 is_active=activation["is_active"],
                 subscription_expiry=activation["subscription_expiry"],
             )
-            user.set_password(row["password"])
+            plain_password = row["password"]
+            user.set_password(plain_password)
             user.save()
             uploaded_count += 1
+            _maybe_send_roster_welcome_email(
+                user,
+                plain_password,
+                send_welcome_emails=send_welcome_emails,
+                email_stats=email_stats,
+            )
         except Exception as exc:
             errors.append({"row": row_number, "error": str(exc)})
 
     if school and uploaded_count:
         refresh_school_onboarding(school)
 
-    return {
+    result = {
         "uploaded": uploaded_count,
         "skipped": skipped_count,
         "errors": errors,
     }
+    if send_welcome_emails:
+        result["emails_sent"] = email_stats["emails_sent"]
+        result["emails_skipped"] = email_stats["emails_skipped"]
+    return result
 
 
 def refresh_school_onboarding(school):

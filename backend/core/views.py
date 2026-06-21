@@ -2487,6 +2487,14 @@ def school_roster_template(request):
     )
 
 
+def _parse_request_bool(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in ('true', '1', 'yes', 'on')
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasPaidSubscription])
 @parser_classes([MultiPartParser, FormParser])
@@ -2503,17 +2511,20 @@ def school_upload_roster(request):
     if not upload:
         return Response({'error': 'Excel file is required.'}, status=400)
 
+    send_welcome_emails = _parse_request_bool(request.data.get('send_welcome_emails'))
+
     result = import_roster_from_file(
         upload,
         school=school,
         allowed_roles={'student', 'teacher'},
+        send_welcome_emails=send_welcome_emails,
     )
 
     if result.get('rejected'):
         error_message = result['errors'][0].get('error', 'Roster upload rejected.')
         return Response({'error': error_message, 'errors': result['errors']}, status=400)
 
-    return Response({
+    response_data = {
         'uploaded': result['uploaded'],
         'skipped': result['skipped'],
         'errors': result['errors'],
@@ -2525,7 +2536,12 @@ def school_upload_roster(request):
             'roster_uploaded': school_has_roster(school),
             'ready': school.is_subscription_active and school_has_roster(school),
         },
-    }, status=200)
+    }
+    if send_welcome_emails:
+        response_data['emails_sent'] = result.get('emails_sent', 0)
+        response_data['emails_skipped'] = result.get('emails_skipped', 0)
+
+    return Response(response_data, status=200)
 
 
 @api_view(['GET'])

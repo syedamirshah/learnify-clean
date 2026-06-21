@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import SchoolPageShell from "../../components/school/SchoolPageShell";
+import {
+  buildRosterUploadFormData,
+  formatRosterEmailSummary,
+  shouldShowRosterEmailResults,
+} from "../../utils/schoolRosterUploadHelpers";
 
 function downloadBlob(blob, filename) {
   const url = window.URL.createObjectURL(blob);
@@ -16,10 +21,12 @@ function downloadBlob(blob, filename) {
 
 export default function SchoolUploadRoster() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [sendWelcomeEmails, setSendWelcomeEmails] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const [lastUploadSentEmails, setLastUploadSentEmails] = useState(false);
 
   const handleDownloadTemplate = async () => {
     setDownloading(true);
@@ -49,14 +56,14 @@ export default function SchoolUploadRoster() {
     setError("");
     setResult(null);
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+    const formData = buildRosterUploadFormData(selectedFile, { sendWelcomeEmails });
 
     try {
       const res = await axiosInstance.post("school/upload-roster/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(res.data || null);
+      setLastUploadSentEmails(sendWelcomeEmails);
       setSelectedFile(null);
       event.target.reset();
     } catch (err) {
@@ -101,6 +108,23 @@ export default function SchoolUploadRoster() {
               onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
               className="block w-full rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 px-4 py-6 text-sm file:mr-4 file:rounded-xl file:border-0 file:bg-[#42b72a] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-green-700"
             />
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+              <input
+                type="checkbox"
+                checked={sendWelcomeEmails}
+                onChange={(event) => setSendWelcomeEmails(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-emerald-300 text-[#42b72a] focus:ring-[#42b72a]"
+              />
+              <span>
+                <span className="block text-sm font-bold text-emerald-950">
+                  Email login details to uploaded users
+                </span>
+                <span className="mt-1 block text-sm text-gray-600">
+                  Sends username and password to users with email addresses. Leave unchecked if
+                  the school will share credentials manually.
+                </span>
+              </span>
+            </label>
             <button
               type="submit"
               disabled={uploading || !selectedFile}
@@ -119,6 +143,29 @@ export default function SchoolUploadRoster() {
           <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
             <h2 className="text-lg font-black text-emerald-950">Import Results</h2>
             <p className="mt-2 text-sm font-semibold text-emerald-900">{result.message}</p>
+            {shouldShowRosterEmailResults(result, lastUploadSentEmails) ? (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-2">
+                {(() => {
+                  const { emailsSent, emailsSkipped } = formatRosterEmailSummary(result);
+                  return (
+                    <>
+                      <div className="rounded-2xl bg-white p-4">
+                        <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                          Emails sent
+                        </p>
+                        <p className="mt-1 text-2xl font-black text-emerald-950">{emailsSent}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white p-4">
+                        <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                          Emails skipped
+                        </p>
+                        <p className="mt-1 text-2xl font-black text-emerald-950">{emailsSkipped}</p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            ) : null}
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-white p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Imported</p>
