@@ -17,22 +17,116 @@ def _grade_name_for_filter(user):
     return getattr(grade, "name", grade)
 
 
-def _is_answer_correct(ans):
+def _build_question_cache(question_ids):
+    ids = [str(question_id) for question_id in question_ids]
+    if not ids:
+        return {"scq": {}, "mcq": {}, "fib": {}}
+    return {
+        "scq": {
+            str(question.question_id): question
+            for question in SCQQuestion.objects.filter(question_id__in=ids)
+        },
+        "mcq": {
+            str(question.question_id): question
+            for question in MCQQuestion.objects.filter(question_id__in=ids)
+        },
+        "fib": {
+            str(question.question_id): question
+            for question in FIBQuestion.objects.filter(question_id__in=ids)
+        },
+    }
+
+
+def _get_question_for_answer(ans, question_cache=None):
+    question_id = str(ans.question_id)
+    if question_cache:
+        cached = question_cache.get(ans.question_type, {}).get(question_id)
+        if cached is not None:
+            return cached
+    if ans.question_type == "scq":
+        return SCQQuestion.objects.get(question_id=question_id)
+    if ans.question_type == "mcq":
+        return MCQQuestion.objects.get(question_id=question_id)
+    if ans.question_type == "fib":
+        return FIBQuestion.objects.get(question_id=question_id)
+    return None
+
+
+def _is_answer_correct(ans, question_cache=None):
     try:
         if ans.question_type == "scq":
-            q = SCQQuestion.objects.get(question_id=str(ans.question_id))
+            q = _get_question_for_answer(ans, question_cache)
             return ans.answer_data.get("selected") == q.correct_answer
         if ans.question_type == "mcq":
-            q = MCQQuestion.objects.get(question_id=str(ans.question_id))
+            q = _get_question_for_answer(ans, question_cache)
             correct_set = sorted([x.strip() for x in q.correct_answers.split(",")])
             selected_set = sorted(ans.answer_data.get("selected", []))
             return selected_set == correct_set
         if ans.question_type == "fib":
-            q = FIBQuestion.objects.get(question_id=str(ans.question_id))
+            q = _get_question_for_answer(ans, question_cache)
             return ans.answer_data == q.correct_answers
     except Exception:
         return False
     return False
+
+
+def _overall_student_average_from_answers(answers, question_cache=None):
+    """
+    Overall Performance student_avg: average of per-subject correct percentages.
+    Returns None when the student has no completed-attempt answer data.
+    """
+    subject_data = defaultdict(lambda: {"total": 0, "correct": 0})
+
+    for ans in answers:
+        try:
+            quiz = ans.attempt.quiz
+            subject = quiz.subject.name if quiz.subject else "Unknown"
+        except Exception:
+            continue
+
+        subject_data[subject]["total"] += 1
+        if _is_answer_correct(ans, question_cache):
+            subject_data[subject]["correct"] += 1
+
+    subject_avgs = []
+    for data in subject_data.values():
+        if data["total"]:
+            subject_avgs.append(data["correct"] / data["total"] * 100)
+
+    if not subject_avgs:
+        return None
+    return round(sum(subject_avgs) / len(subject_avgs), 2)
+
+
+def batch_overall_student_averages(students):
+    """
+    Batch version of overall_performance_metrics()[0] for many students.
+    Returns dict mapping student user id -> student_average or None.
+    """
+    student_list = list(students)
+    if not student_list:
+        return {}
+
+    student_ids = [student.id for student in student_list]
+    answers = list(
+        StudentAnswer.objects.filter(
+            attempt__student_id__in=student_ids,
+            attempt__completed_at__isnull=False,
+        ).select_related("attempt__quiz__subject")
+    )
+    question_cache = _build_question_cache({answer.question_id for answer in answers})
+
+    answers_by_student = defaultdict(list)
+    for answer in answers:
+        answers_by_student[answer.attempt.student_id].append(answer)
+
+    return {
+        student_id: _overall_student_average_from_answers(
+            answers_by_student.get(student_id, []),
+            question_cache,
+        )
+        for student_id in student_ids
+    }
 
 
 def build_subject_performance_rows(student_user):

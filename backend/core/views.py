@@ -2396,8 +2396,11 @@ def school_settings_logo(request):
     }, status=200)
 
 
-def _serialize_school_roster_user(user):
-    return {
+_SCHOOL_ROSTER_SENTINEL = object()
+
+
+def _serialize_school_roster_user(user, *, student_average=_SCHOOL_ROSTER_SENTINEL):
+    payload = {
         'id': user.id,
         'username': user.username,
         'full_name': user.full_name or '',
@@ -2405,6 +2408,9 @@ def _serialize_school_roster_user(user):
         'grade': user.grade.name if user.grade else None,
         'account_status': user.account_status,
     }
+    if student_average is not _SCHOOL_ROSTER_SENTINEL:
+        payload['student_average'] = student_average
+    return payload
 
 
 @api_view(['GET'])
@@ -2431,8 +2437,19 @@ def school_users(request):
         teachers_qs = teachers_qs.filter(search_filter)
         students_qs = students_qs.filter(search_filter)
 
+    ordered_students = list(students_qs.order_by('full_name', 'username'))
+    from core.student_performance import batch_overall_student_averages
+
+    student_averages = batch_overall_student_averages(ordered_students)
+
     teachers = [_serialize_school_roster_user(u) for u in teachers_qs.order_by('full_name', 'username')]
-    students = [_serialize_school_roster_user(u) for u in students_qs.order_by('full_name', 'username')]
+    students = [
+        _serialize_school_roster_user(
+            user,
+            student_average=student_averages.get(user.id),
+        )
+        for user in ordered_students
+    ]
 
     return Response({
         'teachers': teachers,
