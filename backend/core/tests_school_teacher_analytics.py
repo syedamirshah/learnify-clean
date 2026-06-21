@@ -184,6 +184,8 @@ class SchoolTeacherAnalyticsApiTests(TestCase):
         teacher_row = analytics["teachers"][0]
         self.assertEqual(teacher_row["students_count"], 2)
         self.assertEqual(teacher_row["average_student_score"], 65.0)
+        self.assertEqual(teacher_row["class_average"], 65.0)
+        self.assertEqual(teacher_row["tasks_created_count"], 1)
         self.assertEqual(teacher_row["active_tasks_count"], 1)
         self.assertEqual(teacher_row["pending_task_items"], 0)
         self.assertEqual(teacher_row["completed_task_items"], 2)
@@ -191,9 +193,41 @@ class SchoolTeacherAnalyticsApiTests(TestCase):
 
         detail = self.client.get("/api/school/teacher/teacher_one/summary/").data
         self.assertEqual(detail["average_student_score"], 65.0)
+        self.assertEqual(detail["class_average"], 65.0)
+        self.assertEqual(detail["tasks_created_count"], 1)
         self.assertEqual(len(detail["students_requiring_attention"]), 1)
 
         monitoring = self.client.get("/api/school/task-monitoring/").data
         self.assertEqual(monitoring["summary"]["completed_items"], 2)
         self.assertEqual(monitoring["summary"]["pending_items"], 0)
         self.assertEqual(monitoring["tasks"][0]["completion_percentage"], 100)
+        self.assertEqual(monitoring["tasks"][0]["teacher_id"], self.teacher.id)
+
+    def test_teacher_detail_includes_tasks_and_student_progress(self):
+        self.client.force_authenticate(user=self.school_admin)
+        response = self.client.get(f"/api/school/teachers/{self.teacher.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["teacher"]["username"], "teacher_one")
+        self.assertEqual(response.data["tasks_created_count"], 1)
+        self.assertEqual(response.data["class_average"], 65.0)
+        self.assertEqual(len(response.data["tasks"]), 1)
+        task = response.data["tasks"][0]
+        self.assertEqual(task["task_id"], self.task.id)
+        self.assertEqual(task["status"], "active")
+        self.assertEqual(task["target_grade"], "Grade 3")
+        self.assertEqual(len(task["assigned_students"]), 2)
+        self.assertTrue(task["assigned_students"][0]["quizzes"][0]["completed"])
+
+    def test_cross_school_teacher_detail_blocked(self):
+        self.client.force_authenticate(user=self.school_admin)
+        self.assertEqual(
+            self.client.get(f"/api/school/teachers/{self.other_teacher.id}/").status_code,
+            404,
+        )
+
+    def test_non_school_admin_blocked_from_teacher_detail(self):
+        self.client.force_authenticate(user=self.teacher)
+        self.assertEqual(
+            self.client.get(f"/api/school/teachers/{self.teacher.id}/").status_code,
+            403,
+        )

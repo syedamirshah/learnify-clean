@@ -9,14 +9,20 @@ def _teacher_helpers():
     from core.views import (
         _attempt_percentage,
         _latest_attempts_map,
+        _quiz_total_marks,
+        _serialize_student_task_progress,
         _task_assigned_students,
+        _task_status_label,
         _teacher_scoped_students_queryset,
     )
 
     return {
         "attempt_percentage": _attempt_percentage,
         "latest_attempts_map": _latest_attempts_map,
+        "quiz_total_marks": _quiz_total_marks,
+        "serialize_student_task_progress": _serialize_student_task_progress,
         "task_assigned_students": _task_assigned_students,
+        "task_status_label": _task_status_label,
         "teacher_scoped_students_queryset": _teacher_scoped_students_queryset,
     }
 
@@ -29,6 +35,15 @@ def get_school_teacher(school, username):
     return get_object_or_404(
         User,
         username__iexact=username,
+        role="teacher",
+        school=school,
+    )
+
+
+def get_school_teacher_by_id(school, teacher_id):
+    return get_object_or_404(
+        User,
+        pk=teacher_id,
         role="teacher",
         school=school,
     )
@@ -129,8 +144,10 @@ def build_teacher_monitoring_snapshot(teacher, school):
         for student in students
     }
 
+    tasks_created_count = TeacherTask.objects.filter(teacher=teacher, school=school).count()
+
     active_tasks = list(
-        TeacherTask.objects.filter(teacher=teacher, is_active=True).prefetch_related(
+        TeacherTask.objects.filter(teacher=teacher, is_active=True, school=school).prefetch_related(
             Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
             "target_students",
             "target_grade",
@@ -209,6 +226,8 @@ def build_teacher_monitoring_snapshot(teacher, school):
         },
         "students_count": len(students),
         "average_student_score": average_student_score,
+        "class_average": average_student_score,
+        "tasks_created_count": tasks_created_count,
         "active_tasks_count": len(active_tasks),
         "completed_task_items": completed_task_items_count,
         "pending_task_items": pending_task_items_count,
@@ -242,6 +261,8 @@ def build_school_teacher_analytics(school):
             "full_name": snapshot["teacher"]["full_name"],
             "students_count": snapshot["students_count"],
             "average_student_score": snapshot["average_student_score"],
+            "class_average": snapshot["class_average"],
+            "tasks_created_count": snapshot["tasks_created_count"],
             "active_tasks_count": snapshot["active_tasks_count"],
             "completed_task_items": snapshot["completed_task_items"],
             "pending_task_items": snapshot["pending_task_items"],
@@ -271,11 +292,85 @@ def build_school_teacher_summary(teacher, school):
         "teacher": snapshot["teacher"],
         "students_count": snapshot["students_count"],
         "average_student_score": snapshot["average_student_score"],
+        "class_average": snapshot["class_average"],
+        "tasks_created_count": snapshot["tasks_created_count"],
         "active_tasks_count": snapshot["active_tasks_count"],
         "completed_task_items": snapshot["completed_task_items"],
         "pending_task_items": snapshot["pending_task_items"],
         "students_requiring_attention": snapshot["students_requiring_attention"],
         "recent_activity": snapshot["recent_activity"],
+    }
+
+
+def build_school_teacher_task_rows(teacher, school):
+    helpers = _teacher_helpers()
+    tasks = (
+        TeacherTask.objects.filter(teacher=teacher, school=school)
+        .prefetch_related(
+            Prefetch("task_quizzes", queryset=TeacherTaskQuiz.objects.select_related("quiz")),
+            "target_students",
+            "target_grade",
+        )
+        .order_by("-created_at")
+    )
+
+    task_rows = []
+    for task in tasks:
+        task_quizzes = [tq for tq in task.task_quizzes.all() if tq.quiz]
+        quiz_objs = [tq.quiz for tq in task_quizzes]
+        quiz_totals = {quiz.id: helpers["quiz_total_marks"](quiz) for quiz in quiz_objs}
+
+        assigned_students = helpers["task_assigned_students"](task, teacher)
+        student_ids = [student.id for student in assigned_students]
+        quiz_ids = [quiz.id for quiz in quiz_objs]
+        attempts_map = helpers["latest_attempts_map"](student_ids, quiz_ids)
+
+        is_grade_wide = bool(task.target_grade_id) and not task.target_students.exists()
+        target_type = "grade_wide" if is_grade_wide else "selected_students"
+
+        task_rows.append({
+            "task_id": task.id,
+            "id": task.id,
+            "message": task.message,
+            "due_date": task.due_date.strftime("%Y-%m-%d") if task.due_date else None,
+            "created_at": task.created_at.strftime("%Y-%m-%d") if task.created_at else None,
+            "is_active": task.is_active,
+            "status": helpers["task_status_label"](task),
+            "target_type": target_type,
+            "target_grade": task.target_grade.name if task.target_grade else None,
+            "target_students_count": len(assigned_students),
+            "quizzes": [{"id": quiz.id, "title": quiz.title} for quiz in quiz_objs],
+            "assigned_students": [
+                helpers["serialize_student_task_progress"](
+                    student,
+                    task_quizzes,
+                    attempts_map,
+                    quiz_totals,
+                )
+                for student in assigned_students
+            ],
+        })
+
+    return task_rows
+
+
+def build_school_teacher_detail(teacher, school):
+    snapshot = build_teacher_monitoring_snapshot(teacher, school)
+    if not snapshot:
+        return None
+
+    return {
+        "teacher": snapshot["teacher"],
+        "students_count": snapshot["students_count"],
+        "average_student_score": snapshot["average_student_score"],
+        "class_average": snapshot["class_average"],
+        "tasks_created_count": snapshot["tasks_created_count"],
+        "active_tasks_count": snapshot["active_tasks_count"],
+        "completed_task_items": snapshot["completed_task_items"],
+        "pending_task_items": snapshot["pending_task_items"],
+        "students_requiring_attention": snapshot["students_requiring_attention"],
+        "recent_activity": snapshot["recent_activity"],
+        "tasks": build_school_teacher_task_rows(teacher, school),
     }
 
 
@@ -308,6 +403,7 @@ def build_school_task_monitoring(school):
 
         task_rows.append({
             "task_id": task.id,
+            "teacher_id": task.teacher_id,
             "teacher_name": task.teacher.full_name or task.teacher.username,
             "teacher_username": task.teacher.username,
             "message": task.message,

@@ -104,7 +104,14 @@ export default function SchoolTaskMonitoring() {
                     <span>
                       <strong>Pending:</strong> {task.pending_items}
                     </span>
-                    {task.teacher_username ? (
+                    {task.teacher_id ? (
+                      <Link
+                        to={`/school/teachers/${task.teacher_id}`}
+                        className="font-semibold text-green-700 hover:text-green-900"
+                      >
+                        View Teacher
+                      </Link>
+                    ) : task.teacher_username ? (
                       <Link
                         to={`/school/teacher/${task.teacher_username}`}
                         className="font-semibold text-green-700 hover:text-green-900"

@@ -26,11 +26,11 @@ import TeacherTasks from "./pages/teacher/TeacherTasks";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import SchoolDashboard from "./pages/school/SchoolDashboard";
 import SchoolUploadRoster from "./pages/school/SchoolUploadRoster";
-import SchoolAnalytics from "./pages/school/SchoolAnalytics";
 import SchoolStudentSummary from "./pages/school/SchoolStudentSummary";
 import SchoolStudentQuizHistory from "./pages/school/SchoolStudentQuizHistory";
 import SchoolStudentLearningDiagnosis from "./pages/school/SchoolStudentLearningDiagnosis";
 import SchoolTeacherAnalytics from "./pages/school/SchoolTeacherAnalytics";
+import SchoolTeacherMonitoringDetail from "./pages/school/SchoolTeacherMonitoringDetail";
 import SchoolTeacherSummary from "./pages/school/SchoolTeacherSummary";
 import SchoolTaskMonitoring from "./pages/school/SchoolTaskMonitoring";
 import SchoolSettings from "./pages/school/SchoolSettings";
@@ -73,8 +73,9 @@ function App() {
           <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
           <Route path="/school/users" element={<Navigate to="/school/dashboard" replace />} />
           <Route path="/school/upload" element={<SchoolProtectedRoute><SchoolUploadRoster /></SchoolProtectedRoute>} />
-          <Route path="/school/analytics" element={<SchoolProtectedRoute><SchoolAnalytics /></SchoolProtectedRoute>} />
+          <Route path="/school/analytics" element={<Navigate to="/school/teachers" replace />} />
           <Route path="/school/teachers" element={<SchoolProtectedRoute><SchoolTeacherAnalytics /></SchoolProtectedRoute>} />
+          <Route path="/school/teachers/:teacherId" element={<SchoolProtectedRoute><SchoolTeacherMonitoringDetail /></SchoolProtectedRoute>} />
           <Route path="/school/teacher/:username" element={<SchoolProtectedRoute><SchoolTeacherSummary /></SchoolProtectedRoute>} />
           <Route path="/school/tasks" element={<SchoolProtectedRoute><SchoolTaskMonitoring /></SchoolProtectedRoute>} />
           <Route path="/school/settings" element={<SchoolProtectedRoute><SchoolSettings /></SchoolProtectedRoute>} />

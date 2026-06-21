@@ -26,5 +26,7 @@ describe("buildPublicNavItems", () => {
     expect(findNavItem(items, "quizzes")?.label).toBe("Quizzes");
     expect(findNavItem(items, "quizzes")?.href).toBe("/learn");
     expect(findNavItem(items, "users")).toBeUndefined();
+    expect(findNavItem(items, "analytics")).toBeUndefined();
+    expect(findNavItem(items, "teachers")?.href).toBe("/school/teachers");
   });
 });

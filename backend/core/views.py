@@ -78,8 +78,10 @@ from core.school_analytics import (
 from core.school_teacher_analytics import (
     build_school_task_monitoring,
     build_school_teacher_analytics,
+    build_school_teacher_detail,
     build_school_teacher_summary,
     get_school_teacher,
+    get_school_teacher_by_id,
 )
 from core.student_monitoring import build_learning_diagnosis, build_student_quiz_history
 from django.contrib.auth.password_validation import validate_password
@@ -2612,6 +2614,24 @@ def school_teacher_summary(request, username):
 
     teacher = get_school_teacher(school, username)
     payload = build_school_teacher_summary(teacher, school)
+    if not payload:
+        return Response({'error': 'Teacher not found in this school.'}, status=404)
+    return Response(payload, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, HasPaidSubscription])
+def school_teacher_detail(request, teacher_id):
+    user = request.user
+    if user.role != 'school_admin':
+        return Response({'error': 'Only school admins can access this endpoint.'}, status=403)
+
+    school = user.school
+    if not school:
+        return Response({'error': 'No school is linked to this account.'}, status=400)
+
+    teacher = get_school_teacher_by_id(school, teacher_id)
+    payload = build_school_teacher_detail(teacher, school)
     if not payload:
         return Response({'error': 'Teacher not found in this school.'}, status=404)
     return Response(payload, status=200)
