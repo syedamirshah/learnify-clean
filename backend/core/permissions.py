@@ -32,7 +32,10 @@ def has_active_subscription(user):
     """
     Paid learning access: active subscription status and unexpired date.
     Does not use Django is_active (that gates login for unpaid signups).
-    School-linked users may also pass via an active school license (read-through).
+
+    School-linked students/teachers depend on School.is_subscription_active only.
+    Retail students keep individual user subscription fields as authority.
+    School admins may access school dashboard/billing even when the license expired.
     """
     if not user or not getattr(user, "is_authenticated", False):
         return False
@@ -45,14 +48,16 @@ def has_active_subscription(user):
     ):
         return True
 
-    if role == "teacher":
-        return True
+    school = _get_user_school(user)
+    school_id = getattr(user, "school_id", None) or (getattr(school, "id", None) if school else None)
 
     if role == "school_admin":
-        return _get_user_school(user) is not None
+        return school is not None
 
-    school = _get_user_school(user)
-    if school_subscription_active(school):
+    if school_id and role in ("student", "teacher"):
+        return school_subscription_active(school)
+
+    if role == "teacher":
         return True
 
     today = timezone.now().date()

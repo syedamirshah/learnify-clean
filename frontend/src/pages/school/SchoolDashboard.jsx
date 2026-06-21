@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import AppLayout from "../../components/layout/AppLayout";
 import SchoolDashboardHeader from "../../components/school/SchoolDashboardHeader";
-import SchoolGradePreview from "../../components/school/SchoolGradePreview";
-import SchoolInsightCards from "../../components/school/SchoolInsightCards";
 import SchoolOnboardingProgress from "../../components/school/SchoolOnboardingProgress";
+import SchoolUsersContent from "../../components/school/SchoolUsersContent";
 import { useSchoolLogo } from "../../hooks/useSchoolLogo";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import { buildSchoolPaymentChooseUrl } from "../../utils/paymentRedirect";
@@ -24,8 +23,6 @@ export default function SchoolDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
-  const [analytics, setAnalytics] = useState(null);
-  const [taskMonitoring, setTaskMonitoring] = useState(null);
   const [role, setRole] = useState(localStorage.getItem("user_role"));
   const [userFullName, setUserFullName] = useState(localStorage.getItem("user_full_name") || "");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -37,14 +34,8 @@ export default function SchoolDashboard() {
       setLoading(true);
       setError("");
       try {
-        const [dashboardRes, analyticsRes, taskRes] = await Promise.all([
-          axiosInstance.get("school/dashboard-summary/"),
-          axiosInstance.get("school/analytics-summary/"),
-          axiosInstance.get("school/task-monitoring/"),
-        ]);
+        const dashboardRes = await axiosInstance.get("school/dashboard-summary/");
         setData(dashboardRes.data || null);
-        setAnalytics(analyticsRes.data || null);
-        setTaskMonitoring(taskRes.data || null);
       } catch (err) {
         console.error(err);
         setError(
@@ -148,9 +139,11 @@ export default function SchoolDashboard() {
                 />
               </section>
 
-              <SchoolInsightCards analytics={analytics} taskMonitoring={taskMonitoring} />
-
-              <SchoolGradePreview gradeSnapshot={analytics?.grade_snapshot} />
+              <SchoolUsersContent
+                showCards={false}
+                sectionTitle="Students and Teachers"
+                searchInputId="dashboard-school-user-search"
+              />
 
               {showSubscriptionAlert ? (
                 <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">

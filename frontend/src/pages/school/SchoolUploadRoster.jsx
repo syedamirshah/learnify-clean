@@ -146,7 +146,7 @@ export default function SchoolUploadRoster() {
             ) : null}
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
-                to="/school/users"
+                to="/school/dashboard"
                 className="rounded-2xl bg-[#42b72a] px-4 py-2 text-sm font-bold text-white hover:bg-green-700"
               >
                 View Users

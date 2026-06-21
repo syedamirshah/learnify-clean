@@ -98,7 +98,7 @@ export default function SchoolStudentSummary() {
               Learning Diagnosis
             </Link>
             <Link
-              to="/school/users"
+              to="/school/dashboard"
               className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50"
             >
               Back to Users

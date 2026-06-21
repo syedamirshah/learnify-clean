@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
-import { persistStudentGrade } from "../utils/auth";
+import { persistStudentGrade, persistSchoolSubscriptionContext } from "../utils/auth";
 import {
-  buildPaymentChooseUrl,
+  buildPaymentRedirectContext,
   needsPaymentRedirect,
   paymentRedirectMessage,
+  resolvePaymentRedirectUrl,
 } from "../utils/paymentRedirect";
 import { resolvePostLoginPath } from "../utils/roleRoutes";
 
@@ -35,14 +36,6 @@ const Login = () => {
 
       console.log("üîê Token Login ‚Üí Role:", roleFromToken, "Status:", statusFromToken);
 
-      if (needsPaymentRedirect(statusFromToken, roleFromToken)) {
-        alert(`${paymentRedirectMessage(statusFromToken)} Redirecting to payment page...`);
-        setTimeout(() => {
-          window.location.href = buildPaymentChooseUrl(API, username);
-        }, 500);
-        return;
-      }
-
       const userRes = await axiosInstance.get("user/me/", {
         headers: { Authorization: `Bearer ${access}` },
       });
@@ -51,12 +44,14 @@ const Login = () => {
       const status = userData.account_status;
       const role = userData.role;
       const fullName = userData.full_name;
+      const paymentContext = buildPaymentRedirectContext(userData);
 
       localStorage.setItem("account_status", status);
       if (userData.username) localStorage.setItem("username", userData.username);
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("user_role", role);
       persistStudentGrade(userData);
+      persistSchoolSubscriptionContext(userData);
 
       console.log("üì¶ /me ‚Üí Role:", role, "Status:", status);
 
@@ -66,10 +61,16 @@ const Login = () => {
         return;
       }
 
-      if (needsPaymentRedirect(status, role)) {
-        alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
+      if (needsPaymentRedirect(status, role, paymentContext)) {
+        alert(
+          `${paymentRedirectMessage(status, role, paymentContext)} Redirecting to payment page...`
+        );
         setTimeout(() => {
-          window.location.href = buildPaymentChooseUrl(API, username);
+          window.location.href = resolvePaymentRedirectUrl(API, {
+            role,
+            username: userData.username || username,
+            ...paymentContext,
+          });
         }, 500);
         return;
       }

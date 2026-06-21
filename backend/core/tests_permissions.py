@@ -61,13 +61,61 @@ class HasActiveSubscriptionTests(SimpleTestCase):
     def test_manager_bypass(self):
         self.assertTrue(has_active_subscription(self._user(role="manager")))
 
-    def test_teacher_bypass_without_subscription(self):
+    def test_retail_teacher_bypass_without_school(self):
         self.assertTrue(
             has_active_subscription(
                 self._user(
                     role="teacher",
                     account_status="inactive",
                     subscription_expiry=None,
+                )
+            )
+        )
+
+    def test_school_teacher_allowed_with_active_school_license(self):
+        school = self._school()
+        self.assertTrue(
+            has_active_subscription(
+                self._user(
+                    role="teacher",
+                    school=school,
+                    school_id=1,
+                    account_status="inactive",
+                    subscription_expiry=None,
+                )
+            )
+        )
+
+    def test_school_teacher_blocked_when_school_license_expired(self):
+        school = self._school(
+            account_status="expired",
+            subscription_expiry=timezone.now().date() - timedelta(days=1),
+        )
+        self.assertFalse(
+            has_active_subscription(
+                self._user(
+                    role="teacher",
+                    school=school,
+                    school_id=1,
+                    account_status="active",
+                    subscription_expiry=timezone.now().date() + timedelta(days=30),
+                )
+            )
+        )
+
+    def test_school_student_ignores_user_expiry_when_school_expired(self):
+        school = self._school(
+            account_status="active",
+            subscription_expiry=timezone.now().date() - timedelta(days=1),
+        )
+        self.assertFalse(
+            has_active_subscription(
+                self._user(
+                    role="student",
+                    school=school,
+                    school_id=1,
+                    account_status="active",
+                    subscription_expiry=timezone.now().date() + timedelta(days=30),
                 )
             )
         )
@@ -89,6 +137,7 @@ class HasActiveSubscriptionTests(SimpleTestCase):
                     account_status="inactive",
                     subscription_expiry=None,
                     school=school,
+                    school_id=1,
                 )
             )
         )
@@ -105,6 +154,7 @@ class HasActiveSubscriptionTests(SimpleTestCase):
                     account_status="inactive",
                     subscription_expiry=None,
                     school=school,
+                    school_id=1,
                 )
             )
         )

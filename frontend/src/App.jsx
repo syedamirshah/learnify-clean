@@ -25,7 +25,6 @@ import TeacherAssignTask from "./pages/teacher/TeacherAssignTask";
 import TeacherTasks from "./pages/teacher/TeacherTasks";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import SchoolDashboard from "./pages/school/SchoolDashboard";
-import SchoolUsers from "./pages/school/SchoolUsers";
 import SchoolUploadRoster from "./pages/school/SchoolUploadRoster";
 import SchoolAnalytics from "./pages/school/SchoolAnalytics";
 import SchoolStudentSummary from "./pages/school/SchoolStudentSummary";
@@ -72,7 +71,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/account/edit-profile" element={<EditProfile />} />
           <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
-          <Route path="/school/users" element={<SchoolProtectedRoute><SchoolUsers /></SchoolProtectedRoute>} />
+          <Route path="/school/users" element={<Navigate to="/school/dashboard" replace />} />
           <Route path="/school/upload" element={<SchoolProtectedRoute><SchoolUploadRoster /></SchoolProtectedRoute>} />
           <Route path="/school/analytics" element={<SchoolProtectedRoute><SchoolAnalytics /></SchoolProtectedRoute>} />
           <Route path="/school/teachers" element={<SchoolProtectedRoute><SchoolTeacherAnalytics /></SchoolProtectedRoute>} />

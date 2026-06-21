@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import SchoolPageShell from "../../components/school/SchoolPageShell";
 
 function UserTable({ title, users, emptyMessage, showStudentActions = false }) {
   return (
     <section className="rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-black text-emerald-950">{title}</h2>
+        <h3 className="text-lg font-black text-emerald-950">{title}</h3>
         <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">
           {users.length}
         </span>
@@ -55,7 +54,11 @@ function UserTable({ title, users, emptyMessage, showStudentActions = false }) {
   );
 }
 
-export default function SchoolUsers() {
+export default function SchoolUsersContent({
+  showCards = true,
+  sectionTitle = "",
+  searchInputId = "school-user-search",
+}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [teachers, setTeachers] = useState([]);
@@ -103,61 +106,71 @@ export default function SchoolUsers() {
     );
   }, [search, students]);
 
+  if (loading) {
+    return <p className="text-emerald-800">Loading users...</p>;
+  }
+
+  if (error) {
+    return (
+      <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</p>
+    );
+  }
+
   return (
-    <SchoolPageShell
-      title="School Users"
-      subtitle="Teachers and students linked to your school."
-    >
-      {loading ? (
-        <p className="text-emerald-800">Loading users...</p>
-      ) : error ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</p>
-      ) : (
-        <div className="space-y-6">
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Teachers</p>
-              <p className="mt-1 text-2xl font-black text-emerald-950">{teachers.length}</p>
-            </div>
-            <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Students</p>
-              <p className="mt-1 text-2xl font-black text-emerald-950">{students.length}</p>
-            </div>
-            <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Total Users</p>
-              <p className="mt-1 text-2xl font-black text-emerald-950">
-                {teachers.length + students.length}
-              </p>
-            </div>
-          </section>
-
-          <div>
-            <label htmlFor="school-user-search" className="text-sm font-semibold text-emerald-950">
-              Search
-            </label>
-            <input
-              id="school-user-search"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name, username, or email"
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            />
-          </div>
-
-          <UserTable
-            title="Teachers"
-            users={filteredTeachers}
-            emptyMessage="No teachers found for your school."
-          />
-          <UserTable
-            title="Students"
-            users={filteredStudents}
-            emptyMessage="No students found for your school."
-            showStudentActions
-          />
+    <div className="space-y-6">
+      {sectionTitle ? (
+        <div>
+          <h2 className="text-xl font-black text-emerald-950 sm:text-2xl">{sectionTitle}</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Teachers and students linked to your school.
+          </p>
         </div>
-      )}
-    </SchoolPageShell>
+      ) : null}
+
+      {showCards ? (
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Teachers</p>
+            <p className="mt-1 text-2xl font-black text-emerald-950">{teachers.length}</p>
+          </div>
+          <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Students</p>
+            <p className="mt-1 text-2xl font-black text-emerald-950">{students.length}</p>
+          </div>
+          <div className="rounded-3xl border border-emerald-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Total Users</p>
+            <p className="mt-1 text-2xl font-black text-emerald-950">
+              {teachers.length + students.length}
+            </p>
+          </div>
+        </section>
+      ) : null}
+
+      <div>
+        <label htmlFor={searchInputId} className="text-sm font-semibold text-emerald-950">
+          Search
+        </label>
+        <input
+          id={searchInputId}
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search by name, username, or email"
+          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        />
+      </div>
+
+      <UserTable
+        title="Teachers"
+        users={filteredTeachers}
+        emptyMessage="No teachers found for your school."
+      />
+      <UserTable
+        title="Students"
+        users={filteredStudents}
+        emptyMessage="No students found for your school."
+        showStudentActions
+      />
+    </div>
   );
 }

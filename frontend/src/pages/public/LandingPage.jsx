@@ -7,12 +7,13 @@ import heroBanner from "../../assets/learnify-hero.png"; // ⬅️ NEW
 import AppLayout from "../../components/layout/AppLayout";
 import LearningPathSelector from "../../components/layout/LearningPathSelector";
 import AuthPanel from "../../components/layout/AuthPanel";
-import { persistStudentGrade } from "../../utils/auth";
+import { persistStudentGrade, persistSchoolSubscriptionContext, readSchoolSubscriptionContext } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import {
-  buildPaymentChooseUrl,
+  buildPaymentRedirectContext,
   needsPaymentRedirect,
   paymentRedirectMessage,
+  resolvePaymentRedirectUrl,
 } from "../../utils/paymentRedirect";
 import { resolvePostLoginPath } from "../../utils/roleRoutes";
 // EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
@@ -122,14 +123,20 @@ const navLinkClass = () =>
       const status = localStorage.getItem("account_status");
       const storedRole = localStorage.getItem("user_role");
       const token = localStorage.getItem("access_token");
+      const schoolContext = readSchoolSubscriptionContext();
   
       if (
         token &&
         (storedRole === "student" || storedRole === "teacher") &&
-        needsPaymentRedirect(status)
+        needsPaymentRedirect(status, storedRole, schoolContext)
       ) {
-        alert(`${paymentRedirectMessage(status)} Redirecting to payment page...`);
-        window.location.href = buildPaymentChooseUrl(API);
+        alert(
+          `${paymentRedirectMessage(status, storedRole, schoolContext)} Redirecting...`
+        );
+        window.location.href = resolvePaymentRedirectUrl(API, {
+          role: storedRole,
+          ...schoolContext,
+        });
       }
     }, []);
 
@@ -255,6 +262,7 @@ const navLinkClass = () =>
       const role = me.data.role;
       const fullName = me.data.full_name || me.data.username;
       const status = me.data.account_status;
+      const paymentContext = buildPaymentRedirectContext(me.data);
 
       // ✅ Store student grade + grade_id for grade-restricted pages
       const persistedGradeId = persistStudentGrade(me.data);
@@ -278,12 +286,17 @@ const navLinkClass = () =>
       localStorage.setItem("user_full_name", fullName);
       localStorage.setItem("account_status", status);
       if (me.data.username) localStorage.setItem("username", me.data.username);
+      persistSchoolSubscriptionContext(me.data);
       setRole(role);
       setFullName(fullName);
 
-      if ((role === "student" || role === "teacher") && needsPaymentRedirect(status)) {
-        alert(paymentRedirectMessage(status));
-        window.location.href = buildPaymentChooseUrl(API, username);
+      if ((role === "student" || role === "teacher") && needsPaymentRedirect(status, role, paymentContext)) {
+        alert(paymentRedirectMessage(status, role, paymentContext));
+        window.location.href = resolvePaymentRedirectUrl(API, {
+          role,
+          username: me.data.username || username,
+          ...paymentContext,
+        });
       } else {
         navigate(resolvePostLoginPath(role, location.search));
       }

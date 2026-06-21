@@ -16,6 +16,37 @@ export function getAuthSnapshot() {
   };
 }
 
+export function persistSchoolSubscriptionContext(profileData = {}) {
+  const schoolId = profileData?.school_id;
+  if (schoolId !== null && schoolId !== undefined && String(schoolId).trim() !== "") {
+    localStorage.setItem("school_id", String(schoolId));
+  } else {
+    localStorage.removeItem("school_id");
+  }
+
+  const schoolAccountStatus = profileData?.school_account_status;
+  if (schoolAccountStatus) {
+    localStorage.setItem("school_account_status", String(schoolAccountStatus));
+  } else {
+    localStorage.removeItem("school_account_status");
+  }
+
+  const schoolSubscriptionExpiry = profileData?.school_subscription_expiry;
+  if (schoolSubscriptionExpiry) {
+    localStorage.setItem("school_subscription_expiry", String(schoolSubscriptionExpiry));
+  } else {
+    localStorage.removeItem("school_subscription_expiry");
+  }
+}
+
+export function readSchoolSubscriptionContext() {
+  return {
+    schoolId: localStorage.getItem("school_id") || null,
+    schoolAccountStatus: localStorage.getItem("school_account_status") || null,
+    schoolSubscriptionExpiry: localStorage.getItem("school_subscription_expiry") || null,
+  };
+}
+
 export function persistStudentGrade(profileData = {}) {
   const candidates = [
     profileData?.grade_id,
@@ -84,4 +115,7 @@ export function clearAuth() {
   localStorage.removeItem("user_grade");
   localStorage.removeItem("user_grade_id");
   localStorage.removeItem("grade_id");
+  localStorage.removeItem("school_id");
+  localStorage.removeItem("school_account_status");
+  localStorage.removeItem("school_subscription_expiry");
 }
