@@ -10,6 +10,7 @@ import AuthPanel from "../../components/layout/AuthPanel";
 import { persistStudentGrade, persistSchoolSubscriptionContext, readSchoolSubscriptionContext } from "../../utils/auth";
 import { buildPublicNavItems } from "../../utils/publicNav";
 import {
+  buildPaymentChooseUrl,
   buildPaymentRedirectContext,
   needsPaymentRedirect,
   paymentRedirectMessage,
