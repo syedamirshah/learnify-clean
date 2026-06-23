@@ -19,10 +19,7 @@ import {
 import { resolvePostLoginPath } from "../../utils/roleRoutes";
 // EXPERIMENTAL: textbook view UI — revert by removing import + textbookViewExperiment.js
 import {
-  formatChapterSummaryMeta,
   getChapterIcon,
-  getChapterLevelStatus,
-  getChapterLevelStatusClass,
   getChapterProgress,
   getDailyGoalProgress,
   getExerciseStatus,
@@ -905,7 +902,6 @@ const chapterPalettes = [
                                       role === "student" ? historyMap : {}
                                     );
                                     const chapterIcon = getChapterIcon(chapterItem.chapter);
-                                    const levelStatus = getChapterLevelStatus(chapterProgress);
 
                                     return (
                                       <button
@@ -971,11 +967,6 @@ const chapterPalettes = [
                                                 />
                                               </div>
                                             )}
-                                            <span
-                                              className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${getChapterLevelStatusClass(levelStatus.tone)}`}
-                                            >
-                                              {levelStatus.label}
-                                            </span>
                                           </div>
 
                                           <div className="shrink-0 pt-1 text-lg text-white/90">
@@ -1018,11 +1009,6 @@ const chapterPalettes = [
                               ) : (
                                 (() => {
                                   const activeQuizzes = activeQuizzesForSubject;
-                                  const activeProgress = getChapterProgress(
-                                    activeChapterObj.quizzes,
-                                    role === "student" ? historyMap : {}
-                                  );
-                                  const chapterMeta = formatChapterSummaryMeta(activeProgress);
                                   const activeChapterIcon = getChapterIcon(activeChapterObj.chapter);
 
                                   return (
@@ -1036,9 +1022,6 @@ const chapterPalettes = [
                                           <span aria-hidden="true">{activeChapterIcon}</span>
                                           <span>{activeChapterObj.chapter}</span>
                                         </div>
-                                        {chapterMeta && (
-                                          <p className="mt-0.5 text-[11px] text-gray-400">{chapterMeta}</p>
-                                        )}
                                       </div>
 
                                       <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
@@ -1066,27 +1049,19 @@ const chapterPalettes = [
                                               to={`/student/attempt-quiz/${quiz.id}`}
                                               className={`group block rounded-2xl px-4 py-3 transition duration-200 hover:-translate-y-0.5 ${quizCardClass}`}
                                             >
-                                              <div className="flex items-start justify-between gap-2">
-                                                {role === "student" && (
-                                                  <span
-                                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${status.badgeClass}`}
-                                                  >
-                                                    <span aria-hidden="true">{status.icon}</span>
-                                                    {status.label}
-                                                  </span>
-                                                )}
-                                                {role === "student" && stars.count > 0 && (
+                                              {role === "student" && stars.count > 0 && (
+                                                <div className="flex justify-end">
                                                   <span
                                                     className="text-lg leading-none"
                                                     aria-label={stars.label}
                                                   >
                                                     {stars.stars}
                                                   </span>
-                                                )}
-                                              </div>
+                                                </div>
+                                              )}
 
                                               <div
-                                                className={`mt-2 font-semibold leading-snug ${
+                                                className={`${stars.count > 0 && role === "student" ? "mt-1" : ""} font-semibold leading-snug ${
                                                   activePalette ? activePalette.accent : "text-emerald-950"
                                                 }`}
                                               >
@@ -1099,12 +1074,6 @@ const chapterPalettes = [
                                                     {history.percentage}%
                                                   </span>{" "}
                                                   · {history.marks_obtained}/{history.total_marks}
-                                                </p>
-                                              )}
-
-                                              {role === "student" && (
-                                                <p className="mt-3 text-xs font-bold text-emerald-700 group-hover:text-emerald-800">
-                                                  {status.cta} →
                                                 </p>
                                               )}
 
