@@ -4,6 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import AppLayout from "../../components/layout/AppLayout";
 import { buildPublicNavItems } from "../../utils/publicNav";
+import { getDefaultRouteForRole } from "../../utils/roleRoutes";
+
+const QUIZ_LIBRARY_PATH = getDefaultRouteForRole("student");
 
 const StudentQuizHistoryTable = () => {
   const [quizResults, setQuizResults] = useState([]);
@@ -175,7 +178,7 @@ const StudentQuizHistoryTable = () => {
                     </div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-center">
                       <Link
-                        to="/"
+                        to={QUIZ_LIBRARY_PATH}
                         className="inline-flex items-center justify-center rounded-lg border border-green-200 bg-white px-3 py-2 text-sm font-semibold text-green-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                       >
                         Go to Quizzes
@@ -330,7 +333,7 @@ const StudentQuizHistoryTable = () => {
                   Tip: Click any quiz from Landing Page to attempt again.
                 </div>
                 <Link
-                  to="/"
+                  to={QUIZ_LIBRARY_PATH}
                   className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-white/70 px-4 py-2 font-bold text-green-900 shadow-sm transition hover:shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                 >
                   Go to Quizzes

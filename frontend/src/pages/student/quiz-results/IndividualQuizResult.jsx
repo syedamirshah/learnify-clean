@@ -4,6 +4,9 @@ import axiosInstance from "../../../utils/axiosInstance";
 import logo from "../../../assets/logo.png";
 import AppLayout from "../../../components/layout/AppLayout";
 import { buildPublicNavItems } from "../../../utils/publicNav";
+import { getDefaultRouteForRole } from "../../../utils/roleRoutes";
+
+const QUIZ_LIBRARY_PATH = getDefaultRouteForRole("student");
 
 const IndividualQuizResult = () => {
   const { attemptId } = useParams();
@@ -216,7 +219,7 @@ const IndividualQuizResult = () => {
           <div className="rounded-2xl border border-green-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                to="/"
+                to={QUIZ_LIBRARY_PATH}
                 className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
                 Go Back to Quizzes
